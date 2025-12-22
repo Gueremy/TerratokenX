@@ -1,0 +1,39 @@
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reserva Pendiente de Pago</title>
+    <style>
+        body { font-family: sans-serif; color: #333; }
+        .container { padding: 20px; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 5px; background-color: #E4EFE6; }
+        h1 { color: #f59e0b; } /* Tono naranja/amarillo para pendiente */
+        ul { list-style-type: none; padding: 0; }
+        li { margin-bottom: 10px; }
+        .footer { margin-top: 20px; font-size: 0.9em; color: #777; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tu reserva está casi lista</h1>
+        <p>Hola {{ reserva.nombre }},</p>
+        <p>Hemos recibido tu solicitud de reserva y la hemos guardado. Para confirmarla, solo falta completar el pago.</p>
+        <p><strong>Importante:</strong> Tu reserva solo será confirmada una vez que el pago sea aprobado. Si no se completa el pago, la reserva podría ser cancelada.</p>
+        
+        <h2>Resumen de tu solicitud:</h2>
+        <ul>
+            <li><strong>Número de Reserva:</strong> {{ reserva.numero_reserva }}</li>
+            <li><strong>Fecha:</strong> {{ reserva.fecha|date:"d \d\e F \d\e Y" }}</li>
+            <li><strong>Días:</strong> {{ reserva.dias }}</li>
+            <li><strong>Total a pagar:</strong> ${{ reserva.total|intcomma }}</li>
+        </ul>
+
+        <p>Una vez que el pago se complete, recibirás un correo de confirmación con todos los detalles y un enlace para añadir el evento a tu calendario de Google.</p>
+        
+        <div class="footer">
+            <p>Si tienes alguna duda, puedes contactarnos por <a href="https://wa.link/8jz8b1">WhatsApp</a>.</p>
+            <p>Saludos,<br>El equipo de Spa Confort.</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,23 @@
+¡Tu reserva ha sido confirmada!
+
+Hola {{ reserva.nombre }},
+
+Gracias por reservar con nosotros. Aquí están los detalles de tu reserva:
+
+Nombre: {{ reserva.nombre }}
+Correo: {{ reserva.correo }}
+Teléfono: {{ reserva.telefono }}
+Dirección: {{ reserva.direccion }}
+Fecha: {{ reserva.fecha|date:"d \d\e F \d\e Y" }}
+Días: {{ reserva.dias }}
+Total: ${{ reserva.total }}
+
+Añade este evento a tu calendario de Google:
+{{ google_calendar_link }}
+
+Si tienes alguna duda, puedes contactarnos por WhatsApp: +56 9 2883 9093
+
+¡Esperamos verte pronto!
+
+Saludos,
+El equipo de Spa Confort.

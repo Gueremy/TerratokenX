@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #D4AF37;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            color: #D4AF37;
+            margin: 0;
+        }
+
+        .details {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #D4AF37;
+            margin: 20px 0;
+        }
+
+        .footer {
+            font-size: 12px;
+            color: #777;
+            text-align: center;
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+
+        .highlight {
+            color: #D4AF37;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>TerraTokenX</h1>
+        </div>
+
+        <p>Hola <strong>{{ reserva.nombre }}</strong>,</p>
+
+        <p>¡Bienvenido a TerraTokenX!</p>
+
+        <p>Confirmamos la recepción de tu pago por <strong>${{ reserva.total|floatformat:0 }}</strong>.</p>
+
+        <p>Has asegurado exitosamente tu posición en nuestra Preventa Exclusiva.</p>
+
+        <div class="details">
+            <h3>Detalles de tu Inversión:</h3>
+            <p><strong>Nº de Orden:</strong> #{{ reserva.numero_reserva }}</p>
+            <p><strong>Medio de Pago:</strong> {{ reserva.get_metodo_pago_display }}</p>
+            <p><strong>Estado:</strong> Confirmado / Pagado</p>
+        </div>
+
+        <p>¿Qué sigue ahora? Tu participación ya está registrada en nuestra base de datos prioritaria. En Marzo, cuando
+            lancemos la plataforma oficial, te contactaremos a este mismo correo para migrar tu saldo y entregarte tus
+            Tokens digitales en tu dashboard personal.</p>
+
+        <p>Gracias por confiar en el futuro de la inversión inmobiliaria.</p>
+
+        <p>Si tienes dudas, contáctanos a nuestro WhatsApp: <strong>+56 9 2883 9093</strong></p>
+
+        <div class="footer">
+            <p>Atentamente,<br><strong>El equipo de TerraTokenX</strong><br>Respaldo Legal y Tecnología Blockchain</p>
+        </div>
+    </div>
+</body>
+
+</html>

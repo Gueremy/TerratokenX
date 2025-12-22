@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eliminar Reserva - TerraTokenX</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gold: {
+                            400: '#E5C453',
+                            500: '#D4AF37',
+                            600: '#B5952F',
+                        },
+                        dark: {
+                            800: '#121212',
+                            900: '#050505',
+                            700: '#1e1e1e',
+                            card: '#1e1e1e'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="flex items-center justify-center min-h-screen p-4 text-gray-100"
+    style="background: linear-gradient(to top right, #000000, #374151);">
+
+    <main class="w-full max-w-lg">
+        <div class="bg-dark-800 p-8 rounded-xl shadow-2xl border border-gray-800 text-center">
+            <div class="text-red-500 mb-4">
+                <span class="material-icons" style="font-size: 64px;">warning</span>
+            </div>
+
+            <h1 class="text-2xl font-bold text-white mb-4">¿Eliminar Reserva?</h1>
+
+            <div class="bg-red-900/20 border border-red-900/50 rounded-lg p-6 mb-8">
+                <p class="text-gray-300 text-lg leading-relaxed">
+                    ¿Estás seguro que deseas eliminar la reserva de <strong class="text-white">{{ reserva.nombre }}</strong> creada el <strong class="text-white">{{ reserva.created_at|date:"d M Y" }}</strong>?
+                </p>
+                <p class="text-red-400 text-sm mt-4 font-semibold">
+                    Esta acción no se puede deshacer.
+                </p>
+            </div>
+
+            <form method="post" class="flex flex-col sm:flex-row gap-4">
+                {% csrf_token %}
+                <button type="submit"
+                    class="flex-1 flex justify-center items-center gap-2 bg-red-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-red-700 shadow-lg shadow-red-900/20 transition-all transform hover:scale-[1.02]">
+                    <span class="material-icons">delete_forever</span>
+                    Sí, Eliminar
+                </button>
+                <a href="{% url 'admin_panel' %}"
+                    class="flex-1 flex justify-center items-center gap-2 bg-dark-700 text-gray-300 border border-gray-600 font-semibold py-3 px-6 rounded-lg hover:bg-gray-800 hover:text-white transition-colors">
+                    <span class="material-icons">arrow_back</span>
+                    Cancelar
+                </a>
+            </form>
+        </div>
+    </main>
+
+</body>
+
+</html>

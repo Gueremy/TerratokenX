@@ -1,0 +1,138 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Confirmar Pago - Spa Inflable</title>
+    <link rel="icon" href="{% static 'booking/images/favicon.ico' %}" type="image/x-icon">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
+    <style>
+        /* Estilos para los campos de Mercado Pago */
+        .mp-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        .mp-input.mp-input--error {
+            border-color: #ef4444;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Mensaje de ayuda para el usuario en caso de que el formulario no cargue -->
+        <div id="payment-form-error" style="display: none;" class="mb-4 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 rounded-md">
+            <p><strong>¿Problemas para ver el formulario de pago?</strong></p>
+            <p>A veces, los bloqueadores de anuncios o extensiones de privacidad pueden interferir. Por favor, intenta desactivarlos para esta página y recarga. ¡Gracias!</p>
+        </div>
+        <h1 class="text-3xl font-bold text-blue-600 mb-6 text-center">Confirmar Pago de Reserva</h1>
+        {% if messages %}
+            <ul class="mb-4">
+                {% for message in messages %}
+                    <li class="text-red-500 mb-2 text-center">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        <div class="bg-white p-6 rounded-lg shadow-md max-w-lg mx-auto">
+            <p class="text-lg text-gray-800 mb-4">Estás a punto de pagar tu reserva para el spa inflable.</p>
+            <p class="text-md text-gray-700 mb-2"><strong>Número de Reserva:</strong> {{ reserva.numero_reserva }}</p>
+            <p class="text-md text-gray-700 mb-2"><strong>Fecha:</strong> {{ reserva.fecha|date:"d \d\e F \d\e Y" }}</p>
+            <p class="text-md text-gray-700 mb-4"><strong>Total a Pagar:</strong> ${{ reserva.total|floatformat:"0" }}</p>
+
+            <form id="payment-form" method="post" action="{% url 'process_mercado_pago_payment' %}">
+                {% csrf_token %}
+                <input type="hidden" name="reserva_id" value="{{ reserva.id }}">
+                <input type="hidden" name="transaction_amount" value="{{ reserva.total|floatformat:"-2" }}">
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Número de Tarjeta</label>
+                        <div id="form-checkout__cardNumber" class="mp-input"></div>
+                    </div>
+                    <div class="flex space-x-4">
+                        <div class="w-1/2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Vencimiento</label>
+                            <div id="form-checkout__expirationDate" class="mp-input"></div>
+                        </div>
+                        <div class="w-1/2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">CVC</label>
+                            <div id="form-checkout__securityCode" class="mp-input"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <input type="hidden" name="token" id="token" />
+                <input type="hidden" name="payment_method_id" id="payment_method_id" />
+
+                <div class="flex justify-center mt-6">
+                    <button type="submit" id="form-checkout__submit" class="px-6 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors">
+                        Pagar Ahora
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let formMounted = false;
+
+        // Iniciar un temporizador. Si el formulario no se monta en 5 segundos, mostrar el mensaje de error.
+        setTimeout(() => {
+            if (!formMounted) {
+                console.warn("El formulario de Mercado Pago no se montó a tiempo. Posiblemente bloqueado por una extensión.");
+                document.getElementById('payment-form-error').style.display = 'block';
+            }
+        }, 5000);
+
+
+        const mp = new MercadoPago('{{ mercado_pago_public_key }}');
+        const cardForm = mp.cardForm({
+            amount: "{{ reserva.total|floatformat:"-2" }}",
+            iframe: true,
+            form: {
+                id: "payment-form",
+                cardNumber: { id: "form-checkout__cardNumber" },
+                expirationDate: { id: "form-checkout__expirationDate" },
+                securityCode: { id: "form-checkout__securityCode" },
+            },
+            callbacks: {
+                onFormMounted: error => {
+                    if (error) {
+                        return console.error("Error al montar el formulario: ", error);
+                    }
+                    formMounted = true; // El formulario se montó correctamente
+                },
+                onSubmit: event => {
+                    event.preventDefault();
+                    const form = document.getElementById('payment-form');
+                    const submitButton = document.getElementById('form-checkout__submit');
+                    submitButton.disabled = true;
+                    submitButton.innerText = "Procesando...";
+
+                    cardForm.createCardToken()
+                        .then(cardToken => {
+                            if (cardToken.error) {
+                                console.error("Error al crear el token: ", cardToken.error);
+                                alert("Error al procesar la tarjeta. Revisa los datos.");
+                                submitButton.disabled = false;
+                                submitButton.innerText = "Pagar Ahora";
+                            } else {
+                                document.getElementById('token').value = cardToken.id;
+                                document.getElementById('payment_method_id').value = "credit_card";
+                                form.submit();
+                            }
+                        }).catch(error => {
+                                console.error("Error inesperado: ", error);
+                                alert("Ocurrió un error inesperado. Por favor, intenta de nuevo.");
+                                submitButton.disabled = false;
+                                submitButton.innerText = "Pagar Ahora";
+                            });
+                    },
+            },
+        });
+    </script>
+</body>
+</html>

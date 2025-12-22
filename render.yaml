@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: reservation-project
+    runtime: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn reservation_project.reservation_project.wsgi:application"
+    plan: free
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: SECRET_KEY
+        generateValue: true
+      - key: WEB_CONCURRENCY
+        value: 4
+      - key: DEBUG
+        value: "False"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: reservation-db
+          property: connectionString
+      - key: ALLOWED_HOSTS
+        value: "*" # Se ajustará automáticamente con RENDER_EXTERNAL_HOSTNAME en settings.py
+
+databases:
+  - name: reservation-db
+    plan: free
+    databaseName: reservation_db
+    user: reservation_user

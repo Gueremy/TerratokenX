@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reservation Successful</title>
+    <link rel="stylesheet" href="{% static 'reservations/css/styles.css' %}">
+</head>
+<body>
+    <div class="container">
+        <h1>Reservation Confirmed!</h1>
+        <p>Thank you for your reservation, {{ reservation.name }}.</p>
+        <p>Your reservation details are as follows:</p>
+        <ul>
+            <li><strong>Name:</strong> {{ reservation.name }}</li>
+            <li><strong>Email:</strong> {{ reservation.email }}</li>
+            <li><strong>Phone:</strong> {{ reservation.phone }}</li>
+            <li><strong>Address:</strong> {{ reservation.address }}</li>
+            <li><strong>Date:</strong> {{ reservation.date }}</li>
+            <li><strong>Time:</strong> {{ reservation.time }}</li>
+        </ul>
+        <p>We look forward to seeing you!</p>
+    </div>
+    <script src="{% static 'reservations/js/whatsapp.js' %}"></script>
+</body>
+</html>

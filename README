@@ -1,0 +1,91 @@
+# Proyecto de Reservas para Spa Inflable
+
+Este es un proyecto Django diseñado para gestionar un sistema de reservas para el arriendo de spas inflables. Ofrece una interfaz intuitiva para que los clientes realicen sus reservas y un panel de administración completo para gestionar el negocio.
+
+## ✨ Características Principales
+
+-   **Formulario de Reserva Dinámico**: Interfaz amigable construida con TailwindCSS para una experiencia de usuario moderna.
+-   **Validación en Tiempo Real**: El calendario deshabilita fechas pasadas, feriados y días con el cupo de reservas lleno, todo validado con JavaScript del lado del cliente.
+-   **Cálculo de Precios Inteligente**: El precio se ajusta dinámicamente, ofreciendo descuentos para reservas de dos o más días.
+-   **Sistema de Cupones**: Permite a los administradores crear y gestionar cupones de descuento que los clientes pueden aplicar al momento de reservar.
+-   **Notificaciones por Correo**: Envío automático de correos de confirmación a los clientes con todos los detalles de su reserva.
+-   **Panel de Administración Completo**:
+    -   Gestión de Reservas: Ver, editar y eliminar reservas.
+    -   Gestión de Cupones: Crear cupones con códigos únicos y porcentajes de descuento.
+    -   Gestión de Feriados: Añadir fechas que no estarán disponibles para reservar.
+-   **Integración con WhatsApp**: Un botón flotante permite a los clientes iniciar una conversación de WhatsApp para resolver dudas rápidamente.
+-   **Diseño Responsivo**: Totalmente adaptable a dispositivos móviles, tablets y computadores de escritorio.
+
+## 🛠️ Tecnologías Utilizadas
+
+-   **Backend**: Django, Python
+-   **Frontend**: HTML, TailwindCSS, JavaScript
+-   **Base de Datos**: SQLite (por defecto para desarrollo), fácilmente configurable para MySQL o PostgreSQL.
+
+## 🚀 Instalación y Configuración
+
+Sigue estos pasos para poner en marcha el proyecto en tu entorno local.
+
+1.  **Clonar el repositorio**
+    ```bash
+    git clone <URL-DEL-REPOSITORIO>
+    cd reservation_project
+    ```
+
+2.  **Crear y activar un entorno virtual**
+    ```bash
+    # En Windows
+    python -m venv .venv
+    .\.venv\Scripts\activate
+
+    # En macOS/Linux
+    python3 -m venv .venv
+    source .venv/bin/activate
+    ```
+
+3.  **Instalar las dependencias**
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+4.  **Configurar la aplicación**
+    Abre el archivo `reservation_project/settings.py` y configura lo siguiente:
+    -   **`SECRET_KEY`**: Asegúrate de que sea un valor único y secreto.
+    -   **`DATABASES`**: Configura la conexión a tu base de datos (el proyecto usa SQLite por defecto).
+    -   **`EMAIL_HOST_USER` y `EMAIL_HOST_PASSWORD`**: Ingresa tus credenciales de correo para el envío de notificaciones. Se recomienda usar una contraseña de aplicación de Gmail.
+
+5.  **Aplicar las migraciones**
+    Este comando creará las tablas necesarias en tu base de datos.
+    ```bash
+    python manage.py migrate
+    ```
+
+6.  **Crear un superusuario**
+    Esto te permitirá acceder al panel de administración de Django.
+    ```bash
+    python manage.py createsuperuser
+    ```
+
+7.  **Ejecutar el servidor de desarrollo**
+    ```bash
+    python manage.py runserver
+    ```
+    Ahora puedes acceder a la aplicación en `http://127.0.0.1:8000/` y al panel de administración en `http://127.0.0.1:8000/admin/`.
+
+## 📖 Uso
+
+-   **Clientes**: Navegan al formulario principal, completan sus datos, eligen una fecha disponible, aplican un cupón si lo tienen y confirman su reserva.
+-   **Administradores**: Inician sesión en el panel de administración (`/admin/`) para ver todas las reservas, añadir nuevos cupones o marcar días como no laborables.
+
+## ☁️ Despliegue
+
+Este proyecto está listo para ser desplegado en plataformas como Heroku, DigitalOcean, PythonAnywhere o Hostinger. Asegúrate de configurar correctamente los archivos estáticos y las variables de entorno para producción.
+
+## 🤝 Cómo Contribuir
+
+¡Las contribuciones son bienvenidas! Si encuentras un error o tienes una idea para mejorar el proyecto, por favor, abre un *issue* o envía un *pull request*.
+
+## 📄 Licencia
+
+Este proyecto está bajo la Licencia MIT.
+

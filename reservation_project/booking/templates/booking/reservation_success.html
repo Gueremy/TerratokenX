@@ -1,0 +1,134 @@
+{% load static humanize %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estado de tu Reserva</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gold: {
+                            400: '#E5C453',
+                            500: '#D4AF37',
+                            600: '#B5952F',
+                        },
+                        dark: {
+                            800: '#121212',
+                            900: '#050505',
+                            card: '#1e1e1e'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+
+<body class="flex items-center justify-center min-h-screen p-4 text-gray-100 font-sans antialiased"
+    style="background: linear-gradient(to top right, #000000, #374151);">
+
+    <div class="max-w-lg w-full bg-dark-800 p-8 rounded-xl shadow-2xl border border-gray-800 text-center">
+
+        {% if payment_status == 'approved' %}
+        <!-- Estado: Aprobado -->
+        <div class="text-green-500 mb-2">
+            <span class="material-icons" style="font-size: 64px;">check_circle</span>
+        </div>
+        <h1 class="text-3xl font-extrabold text-white mt-4 tracking-tight">¡Pago Aprobado!</h1>
+        <p class="text-gray-400 mt-2">Tu reserva ha sido confirmada exitosamente. Hemos enviado los detalles a tu
+            correo.</p>
+
+        {% elif payment_status == 'pending' %}
+        <!-- Estado: Pendiente -->
+        <div class="text-gold-500 mb-2">
+            <span class="material-icons" style="font-size: 64px;">hourglass_top</span>
+        </div>
+        <h1 class="text-3xl font-extrabold text-white mt-4 tracking-tight">Tu pago está pendiente</h1>
+        <p class="text-gray-400 mt-2">Estamos esperando la confirmación del pago. Te notificaremos por correo
+            electrónico cuando se acredite. ¡No te preocupes, tu reserva está guardada!</p>
+
+        {% elif payment_status == 'failure' or payment_status == 'rejected' %}
+        <!-- Estado: Fallido o Rechazado -->
+        <div class="text-red-500 mb-2">
+            <span class="material-icons" style="font-size: 64px;">cancel</span>
+        </div>
+        <h1 class="text-3xl font-extrabold text-white mt-4 tracking-tight">El pago fue rechazado</h1>
+        <p class="text-gray-400 mt-2">Tu pago no pudo ser completado. Por favor, vuelve al inicio e intenta de nuevo,
+            quizás con otro método de pago.</p>
+
+        {% elif payment_status == 'crypto_pending' %}
+        <!-- Estado: Crypto Pendiente (Simulado) -->
+        <div class="text-orange-400 mb-2">
+            <span class="material-icons" style="font-size: 64px;">developer_mode</span>
+        </div>
+        <h1 class="text-3xl font-extrabold text-white mt-4 tracking-tight">Simulación de Pago Crypto</h1>
+
+        <div class="mt-4 bg-orange-900/40 border border-orange-500/50 rounded-lg p-4 text-left">
+            <div class="flex items-start gap-3">
+                <span class="material-icons text-orange-400 mt-1">warning</span>
+                <div>
+                    <h3 class="font-bold text-orange-300 text-sm uppercase mb-1">Modo Demostración</h3>
+                    <p class="text-gray-300 text-sm leading-relaxed">
+                        Este es un flujo simulado. En producción, aquí el usuario sería redirigido a la pasarela de
+                        <strong class="text-white">CryptoMarket</strong> para realizar el pago con criptomonedas.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <p class="text-gray-400 mt-4 font-medium">La reserva se ha guardado como pendiente.</p>
+        <!-- Estado: Desconocido (el usuario llegó directamente a la URL o canceló) -->
+        <div class="text-blue-500 mb-2">
+            <span class="material-icons" style="font-size: 64px;">info</span>
+        </div>
+        <h1 class="text-3xl font-extrabold text-white mt-4 tracking-tight">Detalles de tu Inversión</h1>
+        <p class="text-gray-400 mt-2">Aquí están los detalles de tu inversión. Si tu pago está pendiente, te
+            notificaremos
+            por correo cuando se apruebe.</p>
+
+        {% endif %}
+
+        <!-- Detalles de la Reserva (se muestran siempre) -->
+        <div class="mt-8 border-t border-gray-700 pt-6 text-left">
+            <h2 class="text-lg font-semibold text-gold-500">Detalles de tu inversión:</h2>
+            <ul class="mt-4 space-y-3 text-gray-300">
+                <li class="flex justify-between border-b border-gray-800 pb-2">
+                    <span class="font-medium">Número de Reserva:</span>
+                    <span class="font-light text-white">{{ reserva.numero_reserva }}</span>
+                </li>
+                <li class="flex justify-between border-b border-gray-800 pb-2">
+                    <span class="font-medium">Nombre:</span>
+                    <span class="font-light text-white">{{ reserva.nombre }}</span>
+                </li>
+                <li class="flex justify-between border-b border-gray-800 pb-2">
+                    <span class="font-medium">Fecha Compra:</span>
+                    <span class="font-light text-white">{{ reserva.created_at|date:"d \d\e F \d\e Y" }}</span>
+                </li>
+                <li class="flex justify-between border-b border-gray-800 pb-2">
+                    <span class="font-medium">Tokens:</span>
+                    <span class="font-light text-white">{{ reserva.cantidad_tokens }}</span>
+                </li>
+                <li class="flex justify-between pt-1">
+                    <span class="font-medium text-lg text-gold-400">Total:</span>
+                    <span class="font-bold text-xl text-white">${{ reserva.total|intcomma }}</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="mt-8 space-y-4">
+            <a href="{% url 'reservation_form' %}"
+                class="w-full block bg-gradient-to-r from-gold-400 to-gold-600 text-black font-bold py-3 px-4 rounded-lg hover:from-gold-500 hover:to-gold-700 shadow-lg transition-transform transform hover:scale-[1.02]">
+                Volver al inicio
+            </a>
+        </div>
+    </div>
+
+</body>
+
+</html>
