@@ -224,14 +224,17 @@ def reservation_form(request):
 
             html_message = render_to_string(template_name, context)
 
-            send_mail(
-                subject,
-                '', # El mensaje de texto plano
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[reserva.correo],
-                fail_silently=False,
-                html_message=html_message,
-            )
+            try:
+                send_mail(
+                    subject,
+                    '', # El mensaje de texto plano
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[reserva.correo],
+                    fail_silently=False,
+                    html_message=html_message,
+                )
+            except Exception as e:
+                print(f"Error enviando correo: {e}")
 
             # Redirección condicional según método de pago
             if reserva.metodo_pago == 'CRYPTO':
