@@ -185,112 +185,7 @@
                     </div>
                 </div>
 
-                <script>
-                    document.addEventListener('DOMContentLoaded', function () {
-                        const cantidadInput = document.querySelector('input[name="cantidad_tokens"]');
-                        const couponInput = document.querySelector('input[name="coupon_code"]');
-                        const btnValidar = document.getElementById('btn-validar-cupon');
-                        const couponMessage = document.getElementById('coupon-message');
 
-                        const cantidadDisplay = document.getElementById('cantidad-display');
-                        const precioTotalDisplay = document.getElementById('precio-total');
-                        const rowDescuento = document.getElementById('row-descuento');
-                        const discountPercentDisplay = document.getElementById('discount-percent');
-                        const discountAmountDisplay = document.getElementById('discount-amount');
-
-                        const precioBase = {{ precio_base_token }
-                    };
-                    let currentDiscountPercent = 0;
-
-                    function formatCurrency(amount) {
-                        return '$' + Math.round(amount).toLocaleString('es-CL');
-                    }
-
-                    function actualizarTotal() {
-                        let cantidad = parseInt(cantidadInput.value) || 1;
-                        if (cantidad < 1) {
-                            cantidad = 1;
-                            cantidadInput.value = 1;
-                        }
-
-                        cantidadDisplay.textContent = cantidad;
-
-                        const subtotal = precioBase * cantidad;
-                        let discountAmount = 0;
-
-                        if (currentDiscountPercent > 0) {
-                            discountAmount = (subtotal * currentDiscountPercent) / 100;
-
-                            // Mostrar desglose de descuento
-                            rowDescuento.classList.remove('hidden');
-                            discountPercentDisplay.textContent = currentDiscountPercent;
-                            discountAmountDisplay.textContent = '-' + formatCurrency(discountAmount);
-                        } else {
-                            rowDescuento.classList.add('hidden');
-                        }
-
-                        const total = subtotal - discountAmount;
-                        precioTotalDisplay.textContent = formatCurrency(total);
-                    }
-
-                    // Event Listeners para cantidad
-                    if (cantidadInput) {
-                        cantidadInput.addEventListener('input', actualizarTotal);
-                        cantidadInput.addEventListener('change', actualizarTotal);
-                    }
-
-                    // Lógica de Validación de Cupón
-                    if (btnValidar) {
-                        btnValidar.addEventListener('click', function () {
-                            const code = couponInput.value.trim();
-                            if (!code) {
-                                couponMessage.textContent = "Ingresa un código primero.";
-                                couponMessage.className = "text-red-500 block mt-1 h-5";
-                                return;
-                            }
-
-                            btnValidar.disabled = true;
-                            btnValidar.textContent = "...";
-
-                            fetch('{% url "validate_coupon" %}', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                                },
-                                body: JSON.stringify({ code: code })
-                            })
-                                .then(response => response.json())
-                                .then(data => {
-                                    btnValidar.disabled = false;
-                                    btnValidar.textContent = "Validar";
-
-                                    if (data.valid) {
-                                        currentDiscountPercent = data.discount_percentage;
-                                        couponMessage.textContent = data.message;
-                                        couponMessage.className = "text-green-400 block mt-1 h-5 font-medium";
-                                        actualizarTotal(); // Recalcular con descuento
-                                    } else {
-                                        currentDiscountPercent = 0;
-                                        couponMessage.textContent = data.message;
-                                        couponMessage.className = "text-red-500 block mt-1 h-5";
-                                        actualizarTotal(); // Recalcular sin descuento
-                                    }
-                                })
-                                .catch(error => {
-                                    console.error('Error:', error);
-                                    btnValidar.disabled = false;
-                                    btnValidar.textContent = "Validar";
-                                    couponMessage.textContent = "Error al validar el cupón.";
-                                    couponMessage.className = "text-red-500 block mt-1 h-5";
-                                });
-                        });
-                    }
-
-                    // Inicializar total al cargar
-                    actualizarTotal();
-                    });
-                </script>
 
                 <!-- Selector de Medio de Pago -->
                 <div class="mt-8 mb-6">
@@ -383,6 +278,7 @@
         </div>
     </div>
 
+    <!-- Modal Popup Logic & Main Form Logic (Combined at the end) -->
     <script>
         // Modal Logic
         const modal = document.getElementById('infoModal');
@@ -402,6 +298,124 @@
         // Auto Open on Load
         window.addEventListener('load', () => {
             setTimeout(openModal, 500); // Small delay for effect
+        });
+
+        // Price Calculation & Coupon Logic
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log("DOM loaded - Initializing Price Script");
+
+            // Selectors
+            const cantidadInput = document.querySelector('input[name="cantidad_tokens"]');
+            const couponInput = document.querySelector('input[name="coupon_code"]');
+            const btnValidar = document.getElementById('btn-validar-cupon');
+            const couponMessage = document.getElementById('coupon-message');
+
+            const cantidadDisplay = document.getElementById('cantidad-display');
+            const precioTotalDisplay = document.getElementById('precio-total');
+            const rowDescuento = document.getElementById('row-descuento');
+            const discountPercentDisplay = document.getElementById('discount-percent');
+            const discountAmountDisplay = document.getElementById('discount-amount');
+
+            // Values
+            const precioBase = {{ precio_base_token }
+        };
+        let currentDiscountPercent = 0;
+
+        console.log("Base Price:", precioBase);
+
+        function formatCurrency(amount) {
+            return '$' + Math.round(amount).toLocaleString('es-CL');
+        }
+
+        function actualizarTotal() {
+            let cantidad = parseInt(cantidadInput.value) || 1;
+            if (cantidad < 1) {
+                cantidad = 1;
+                cantidadInput.value = 1;
+            }
+
+            console.log("Updating Total. Quantity:", cantidad, "Discount:", currentDiscountPercent);
+
+            cantidadDisplay.textContent = cantidad;
+
+            const subtotal = precioBase * cantidad;
+            let discountAmount = 0;
+
+            if (currentDiscountPercent > 0) {
+                discountAmount = (subtotal * currentDiscountPercent) / 100;
+
+                if (rowDescuento) {
+                    rowDescuento.classList.remove('hidden');
+                    discountPercentDisplay.textContent = currentDiscountPercent;
+                    discountAmountDisplay.textContent = '-' + formatCurrency(discountAmount);
+                }
+            } else {
+                if (rowDescuento) rowDescuento.classList.add('hidden');
+            }
+
+            const total = subtotal - discountAmount;
+            precioTotalDisplay.textContent = formatCurrency(total);
+        }
+
+        // Event Listeners for Quantity
+        if (cantidadInput) {
+            cantidadInput.addEventListener('input', actualizarTotal);
+            cantidadInput.addEventListener('change', actualizarTotal);
+            // Also trigger initially
+            actualizarTotal();
+        } else {
+            console.error("Critical: Quantity input not found!");
+        }
+
+        // Coupon Validation Logic
+        if (btnValidar) {
+            btnValidar.addEventListener('click', function () {
+                console.log("Validating coupon...");
+                const code = couponInput.value.trim();
+                if (!code) {
+                    couponMessage.textContent = "Ingresa un código primero.";
+                    couponMessage.className = "text-red-500 block mt-1 h-5";
+                    return;
+                }
+
+                btnValidar.disabled = true;
+                btnValidar.textContent = "...";
+
+                fetch('{% url "validate_coupon" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify({ code: code })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log("Coupon Response:", data);
+                        btnValidar.disabled = false;
+                        btnValidar.textContent = "Validar";
+
+                        if (data.valid) {
+                            currentDiscountPercent = data.discount_percentage;
+                            couponMessage.textContent = data.message;
+                            couponMessage.className = "text-green-400 block mt-1 h-5 font-medium";
+                            actualizarTotal();
+                        } else {
+                            currentDiscountPercent = 0;
+                            couponMessage.textContent = data.message;
+                            couponMessage.className = "text-red-500 block mt-1 h-5";
+                            actualizarTotal();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching coupon:', error);
+                        btnValidar.disabled = false;
+                        btnValidar.textContent = "Validar";
+                        couponMessage.textContent = "Error al validar el cupón.";
+                        couponMessage.className = "text-red-500 block mt-1 h-5";
+                    });
+            });
+        }
         });
     </script>
 </body>
