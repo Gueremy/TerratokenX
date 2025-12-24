@@ -300,34 +300,31 @@
             setTimeout(openModal, 500); // Small delay for effect
         });
 
-            // Price Calculation & Coupon Logic
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log("DOM loaded - Initializing Price Script V2");
+        // Price Calculation & Coupon Logic
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log("DOM loaded - Initializing Price Script");
 
-        // Selectors
-        const cantidadInput = document.querySelector('input[name="cantidad_tokens"]');
-        const couponInput = document.querySelector('input[name="coupon_code"]');
-        const btnValidar = document.getElementById('btn-validar-cupon');
-        const couponMessage = document.getElementById('coupon-message');
+            // Selectors
+            const cantidadInput = document.querySelector('input[name="cantidad_tokens"]');
+            const couponInput = document.querySelector('input[name="coupon_code"]');
+            const btnValidar = document.getElementById('btn-validar-cupon');
+            const couponMessage = document.getElementById('coupon-message');
 
-        const cantidadDisplay = document.getElementById('cantidad-display');
-        const precioTotalDisplay = document.getElementById('precio-total');
-        const rowDescuento = document.getElementById('row-descuento');
-        const discountPercentDisplay = document.getElementById('discount-percent');
-        const discountAmountDisplay = document.getElementById('discount-amount');
+            const cantidadDisplay = document.getElementById('cantidad-display');
+            const precioTotalDisplay = document.getElementById('precio-total');
+            const rowDescuento = document.getElementById('row-descuento');
+            const discountPercentDisplay = document.getElementById('discount-percent');
+            const discountAmountDisplay = document.getElementById('discount-amount');
 
-        // Values - precio_base_token viene del template Django
-        const precioBase = {{ precio_base_token }};
+            // Values
+            const precioBase = {{ precio_base_token }
+        };
         let currentDiscountPercent = 0;
 
         console.log("Base Price:", precioBase);
-        console.log("Cantidad Input Found:", cantidadInput);
 
         function formatCurrency(amount) {
-            return '
-</body>
-
-</html> + Math.round(amount).toLocaleString('es-CL');
+            return '$' + Math.round(amount).toLocaleString('es-CL');
         }
 
         function actualizarTotal() {
@@ -364,18 +361,19 @@
         if (cantidadInput) {
             cantidadInput.addEventListener('input', actualizarTotal);
             cantidadInput.addEventListener('change', actualizarTotal);
-            actualizarTotal(); // Initial call
+            // Also trigger initially
+            actualizarTotal();
         } else {
             console.error("Critical: Quantity input not found!");
         }
 
         // Coupon Validation Logic
         if (btnValidar) {
-            btnValidar.addEventListener('click', function() {
+            btnValidar.addEventListener('click', function () {
                 console.log("Validating coupon...");
                 const code = couponInput.value.trim();
                 if (!code) {
-                    couponMessage.textContent = "Ingresa un codigo primero.";
+                    couponMessage.textContent = "Ingresa un código primero.";
                     couponMessage.className = "text-red-500 block mt-1 h-5";
                     return;
                 }
@@ -391,34 +389,34 @@
                     },
                     body: JSON.stringify({ code: code })
                 })
-                .then(response => response.json())
-                .then(data => {
-                    console.log("Coupon Response:", data);
-                    btnValidar.disabled = false;
-                    btnValidar.textContent = "Validar";
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log("Coupon Response:", data);
+                        btnValidar.disabled = false;
+                        btnValidar.textContent = "Validar";
 
-                    if (data.valid) {
-                        currentDiscountPercent = data.discount_percentage;
-                        couponMessage.textContent = "Cupon valido! " + data.discount_percentage + "% de descuento";
-                        couponMessage.className = "text-green-400 block mt-1 h-5 font-medium";
-                        actualizarTotal();
-                    } else {
-                        currentDiscountPercent = 0;
-                        couponMessage.textContent = data.message || "Cupon invalido";
+                        if (data.valid) {
+                            currentDiscountPercent = data.discount_percentage;
+                            couponMessage.textContent = data.message;
+                            couponMessage.className = "text-green-400 block mt-1 h-5 font-medium";
+                            actualizarTotal();
+                        } else {
+                            currentDiscountPercent = 0;
+                            couponMessage.textContent = data.message;
+                            couponMessage.className = "text-red-500 block mt-1 h-5";
+                            actualizarTotal();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching coupon:', error);
+                        btnValidar.disabled = false;
+                        btnValidar.textContent = "Validar";
+                        couponMessage.textContent = "Error al validar el cupón.";
                         couponMessage.className = "text-red-500 block mt-1 h-5";
-                        actualizarTotal();
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching coupon:', error);
-                    btnValidar.disabled = false;
-                    btnValidar.textContent = "Validar";
-                    couponMessage.textContent = "Error al validar el cupon.";
-                    couponMessage.className = "text-red-500 block mt-1 h-5";
-                });
+                    });
             });
         }
-    });
+        });
     </script>
 </body>
 
