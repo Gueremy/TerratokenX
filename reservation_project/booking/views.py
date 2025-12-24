@@ -163,7 +163,7 @@ def admin_panel(request):
         dias_feriados = DiaFeriado.objects.all().order_by('fecha')
         coupons = Coupon.objects.all().order_by('-valid_to')
         config = Configuracion.load()  # Cargar configuración para mostrarla
-        return render(request, 'booking/admin_panel_v2.html', {
+        return render(request, 'booking/admin_panel_v3.html', {
             'reservas': reservas,
             'dias_feriados': dias_feriados,
             'coupons': coupons,
@@ -172,7 +172,7 @@ def admin_panel(request):
         })
     except Exception as e:
         import traceback
-        return HttpResponse(f"Error en admin_panel_v2 (CHECK TRACE): {e} | {traceback.format_exc()}", status=500)
+        return HttpResponse(f"Error en admin_panel_v3 (CHECK TRACE): {e} | {traceback.format_exc()}", status=500)
 
 @staff_member_required
 def editar_reserva(request, reserva_id):
