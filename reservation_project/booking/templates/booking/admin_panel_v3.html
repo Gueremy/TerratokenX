@@ -1,4 +1,4 @@
-﻿{% load humanize %}
+{% load humanize %}
 <!DOCTYPE html>
 <html lang="es">
 
@@ -134,7 +134,10 @@
                         </div>
                         <div class="flex items-center gap-2">
                             <span class="material-icons text-gold-500 text-sm">monetization_on</span>
-                            <span class="text-white font-semibold">Tokens:</span> {{ reserva.cantidad_tokens }}
+                            <span class="text-white font-semibold">Tokens:</span> {{ reserva.cantidad_tokens }}</div>
+                        <div class="flex items-center gap-2">
+                            <span class="material-icons text-sm {% if reserva.metodo_pago == 'MP' %}text-blue-400{% else %}text-orange-400{% endif %}">{% if reserva.metodo_pago == 'MP' %}credit_card{% else %}currency_bitcoin{% endif %}</span>
+                            <span class="text-white font-semibold">Pago:</span> {{ reserva.get_metodo_pago_display }}
                         </div>
                         <div class="flex items-center gap-2">
                             <span class="material-icons text-sm">attach_money</span>
