@@ -317,7 +317,7 @@
             const discountAmountDisplay = document.getElementById('discount-amount');
 
             // Values
-            const precioBase = {{ precio_base_token }};
+            const precioBase = {{ precio_base_token|stringformat:"d" }};
             let currentDiscountPercent = 0;
 
             console.log("Base Price:", precioBase);
