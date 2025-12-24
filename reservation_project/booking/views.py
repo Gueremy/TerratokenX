@@ -476,3 +476,38 @@ def preview_email(request):
     
     return render(request, 'booking/email/reservation_confirmation.html', {'reserva': reserva})
 
+
+from django.http import JsonResponse
+import json
+
+def validate_coupon(request):
+    """
+    Validates a coupon code via AJAX.
+    """
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            code = data.get('code', '').strip()
+            
+            try:
+                coupon = Coupon.objects.get(code=code)
+                if coupon.is_valid():
+                    return JsonResponse({
+                        'valid': True,
+                        'discount_percentage': coupon.discount_percentage,
+                        'message': f'¡Cupón válido! {coupon.discount_percentage}% de descuento aplicado.'
+                    })
+                else:
+                    return JsonResponse({
+                        'valid': False,
+                        'message': 'El cupón ha expirado o no está activo.'
+                    })
+            except Coupon.DoesNotExist:
+                return JsonResponse({
+                    'valid': False,
+                    'message': 'Código de cupón no encontrado.'
+                })
+        except Exception as e:
+            return JsonResponse({'valid': False, 'message': 'Error procesando la solicitud.'}, status=400)
+    
+    return JsonResponse({'valid': False, 'message': 'Método no permitido.'}, status=405)

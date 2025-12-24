@@ -146,8 +146,12 @@
                                 {{ form.coupon_code }}
                                 {{ form.coupon_code.errors }}
                             </div>
+                            <button type="button" id="btn-validar-cupon"
+                                class="px-3 py-2 bg-dark-700 border border-gold-500 text-gold-500 rounded hover:bg-gold-500 hover:text-black transition-colors text-sm font-bold">
+                                Validar
+                            </button>
                         </div>
-                        <small class="text-gray-500">¿Tienes un cupón de descuento? Ingresa el código aquí.</small>
+                        <small id="coupon-message" class="text-gray-500 block mt-1 h-5"></small>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-300 mb-1">Cantidad de Tokens</label>
@@ -155,47 +159,136 @@
                         {{ form.cantidad_tokens.errors }}
                     </div>
                 </div>
+
                 <!-- Sección de Precios Mejorada -->
                 <div id="precio-info" class="mt-6 bg-dark-700 border border-gray-700 p-4 rounded-lg">
                     <div class="flex justify-between items-center text-sm mb-1 text-gray-400">
                         <span id="precio-dia-label">Valor del Token</span>
-                        <!-- Mostrar precio base formateado -->
                         <span class="font-semibold text-gray-300">${{ precio_base_token|intcomma }}</span>
                     </div>
                     <div class="flex justify-between items-center text-sm mb-1 text-gray-400">
                         <span>Cantidad</span>
                         <span id="cantidad-display" class="font-semibold text-gray-300">1</span>
                     </div>
+
+                    <!-- Fila de Descuento (Oculta por defecto) -->
+                    <div id="row-descuento"
+                        class="flex justify-between items-center text-sm mb-1 text-green-400 hidden">
+                        <span>Descuento (<span id="discount-percent">0</span>%)</span>
+                        <span id="discount-amount" class="font-semibold">-$0</span>
+                    </div>
+
                     <div
                         class="flex justify-between items-center text-lg font-bold text-gold-400 mt-2 border-t border-gray-600 pt-2">
                         <span>Total a Pagar</span>
                         <span id="precio-total">${{ precio_base_token|intcomma }}</span>
                     </div>
-                    <p class="text-xs text-gray-500 mt-2 text-center">* El descuento del cupón se aplicará sobre el total si es válido.</p>
                 </div>
 
                 <script>
-                    document.addEventListener('DOMContentLoaded', function() {
+                    document.addEventListener('DOMContentLoaded', function () {
                         const cantidadInput = document.querySelector('input[name="cantidad_tokens"]');
+                        const couponInput = document.querySelector('input[name="coupon_code"]');
+                        const btnValidar = document.getElementById('btn-validar-cupon');
+                        const couponMessage = document.getElementById('coupon-message');
+
                         const cantidadDisplay = document.getElementById('cantidad-display');
                         const precioTotalDisplay = document.getElementById('precio-total');
-                        const precioBase = {{ precio_base_token }};
+                        const rowDescuento = document.getElementById('row-descuento');
+                        const discountPercentDisplay = document.getElementById('discount-percent');
+                        const discountAmountDisplay = document.getElementById('discount-amount');
 
-                        function actualizarTotal() {
-                            let cantidad = parseInt(cantidadInput.value) || 1;
-                            if (cantidad < 1) cantidad = 1;
-                            
-                            cantidadDisplay.textContent = cantidad;
-                            
-                            const total = precioBase * cantidad;
-                            // Formato básico de moneda (usamos replace para simular intcomma de Django en JS simple)
-                            precioTotalDisplay.textContent = '$' + total.toLocaleString('es-CL');
+                        const precioBase = {{ precio_base_token }
+                    };
+                    let currentDiscountPercent = 0;
+
+                    function formatCurrency(amount) {
+                        return '$' + Math.round(amount).toLocaleString('es-CL');
+                    }
+
+                    function actualizarTotal() {
+                        let cantidad = parseInt(cantidadInput.value) || 1;
+                        if (cantidad < 1) {
+                            cantidad = 1;
+                            cantidadInput.value = 1;
                         }
 
-                        if (cantidadInput) {
-                            cantidadInput.addEventListener('input', actualizarTotal);
-                            cantidadInput.addEventListener('change', actualizarTotal);
+                        cantidadDisplay.textContent = cantidad;
+
+                        const subtotal = precioBase * cantidad;
+                        let discountAmount = 0;
+
+                        if (currentDiscountPercent > 0) {
+                            discountAmount = (subtotal * currentDiscountPercent) / 100;
+
+                            // Mostrar desglose de descuento
+                            rowDescuento.classList.remove('hidden');
+                            discountPercentDisplay.textContent = currentDiscountPercent;
+                            discountAmountDisplay.textContent = '-' + formatCurrency(discountAmount);
+                        } else {
+                            rowDescuento.classList.add('hidden');
                         }
+
+                        const total = subtotal - discountAmount;
+                        precioTotalDisplay.textContent = formatCurrency(total);
+                    }
+
+                    // Event Listeners para cantidad
+                    if (cantidadInput) {
+                        cantidadInput.addEventListener('input', actualizarTotal);
+                        cantidadInput.addEventListener('change', actualizarTotal);
+                    }
+
+                    // Lógica de Validación de Cupón
+                    if (btnValidar) {
+                        btnValidar.addEventListener('click', function () {
+                            const code = couponInput.value.trim();
+                            if (!code) {
+                                couponMessage.textContent = "Ingresa un código primero.";
+                                couponMessage.className = "text-red-500 block mt-1 h-5";
+                                return;
+                            }
+
+                            btnValidar.disabled = true;
+                            btnValidar.textContent = "...";
+
+                            fetch('{% url "validate_coupon" %}', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                                },
+                                body: JSON.stringify({ code: code })
+                            })
+                                .then(response => response.json())
+                                .then(data => {
+                                    btnValidar.disabled = false;
+                                    btnValidar.textContent = "Validar";
+
+                                    if (data.valid) {
+                                        currentDiscountPercent = data.discount_percentage;
+                                        couponMessage.textContent = data.message;
+                                        couponMessage.className = "text-green-400 block mt-1 h-5 font-medium";
+                                        actualizarTotal(); // Recalcular con descuento
+                                    } else {
+                                        currentDiscountPercent = 0;
+                                        couponMessage.textContent = data.message;
+                                        couponMessage.className = "text-red-500 block mt-1 h-5";
+                                        actualizarTotal(); // Recalcular sin descuento
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error:', error);
+                                    btnValidar.disabled = false;
+                                    btnValidar.textContent = "Validar";
+                                    couponMessage.textContent = "Error al validar el cupón.";
+                                    couponMessage.className = "text-red-500 block mt-1 h-5";
+                                });
+                        });
+                    }
+
+                    // Inicializar total al cargar
+                    actualizarTotal();
                     });
                 </script>
 

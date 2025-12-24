@@ -23,4 +23,7 @@ urlpatterns = [
     
     # Preview Email
     path('preview-email/', views.preview_email, name='preview_email'),
+    
+    # AJAX Coupon Validation
+    path('validate-coupon/', views.validate_coupon, name='validate_coupon'),
 ]
