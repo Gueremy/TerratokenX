@@ -234,7 +234,10 @@ def reservation_form(request):
                     html_message=html_message,
                 )
             except Exception as e:
-                print(f"Error enviando correo: {e}")
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Error enviando correo con SendGrid: {e}")
+                print(f"Error enviando correo: {e}") # Keep print just in case
 
             # Redirección condicional según método de pago
             if reserva.metodo_pago == 'CRYPTO':
