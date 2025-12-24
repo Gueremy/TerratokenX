@@ -156,17 +156,18 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MERCADO_PAGO_PUBLIC_KEY = env('MERCADO_PAGO_PUBLIC_KEY')
 MERCADO_PAGO_ACCESS_TOKEN = env('MERCADO_PAGO_ACCESS_TOKEN')
 
-# Ejemplo para Gmail
+# Configuración de Correo (SendGrid)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 2525
+EMAIL_HOST = 'smtp.sendgrid.net'
+EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_USE_SSL = False
-EMAIL_TIMEOUT = 10  # Timeout en segundos para evitar que la web se congele si el correo falla
+EMAIL_TIMEOUT = 10 
+
+# Para SendGrid, el usuario siempre es 'apikey' y la contraseña es la API Key.
+EMAIL_HOST_USER = 'apikey' 
+EMAIL_HOST_PASSWORD = env('SENDGRID_API_KEY') # ¡Agrega esta variable en Render!
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL') # El correo que verificaste en SendGrid
 
 # --- URLs de Autenticación ---
 LOGIN_URL = 'login'
 LOGOUT_REDIRECT_URL = '/' # Redirigir a la página principal después de cerrar sesión
-EMAIL_HOST_USER = env('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
-DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default=EMAIL_HOST_USER)
