@@ -85,8 +85,8 @@
                         <select name="pagado"
                             class="w-full bg-dark-700 border border-gray-600 rounded-lg p-2.5 text-white focus:border-gold-500 focus:ring-1 focus:ring-gold-500 outline-none transition-colors">
                             <option value="">Todos</option>
-                            <option value="true" {% if request.GET.pagado=='true' %}selected{% endif %}>Pagados</option>
-                            <option value="false" {% if request.GET.pagado=='false' %}selected{% endif %}>Pendientes
+                            <option value="true" {% if request.GET.pagado == 'true' %}selected{% endif %}>Pagados</option>
+                            <option value="false" {% if request.GET.pagado == 'false' %}selected{% endif %}>Pendientes
                             </option>
                         </select>
                     </div>
