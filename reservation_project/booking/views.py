@@ -171,7 +171,8 @@ def admin_panel(request):
             'request': request,
         })
     except Exception as e:
-        return HttpResponse(f"Error en admin_panel: {e}", status=500)
+        import traceback
+        return HttpResponse(f"Error en admin_panel_v2 (CHECK TRACE): {e} | {traceback.format_exc()}", status=500)
 
 @staff_member_required
 def editar_reserva(request, reserva_id):
