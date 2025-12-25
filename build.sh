@@ -2,8 +2,11 @@
 # Exit on error
 set -o errexit
 
-# Install dependencies
-pip install -r requirements.txt
+# Change to the Django project directory
+cd reservation_project
+
+# Install dependencies from parent directory
+pip install -r ../requirements.txt
 
 # Create static directory if it doesn't exist
 mkdir -p staticfiles

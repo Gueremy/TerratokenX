@@ -3,7 +3,7 @@ services:
     name: reservation-project
     runtime: python
     buildCommand: "./build.sh"
-    startCommand: "gunicorn reservation_project.reservation_project.wsgi:application"
+    startCommand: "cd reservation_project && gunicorn reservation_project.wsgi:application"
     plan: free
     envVars:
       - key: PYTHON_VERSION
@@ -19,7 +19,7 @@ services:
           name: reservation-db
           property: connectionString
       - key: ALLOWED_HOSTS
-        value: "*" # Se ajustará automáticamente con RENDER_EXTERNAL_HOSTNAME en settings.py
+        value: "*"
 
 databases:
   - name: reservation-db
