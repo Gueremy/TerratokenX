@@ -81,15 +81,20 @@
                 </div>
             </div>
         </div>
+
         <p class="text-gray-400 mt-4 font-medium">La reserva se ha guardado como pendiente.</p>
-        <!-- Estado: Desconocido (el usuario llegó directamente a la URL o canceló) -->
-        <div class="text-blue-500 mb-2">
-            <span class="material-icons" style="font-size: 64px;">info</span>
+
+        <!-- Botón de Simulación de Pago Exitoso -->
+        <div class="mt-6">
+            <a href="{% url 'simulate_crypto_payment' reserva_id=reserva.id %}"
+                class="w-full block bg-gradient-to-r from-green-500 to-green-700 text-white font-bold py-3 px-4 rounded-lg hover:from-green-600 hover:to-green-800 shadow-lg transition-transform transform hover:scale-[1.02]">
+                <span class="flex items-center justify-center gap-2">
+                    <span class="material-icons">check_circle</span>
+                    Simular Pago Exitoso
+                </span>
+            </a>
+            <p class="text-xs text-gray-500 mt-2">Solo para pruebas de desarrollo</p>
         </div>
-        <h1 class="text-3xl font-extrabold text-white mt-4 tracking-tight">Detalles de tu Inversión</h1>
-        <p class="text-gray-400 mt-2">Aquí están los detalles de tu inversión. Si tu pago está pendiente, te
-            notificaremos
-            por correo cuando se apruebe.</p>
 
         {% endif %}
 

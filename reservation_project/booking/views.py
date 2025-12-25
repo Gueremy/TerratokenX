@@ -288,13 +288,16 @@ def reservation_success(request, reserva_id):
             'google_calendar_link': google_calendar_link_email,
         }
         html_message_confirm = render_to_string('booking/email/reservation_confirmation.html', context_confirm)
-        send_mail(
-            subject_confirm, '',
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[reserva.correo],
-            fail_silently=False,
-            html_message=html_message_confirm
-        )
+        try:
+            send_mail(
+                subject_confirm, '',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[reserva.correo],
+                fail_silently=False,
+                html_message=html_message_confirm
+            )
+        except Exception as e:
+            logger.error(f"Error enviando correo de confirmación: {e}")
         
         # Agregar evento al calendario del negocio
         add_event_to_spa_calendar(reserva)
@@ -387,9 +390,10 @@ def export_reservas_excel(request):
             reserva.telefono,
         ])
 
-    # Crear la respuesta HTTP
+    # Crear la respuesta HTTP con nombre de archivo correcto
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename=reservas.xlsx'
+    # Usar comillas y filename* para compatibilidad con todos los navegadores
+    response['Content-Disposition'] = 'attachment; filename="inversiones_TerraTokenX.xlsx"; filename*=UTF-8\'\'inversiones_TerraTokenX.xlsx'
     workbook.save(response)
     
     return response
@@ -464,6 +468,43 @@ def crear_orden_cryptomarket(reserva):
     
     url = resolve_url('reservation_success', reserva_id=reserva.id)
     return redirect(f'{url}?status=crypto_pending')
+
+
+def simulate_crypto_payment(request, reserva_id):
+    """
+    Vista de simulación para desarrollo - marca la reserva como pagada.
+    SOLO PARA TESTING LOCAL - NO USAR EN PRODUCCIÓN.
+    """
+    from django.shortcuts import get_object_or_404, resolve_url
+    from django.core.mail import send_mail
+    from django.template.loader import render_to_string
+    from django.conf import settings
+    
+    reserva = get_object_or_404(Reserva, id=reserva_id)
+    
+    # Marcar como pagado (IMPORTANTE: debe ser pagado=True, no estado)
+    reserva.pagado = True
+    reserva.save()
+    
+    # Intentar enviar correo de confirmación
+    try:
+        context = {'reserva': reserva, 'google_calendar_link': '#'}
+        html_message = render_to_string('booking/email/reservation_confirmation.html', context)
+        send_mail(
+            subject='🎉 ¡Tu inversión en TerraTokenX ha sido confirmada!',
+            message='',
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[reserva.correo],
+            fail_silently=False,  # Queremos ver los errores
+            html_message=html_message,
+        )
+        print(f"[SIMULATION] Email enviado exitosamente a {reserva.correo}")
+    except Exception as e:
+        print(f"[SIMULATION] ERROR enviando email: {e}")
+    
+    # Redirigir con status approved
+    url = resolve_url('reservation_success', reserva_id=reserva.id)
+    return redirect(f'{url}?status=approved')
 
 def preview_email(request):
     """

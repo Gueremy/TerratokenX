@@ -26,4 +26,7 @@ urlpatterns = [
     
     # AJAX Coupon Validation
     path('validate-coupon/', views.validate_coupon, name='validate_coupon'),
+    
+    # Crypto Payment Simulation (Development Only)
+    path('simulate-crypto-payment/<int:reserva_id>/', views.simulate_crypto_payment, name='simulate_crypto_payment'),
 ]

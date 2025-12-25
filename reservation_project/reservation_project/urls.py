@@ -7,7 +7,7 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     # AQUÍ ESTÁ LA CORRECCIÓN:
-    path('', include('reservation_project.booking.urls')), 
+    path('', include('booking.urls')), 
 ]
 
 if settings.DEBUG:

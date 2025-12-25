@@ -316,9 +316,8 @@
             const discountPercentDisplay = document.getElementById('discount-percent');
             const discountAmountDisplay = document.getElementById('discount-amount');
 
-            // Values
-            const precioBase = {{ precio_base_token }
-        };
+            // Values - FIXED: proper Django template tag closure
+            const precioBase = {{ precio_base_token|stringformat:"d" }};
         let currentDiscountPercent = 0;
 
         console.log("Base Price:", precioBase);
@@ -336,7 +335,7 @@
 
             console.log("Updating Total. Quantity:", cantidad, "Discount:", currentDiscountPercent);
 
-            cantidadDisplay.textContent = cantidad;
+            if (cantidadDisplay) cantidadDisplay.textContent = cantidad;
 
             const subtotal = precioBase * cantidad;
             let discountAmount = 0;
@@ -346,22 +345,21 @@
 
                 if (rowDescuento) {
                     rowDescuento.classList.remove('hidden');
-                    discountPercentDisplay.textContent = currentDiscountPercent;
-                    discountAmountDisplay.textContent = '-' + formatCurrency(discountAmount);
+                    if (discountPercentDisplay) discountPercentDisplay.textContent = currentDiscountPercent;
+                    if (discountAmountDisplay) discountAmountDisplay.textContent = '-' + formatCurrency(discountAmount);
                 }
             } else {
                 if (rowDescuento) rowDescuento.classList.add('hidden');
             }
 
             const total = subtotal - discountAmount;
-            precioTotalDisplay.textContent = formatCurrency(total);
+            if (precioTotalDisplay) precioTotalDisplay.textContent = formatCurrency(total);
         }
 
         // Event Listeners for Quantity
         if (cantidadInput) {
             cantidadInput.addEventListener('input', actualizarTotal);
             cantidadInput.addEventListener('change', actualizarTotal);
-            // Also trigger initially
             actualizarTotal();
         } else {
             console.error("Critical: Quantity input not found!");

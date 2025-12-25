@@ -52,7 +52,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'import_export',  # Añadir django-import-export
-    'reservation_project.booking',       # Ruta completa a la app booking
+    'booking',       # Ruta a la app booking
     'django.contrib.humanize',
     'widget_tweaks',
 ]
@@ -68,7 +68,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'reservation_project.reservation_project.urls'
+ROOT_URLCONF = 'reservation_project.urls'
 
 TEMPLATES = [
     {
@@ -86,7 +86,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'reservation_project.reservation_project.wsgi.application'
+WSGI_APPLICATION = 'reservation_project.wsgi.application'
 
 
 # Database
@@ -153,20 +153,21 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 #mercado pago configuración
-MERCADO_PAGO_PUBLIC_KEY = env('MERCADO_PAGO_PUBLIC_KEY')
-MERCADO_PAGO_ACCESS_TOKEN = env('MERCADO_PAGO_ACCESS_TOKEN')
+MERCADO_PAGO_PUBLIC_KEY = env('MERCADO_PAGO_PUBLIC_KEY', default='TEST_PUBLIC_KEY')
+MERCADO_PAGO_ACCESS_TOKEN = env('MERCADO_PAGO_ACCESS_TOKEN', default='TEST_ACCESS_TOKEN')
 
 # Configuración de Correo (SendGrid)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.sendgrid.net'
-EMAIL_PORT = 2525
+EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_TIMEOUT = 10 
 
 # Para SendGrid, el usuario siempre es 'apikey' y la contraseña es la API Key.
 EMAIL_HOST_USER = 'apikey' 
-EMAIL_HOST_PASSWORD = env('SENDGRID_API_KEY') # ¡Agrega esta variable en Render!
-DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL') # El correo que verificaste en SendGrid
+EMAIL_HOST_PASSWORD = env('SENDGRID_API_KEY')  # REQUERIDO: Configurar en Render
+# IMPORTANTE: Este email DEBE coincidir con el Single Sender verificado en SendGrid
+DEFAULT_FROM_EMAIL = 'gueremybtos@gmail.com'
 
 # --- URLs de Autenticación ---
 LOGIN_URL = 'login'
