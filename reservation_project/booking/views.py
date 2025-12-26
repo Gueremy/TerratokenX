@@ -209,42 +209,42 @@ def reservation_form(request):
             reserva.metodo_pago = metodo_pago
             reserva.save()
             
-            # Enviar correo de "Reserva Pendiente"
-            # Enviar correo de "Reserva Pendiente" (Diferenciado por método de pago)
-            if reserva.metodo_pago == 'CRYPTO':
-                subject = '⏳ Instrucciones para finalizar tu inversión en TerraTokenX'
-                template_name = 'booking/email/pending_reservation_crypto.html'
-            else:
-                # Default to Mercado Pago msg
-                subject = 'Tu solicitud de reserva está pendiente de pago'
-                template_name = 'booking/email/pending_reservation_mp.html'
+            # Enviar correo de "Reserva Pendiente" EN BACKGROUND (no bloquea la redirección)
+            import threading
+            
+            def send_pending_email():
+                if reserva.metodo_pago == 'CRYPTO':
+                    subject = '⏳ Instrucciones para finalizar tu inversión en TerraTokenX'
+                    template_name = 'booking/email/pending_reservation_crypto.html'
+                else:
+                    subject = 'Tu solicitud de reserva está pendiente de pago'
+                    template_name = 'booking/email/pending_reservation_mp.html'
 
-            context = {
-                'reserva': reserva,
-            }
+                context = {'reserva': reserva}
+                html_message = render_to_string(template_name, context)
 
-            html_message = render_to_string(template_name, context)
+                try:
+                    send_mail(
+                        subject,
+                        '',
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=[reserva.correo],
+                        fail_silently=False,
+                        html_message=html_message,
+                    )
+                    print(f"[EMAIL] Correo pendiente enviado a {reserva.correo}")
+                except Exception as e:
+                    logger.error(f"Error enviando correo con SendGrid: {e}")
+                    print(f"[EMAIL ERROR] {e}")
+            
+            # Enviar email en un hilo separado
+            email_thread = threading.Thread(target=send_pending_email)
+            email_thread.start()
 
-            try:
-                send_mail(
-                    subject,
-                    '', # El mensaje de texto plano
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[reserva.correo],
-                    fail_silently=False,
-                    html_message=html_message,
-                )
-            except Exception as e:
-                import logging
-                logger = logging.getLogger(__name__)
-                logger.error(f"Error enviando correo con SendGrid: {e}")
-                print(f"Error enviando correo: {e}") # Keep print just in case
-
-            # Redirección condicional según método de pago
+            # Redirección condicional según método de pago (NO ESPERA al email)
             if reserva.metodo_pago == 'CRYPTO':
                 return crear_orden_cryptomarket(reserva)
             else:
-                # Default to Mercado Pago
                 return redirect('create_mp_preference', reserva_id=reserva.id)
         # Si el formulario no es válido, se renderizará de nuevo con los errores.
     else:
@@ -281,23 +281,31 @@ def reservation_success(request, reserva_id):
     if pago_procesado_ahora:
         google_calendar_link_email = create_google_calendar_link(reserva)
         
-        # Enviar correo de confirmación
-        subject_confirm = '✅ Confirmación: Tu cupo en la Preventa TerraTokenX está asegurado'
-        context_confirm = {
-            'reserva': reserva,
-            'google_calendar_link': google_calendar_link_email,
-        }
-        html_message_confirm = render_to_string('booking/email/reservation_confirmation.html', context_confirm)
-        try:
-            send_mail(
-                subject_confirm, '',
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[reserva.correo],
-                fail_silently=False,
-                html_message=html_message_confirm
-            )
-        except Exception as e:
-            logger.error(f"Error enviando correo de confirmación: {e}")
+        # Enviar correo de confirmación EN BACKGROUND
+        import threading
+        
+        def send_confirmation_email():
+            subject_confirm = '✅ Confirmación: Tu cupo en la Preventa TerraTokenX está asegurado'
+            context_confirm = {
+                'reserva': reserva,
+                'google_calendar_link': google_calendar_link_email,
+            }
+            html_message_confirm = render_to_string('booking/email/reservation_confirmation.html', context_confirm)
+            try:
+                send_mail(
+                    subject_confirm, '',
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[reserva.correo],
+                    fail_silently=False,
+                    html_message=html_message_confirm
+                )
+                print(f"[EMAIL] Correo confirmación enviado a {reserva.correo}")
+            except Exception as e:
+                logger.error(f"Error enviando correo de confirmación: {e}")
+                print(f"[EMAIL ERROR] {e}")
+        
+        email_thread = threading.Thread(target=send_confirmation_email)
+        email_thread.start()
         
         # Agregar evento al calendario del negocio
         add_event_to_spa_calendar(reserva)
@@ -486,23 +494,29 @@ def simulate_crypto_payment(request, reserva_id):
     reserva.pagado = True
     reserva.save()
     
-    # Intentar enviar correo de confirmación
-    try:
-        context = {'reserva': reserva, 'google_calendar_link': '#'}
-        html_message = render_to_string('booking/email/reservation_confirmation.html', context)
-        send_mail(
-            subject='🎉 ¡Tu inversión en TerraTokenX ha sido confirmada!',
-            message='',
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[reserva.correo],
-            fail_silently=False,  # Queremos ver los errores
-            html_message=html_message,
-        )
-        print(f"[SIMULATION] Email enviado exitosamente a {reserva.correo}")
-    except Exception as e:
-        print(f"[SIMULATION] ERROR enviando email: {e}")
+    # Enviar correo de confirmación EN BACKGROUND
+    import threading
     
-    # Redirigir con status approved
+    def send_simulation_email():
+        try:
+            context = {'reserva': reserva, 'google_calendar_link': '#'}
+            html_message = render_to_string('booking/email/reservation_confirmation.html', context)
+            send_mail(
+                subject='🎉 ¡Tu inversión en TerraTokenX ha sido confirmada!',
+                message='',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[reserva.correo],
+                fail_silently=False,
+                html_message=html_message,
+            )
+            print(f"[SIMULATION] Email enviado exitosamente a {reserva.correo}")
+        except Exception as e:
+            print(f"[SIMULATION] ERROR enviando email: {e}")
+    
+    email_thread = threading.Thread(target=send_simulation_email)
+    email_thread.start()
+    
+    # Redirigir con status approved (NO ESPERA al email)
     url = resolve_url('reservation_success', reserva_id=reserva.id)
     return redirect(f'{url}?status=approved')
 
