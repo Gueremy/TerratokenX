@@ -156,17 +156,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MERCADO_PAGO_PUBLIC_KEY = env('MERCADO_PAGO_PUBLIC_KEY', default='TEST_PUBLIC_KEY')
 MERCADO_PAGO_ACCESS_TOKEN = env('MERCADO_PAGO_ACCESS_TOKEN', default='TEST_ACCESS_TOKEN')
 
-# Configuración de Correo (SendGrid)
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.sendgrid.net'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_TIMEOUT = 30  # Aumentado para Render (free tier puede ser lento)
+# Configuración de Correo (SendGrid Web API)
+# Usamos Web API en lugar de SMTP porque Render bloquea el puerto 587
+EMAIL_BACKEND = 'sendgrid_backend.SendgridBackend'
+SENDGRID_API_KEY = env('SENDGRID_API_KEY')
+SENDGRID_SANDBOX_MODE_IN_DEBUG = False  # Enviar emails reales incluso en DEBUG
 
-# Para SendGrid, el usuario siempre es 'apikey' y la contraseña es la API Key.
-EMAIL_HOST_USER = 'apikey' 
-EMAIL_HOST_PASSWORD = env('SENDGRID_API_KEY')  # REQUERIDO: Configurar en Render
-# IMPORTANTE: Este email DEBE coincidir con el Single Sender verificado en SendGrid
+# Email remitente (DEBE coincidir con el Single Sender verificado en SendGrid)
 DEFAULT_FROM_EMAIL = 'gueremybtos@gmail.com'
 
 # --- URLs de Autenticación ---
