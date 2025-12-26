@@ -37,4 +37,5 @@ urllib3==2.5.0
 whitenoise==6.9.0
 django-widget-tweaks
 sendgrid
+django-sendgrid-v5
 
