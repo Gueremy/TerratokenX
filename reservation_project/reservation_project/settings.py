@@ -180,6 +180,12 @@ EMAIL_BACKEND = 'sendgrid_backend.SendgridBackend'
 SENDGRID_API_KEY = env('SENDGRID_API_KEY')
 CRYPTOMKT_API_KEY = env('CRYPTOMKT_API_KEY', default='')
 CRYPTOMKT_API_SECRET = env('CRYPTOMKT_API_SECRET', default='')
+
+# Static Wallet Addresses (Fallback if API key lacks Wallet permissions)
+CRYPTOMKT_WALLET_ETH = env('CRYPTOMKT_WALLET_ETH', default='')
+CRYPTOMKT_WALLET_BTC = env('CRYPTOMKT_WALLET_BTC', default='')
+CRYPTOMKT_WALLET_USDT = env('CRYPTOMKT_WALLET_USDT', default='')
+CRYPTOMKT_WALLET_XLM = env('CRYPTOMKT_WALLET_XLM', default='')
 SENDGRID_SANDBOX_MODE_IN_DEBUG = False  # Enviar emails reales incluso en DEBUG
 
 # Email remitente (DEBE coincidir con el Single Sender verificado en SendGrid)

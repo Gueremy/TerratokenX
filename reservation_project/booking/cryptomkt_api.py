@@ -87,6 +87,11 @@ class CryptoMarketAPI:
 
         except Exception as e:
             logger.error(f"Error obteniendo dirección para {currency}: {e}")
+            # Fallback for 401/403 or other API errors: Check static settings
+            static_addr = getattr(settings, f'CRYPTOMKT_WALLET_{currency}', '')
+            if static_addr:
+                logger.info(f"Using STATIC address for {currency}: {static_addr}")
+                return static_addr
             return None
 
     def generate_deposit_address(self, currency):
