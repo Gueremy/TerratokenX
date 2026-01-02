@@ -488,6 +488,12 @@ def simulate_crypto_payment(request, reserva_id):
     from django.template.loader import render_to_string
     from django.conf import settings
     
+    from django.http import Http404
+    
+    # PROTECCIÓN: Solo permitir en modo DEBUG
+    if not settings.DEBUG:
+        raise Http404("Página no encontrada en Producción")
+
     reserva = get_object_or_404(Reserva, id=reserva_id)
     
     # Marcar como pagado (IMPORTANTE: debe ser pagado=True, no estado)
