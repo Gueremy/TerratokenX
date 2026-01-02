@@ -462,20 +462,24 @@ def crear_orden_cryptomarket(reserva):
     Placeholder para la integración con CryptoMarket.
     Por ahora retorna una respuesta simulada o redirige a una página de 'Pendiente'.
     """
-    # En un futuro:
-    # 1. Preparar payload para API CryptoMarket
-    # 2. Hacer POST a /api/3/payment/orders
-    # 3. Obtener payment_url de la respuesta
-    # 4. Redirigir al usuario a esa URL
-
-    # Simulación de respuesta exitosa o redirección temporal
-    # Redirigimos a success con status='crypto_pending' para diferenciar.
-    # Usamos resolve_url o string con params, pero redirect acepta kwargs para la url, no query params directos.
-    # Así que construimos la url primero.
-    from django.shortcuts import resolve_url
+    from .cryptomkt_api import create_order_and_get_url
     
-    url = resolve_url('reservation_success', reserva_id=reserva.id)
-    return redirect(f'{url}?status=crypto_pending')
+    # Intentar crear la orden real
+    payment_url = create_order_and_get_url(reserva)
+    
+    if payment_url:
+        # Redirigir a la pasarela de pago de CryptoMarket
+        return redirect(payment_url)
+    else:
+        # Fallback si falla la API: Mostrar error o página de pendiente
+        # Por ahora redirigimos a una página de error o pendiente con mensaje
+        from django.contrib import messages
+        messages.error(reserva, "No se pudo conectar con la pasarela de pago Crypto. Intenta nuevamente.")
+        # Podríamos redirigir de vuelta al form o a una página de status
+        # Por seguridad y UX, mandamos a success con status error
+        from django.shortcuts import resolve_url
+        url = resolve_url('reservation_success', reserva_id=reserva.id)
+        return redirect(f'{url}?status=failed_api')
 
 
 def simulate_crypto_payment(request, reserva_id):
