@@ -17,8 +17,8 @@ class CryptoMarketAPI:
     BASE_URL = "https://api.exchange.cryptomkt.com"
     
     def __init__(self):
-        self.api_key = settings.env('CRYPTOMKT_API_KEY')
-        self.api_secret = settings.env('CRYPTOMKT_API_SECRET')
+        self.api_key = settings.CRYPTOMKT_API_KEY
+        self.api_secret = settings.CRYPTOMKT_API_SECRET
         
     def _get_headers(self, method, path, body=None):
         timestamp = str(int(time.time()))

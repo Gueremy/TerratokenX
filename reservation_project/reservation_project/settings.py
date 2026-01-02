@@ -40,6 +40,24 @@ if RENDER_EXTERNAL_HOSTNAME:
 else:
     CSRF_TRUSTED_ORIGINS = ['https://terratokenx.onrender.com']
 
+# Configuración de Seguridad para Producción
+if not DEBUG:
+    # URL del Admin Oculta (Definida en env o default seguro aleatorio)
+    ADMIN_URL = env('ADMIN_URL', default='admin-seguro/')
+    
+    # HTTPS y Cookies Seguras
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+    SECURE_HSTS_SECONDS = 31536000  # 1 año
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+else:
+    ADMIN_URL = 'admin/'
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -160,6 +178,8 @@ MERCADO_PAGO_ACCESS_TOKEN = env('MERCADO_PAGO_ACCESS_TOKEN', default='TEST_ACCES
 # Usamos Web API en lugar de SMTP porque Render bloquea el puerto 587
 EMAIL_BACKEND = 'sendgrid_backend.SendgridBackend'
 SENDGRID_API_KEY = env('SENDGRID_API_KEY')
+CRYPTOMKT_API_KEY = env('CRYPTOMKT_API_KEY', default='')
+CRYPTOMKT_API_SECRET = env('CRYPTOMKT_API_SECRET', default='')
 SENDGRID_SANDBOX_MODE_IN_DEBUG = False  # Enviar emails reales incluso en DEBUG
 
 # Email remitente (DEBE coincidir con el Single Sender verificado en SendGrid)
