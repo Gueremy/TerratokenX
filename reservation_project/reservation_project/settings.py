@@ -183,7 +183,7 @@ CRYPTOMKT_API_SECRET = env('CRYPTOMKT_API_SECRET', default='')
 SENDGRID_SANDBOX_MODE_IN_DEBUG = False  # Enviar emails reales incluso en DEBUG
 
 # Email remitente (DEBE coincidir con el Single Sender verificado en SendGrid)
-DEFAULT_FROM_EMAIL = 'gueremybtos@gmail.com'
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='contacto@terratokenx.com')
 
 # --- URLs de Autenticación ---
 LOGIN_URL = 'login'
