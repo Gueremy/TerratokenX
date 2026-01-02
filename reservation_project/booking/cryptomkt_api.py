@@ -1,59 +1,99 @@
-from cryptomarket.client import Client
-from cryptomarket.args import Account
+import hmac
+import hashlib
+import time
+import requests
+import json
 from django.conf import settings
 import logging
 
 logger = logging.getLogger(__name__)
 
-def create_order_and_get_url(reserva):
+class CryptoMarketAPI:
     """
-    Crea una orden de pago usando el SDK oficial de CryptoMarket.
-    Retorna la URL de pago para redirigir al usuario.
+    Cliente manual para la API de Pagos de CryptoMarket (CryptoMarket Pay).
     """
-    api_key = settings.CRYPTOMKT_API_KEY
-    api_secret = settings.CRYPTOMKT_API_SECRET
     
-    # Inicializar cliente del SDK
-    client = Client(api_key, api_secret)
+    # URL Base sujeta a confirmación con documentación oficial
+    # Se ha probado: 
+    # - https://api.exchange.cryptomkt.com/api/payment/v1/orders (404)
+    # - https://api.exchange.cryptomkt.com/api/3/payment/orders (404)
+    BASE_URL = "https://api.exchange.cryptomkt.com"
     
-    try:
-        # Construir URLs de callback
+    def __init__(self):
+        self.api_key = settings.CRYPTOMKT_API_KEY
+        self.api_secret = settings.CRYPTOMKT_API_SECRET
+        
+    def _get_headers(self, method, path, body=None):
+        timestamp = str(int(time.time()))
+        
+        # Formato estándar de firma CryptoMarket
+        message = timestamp + method + path
+        if body:
+            message += body
+            
+        signature = hmac.new(
+            self.api_secret.encode('utf-8'),
+            message.encode('utf-8'),
+            hashlib.sha256
+        ).hexdigest()
+        
+        return {
+            'X-MKT-APIKEY': self.api_key,
+            'X-MKT-SIGNATURE': signature,
+            'X-MKT-TIMESTAMP': timestamp,
+            'Content-Type': 'application/json'
+        }
+
+    def create_payment_order(self, reserva):
+        """
+        Crea una orden de pago.
+        """
+        # Endpoint PROBABLE. Si falla, se verá en los logs.
+        path = "/api/payment/v1/orders"
+        
         domain = "https://terratokenx.onrender.com" if not settings.DEBUG else "http://127.0.0.1:8000"
         
-        # Crear orden de pago
-        # Según la documentación del SDK, el método para crear órdenes de pago
-        # suele ser 'create_payment_order' o similar. 
-        # Verificando firma común en SDK v3: client.create_payment(...)
+        payload = {
+            "to_receive_currency": "CLP",
+            "to_receive": str(int(reserva.total)),
+            "external_id": str(reserva.numero_reserva),
+            "callback_url": f"{domain}/api/crypto/callback/",
+            "success_url": f"{domain}/success/{reserva.id}/?status=approved",
+            "error_url": f"{domain}/success/{reserva.id}/?status=failed",
+            "language": "es"
+        }
         
-        # NOTA: Al no tener autocompletado del SDK aquí, usamos la estructura más probable
-        # basada en la documentación v3. 
+        body = json.dumps(payload)
+        headers = self._get_headers('POST', path, body)
         
-        response = client.create_payment(
-            to_receive_currency='CLP',
-            to_receive=str(int(reserva.total)),
-            external_id=str(reserva.numero_reserva),
-            callback_url=f"{domain}/api/crypto/callback/",
-            success_url=f"{domain}/success/{reserva.id}/?status=approved",
-            error_url=f"{domain}/success/{reserva.id}/?status=failed",
-            language='es'
-        )
+        url = f"{self.BASE_URL}{path}"
+        logger.info(f"Intentando crear orden en: {url}")
         
-        # Analizar respuesta del SDK
-        # Dependiendo de la versión del SDK, puede devolver un diccionario o un objeto.
-        # Asumimos diccionario por consistencia con Python.
-        
-        logger.info(f"Respuesta CryptoMarket SDK: {response}")
-        
-        # Buscar la URL de pago en la respuesta
-        # Estructura usual: {'payment_url': '...'} o internal objects
-        
-        if isinstance(response, dict):
-            return response.get('payment_url')
-        elif hasattr(response, 'payment_url'):
-            return response.payment_url
+        try:
+            response = requests.post(url, headers=headers, data=body)
             
-        return None
+            # Loguear respuesta si falla para debugging
+            if not response.ok:
+                logger.error(f"CryptoMarket Error {response.status_code}: {response.text}")
+                
+            response.raise_for_status()
+            
+            return response.json()
+            
+        except Exception as e:
+            logger.error(f"Excepción conectando con CryptoMarket: {str(e)}")
+            raise e
 
-    except Exception as e:
-        logger.error(f"Fallo al crear orden con CryptoMarket SDK: {e}")
+def create_order_and_get_url(reserva):
+    """
+    Helper function para crear la orden y obtener la URL de pago.
+    """
+    client = CryptoMarketAPI()
+    try:
+        data = client.create_payment_order(reserva)
+        # Ajustar según la estructura de respuesta real cuando la tengamos
+        if 'data' in data and 'payment_url' in data['data']:
+             return data['data']['payment_url']
+        return None
+    except Exception:
         return None
