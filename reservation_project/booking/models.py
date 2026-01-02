@@ -29,6 +29,13 @@ class Reserva(models.Model):
     # fecha, dias, espacio_techado REMOVED
     pagado = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)  # Added timestamp as requested
+    updated_at = models.DateTimeField(auto_now=True)
+
+    # Campos para pago Crypto (DIY Flow)
+    crypto_amount = models.DecimalField(max_digits=20, decimal_places=8, null=True, blank=True, help_text="Monto exacto esperado en crypto")
+    crypto_currency = models.CharField(max_length=10, null=True, blank=True, help_text="Ej: ETH, BTC")
+    crypto_address = models.CharField(max_length=255, null=True, blank=True, help_text="Dirección de depósito asignada")
+    payment_window_start = models.DateTimeField(null=True, blank=True, help_text="Inicio de la ventana de espera del pago")
 
     # --- Nuevos campos ---
     cantidad_tokens = models.PositiveIntegerField("Cantidad de Tokens", default=1)

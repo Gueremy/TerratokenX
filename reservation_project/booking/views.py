@@ -462,25 +462,7 @@ def crear_orden_cryptomarket(request, reserva):
     Placeholder para la integración con CryptoMarket.
     Por ahora retorna una respuesta simulada o redirige a una página de 'Pendiente'.
     """
-    from .cryptomkt_api import create_order_and_get_url
-    from django.shortcuts import redirect
-    
-    # Intentar crear la orden real
-    payment_url = create_order_and_get_url(reserva)
-    
-    if payment_url:
-        # Redirigir a la pasarela de pago de CryptoMarket
-        return redirect(payment_url)
-    else:
-        # Fallback si falla la API: Mostrar error o página de pendiente
-        # Por ahora redirigimos a una página de error o pendiente con mensaje
-        from django.contrib import messages
-        messages.error(request, "No se pudo conectar con la pasarela de pago Crypto. Intenta nuevamente.")
-        # Podríamos redirigir de vuelta al form o a una página de status
-        # Por seguridad y UX, mandamos a success con status error
-        from django.shortcuts import resolve_url
-        url = resolve_url('reservation_success', reserva_id=reserva.id)
-        return redirect(f'{url}?status=failed_api')
+    return redirect('payment_crypto_view', reserva_id=reserva.id)
 
 
 def simulate_crypto_payment(request, reserva_id):
@@ -581,3 +563,131 @@ def validate_coupon(request):
             return JsonResponse({'valid': False, 'message': 'Error procesando la solicitud.'}, status=400)
     
     return JsonResponse({'valid': False, 'message': 'Método no permitido.'}, status=405)
+
+
+# --- DIY Crypto Payment Views ---
+from .cryptomkt_api import CryptoMarketAPI
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+
+def payment_crypto_view(request, reserva_id):
+    """Muestra la página de selección de moneda y pago."""
+    reserva = get_object_or_404(Reserva, id=reserva_id)
+    return render(request, 'booking/payment_crypto.html', {'reserva': reserva})
+
+def api_get_crypto_details(request):
+    """
+    AJAX: Calcula el monto en crypto y obtiene la dirección de depósito.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Método no permitido'})
+        
+    try:
+        data = json.loads(request.body)
+        reserva_id = data.get('reserva_id')
+        currency = data.get('currency')
+        
+        reserva = get_object_or_404(Reserva, id=reserva_id)
+        api = CryptoMarketAPI()
+        
+        # 1. Obtener precio actual (ej: ETHCLP)
+        symbol = f"{currency}CLP"
+        # Algunos pares pueden ser diferentes (ej: USDTCLP, BTCCLP)
+        # Si falla, intentar convertir vía USD? Por ahora directo.
+        
+        ticker = api.get_ticker(symbol)
+        
+        # Manejo robusto de respuesta de ticker
+        rate = 0
+        if ticker:
+            # Intentar keys comunes de V3
+            if 'last' in ticker: rate = float(ticker['last'])
+            elif 'last_price' in ticker: rate = float(ticker['last_price'])
+            elif 'price' in ticker: rate = float(ticker['price'])
+        
+        if rate == 0:
+            return JsonResponse({'success': False, 'error': f'No se pudo obtener la tasa para {currency}. Intenta otra moneda.'})
+            
+        # 2. Calcular monto (Neto)
+        total_clp = float(reserva.total)
+        crypto_amount = total_clp / rate
+        crypto_amount = round(crypto_amount, 8)
+        
+        # 3. Obtener dirección
+        address = api.get_deposit_address(currency)
+        if not address:
+             return JsonResponse({'success': False, 'error': 'No se pudo generar dirección de depósito. Contacta soporte.'})
+             
+        # 4. Guardar intentos
+        reserva.crypto_amount = crypto_amount
+        reserva.crypto_currency = currency
+        reserva.crypto_address = address
+        reserva.payment_window_start = timezone.now()
+        reserva.save()
+        
+        return JsonResponse({
+            'success': True,
+            'amount': f"{crypto_amount:.8f}",
+            'currency': currency,
+            'address': address
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+def api_check_payment_status(request):
+    """
+    AJAX: Polling para verificar si el pago llegó.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'success': False})
+        
+    try:
+        data = json.loads(request.body)
+        reserva_id = data.get('reserva_id')
+        reserva = get_object_or_404(Reserva, id=reserva_id)
+        
+        if reserva.pagado:
+             return JsonResponse({'confirmed': True})
+             
+        if not reserva.crypto_amount or not reserva.crypto_currency:
+             return JsonResponse({'confirmed': False})
+             
+        api = CryptoMarketAPI()
+        
+        # Verificar en blockchain/exchange
+        confirmed = api.check_payment(
+            reserva.crypto_currency, 
+            reserva.crypto_amount, 
+            reserva.payment_window_start
+        )
+        
+        if confirmed:
+            reserva.pagado = True
+            reserva.metodo_pago = 'CRYPTO'
+            reserva.save()
+            
+            # Enviar correo confirmación
+            try:
+                # Usar template existente o uno genérico
+                context = {'reserva': reserva}
+                # Intentar usar el template de confirmación estándar si existe
+                msg_html = render_to_string('booking/email/reservation_confirmation.html', context)
+                send_mail(
+                    subject=f'Pago Confirmado - Reserva #{reserva.numero_reserva}',
+                    message='',
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[reserva.correo],
+                    html_message=msg_html
+                )
+            except Exception as e:
+                print(f"Error enviando email confirmación: {e}")
+                
+            return JsonResponse({'confirmed': True})
+            
+        return JsonResponse({'confirmed': False})
+        
+    except Exception:
+        return JsonResponse({'confirmed': False})

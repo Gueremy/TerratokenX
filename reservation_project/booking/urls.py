@@ -27,6 +27,11 @@ urlpatterns = [
     # AJAX Coupon Validation
     path('validate-coupon/', views.validate_coupon, name='validate_coupon'),
     
+    # Crypto Payment Flow (DIY)
+    path('payment/crypto/<int:reserva_id>/', views.payment_crypto_view, name='payment_crypto_view'),
+    path('api/crypto/get-details/', views.api_get_crypto_details, name='api_get_crypto_details'),
+    path('api/crypto/check-payment/', views.api_check_payment_status, name='api_check_payment_status'),
+
     # Crypto Payment Simulation (Development Only)
     path('simulate-crypto-payment/<int:reserva_id>/', views.simulate_crypto_payment, name='simulate_crypto_payment'),
 ]
