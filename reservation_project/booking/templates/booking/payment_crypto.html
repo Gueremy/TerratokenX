@@ -235,7 +235,7 @@
             selector.disabled = true;
             errorMsg.classList.add('d-none');
 
-            fetch('/booking/api/crypto/get-details/', {
+            fetch("{% url 'api_get_crypto_details' %}", {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -314,7 +314,7 @@
         function startPolling() {
             const reservaId = document.getElementById('reserva-id').value;
             pollInterval = setInterval(() => {
-                fetch('/booking/api/crypto/check-payment/', {
+                fetch("{% url 'api_check_payment_status' %}", {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -326,7 +326,8 @@
                     .then(data => {
                         if (data.confirmed) {
                             clearInterval(pollInterval);
-                            window.location.href = `/booking/success/${reservaId}/?status=approved`;
+                            // Corrected success URL (without /booking prefix)
+                            window.location.href = `/success/${reservaId}/?status=approved`;
                         }
                     });
             }, 10000); // Check every 10 seconds
