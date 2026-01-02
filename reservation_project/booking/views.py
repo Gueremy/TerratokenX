@@ -243,7 +243,7 @@ def reservation_form(request):
 
             # Redirección condicional según método de pago (NO ESPERA al email)
             if reserva.metodo_pago == 'CRYPTO':
-                return crear_orden_cryptomarket(reserva)
+                return crear_orden_cryptomarket(request, reserva)
             else:
                 return redirect('create_mp_preference', reserva_id=reserva.id)
         # Si el formulario no es válido, se renderizará de nuevo con los errores.
@@ -457,12 +457,13 @@ def export_reservas_pdf(request):
     doc.build(elements)
     return response
 
-def crear_orden_cryptomarket(reserva):
+def crear_orden_cryptomarket(request, reserva):
     """
     Placeholder para la integración con CryptoMarket.
     Por ahora retorna una respuesta simulada o redirige a una página de 'Pendiente'.
     """
     from .cryptomkt_api import create_order_and_get_url
+    from django.shortcuts import redirect
     
     # Intentar crear la orden real
     payment_url = create_order_and_get_url(reserva)
@@ -474,7 +475,7 @@ def crear_orden_cryptomarket(reserva):
         # Fallback si falla la API: Mostrar error o página de pendiente
         # Por ahora redirigimos a una página de error o pendiente con mensaje
         from django.contrib import messages
-        messages.error(reserva, "No se pudo conectar con la pasarela de pago Crypto. Intenta nuevamente.")
+        messages.error(request, "No se pudo conectar con la pasarela de pago Crypto. Intenta nuevamente.")
         # Podríamos redirigir de vuelta al form o a una página de status
         # Por seguridad y UX, mandamos a success con status error
         from django.shortcuts import resolve_url

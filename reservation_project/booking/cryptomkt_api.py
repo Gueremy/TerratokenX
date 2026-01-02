@@ -45,7 +45,7 @@ class CryptoMarketAPI:
         """
         Crea una orden de pago en CryptoMarket para una reserva.
         """
-        path = "/api/3/payment/orders"
+        path = "/api/payment/v1/orders"
         
         # Construir URLs de callback (éxito y falla)
         # Nota: En producción usar HTTPS y el dominio real
