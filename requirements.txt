@@ -29,7 +29,7 @@ Pillow
 python-dotenv==1.1.0
 python-slugify==8.0.4
 reportlab==4.4.2
-requests==2.32.4
+requests==2.31.0
 sqlparse==0.5.3
 tablib==3.8.0
 text-unidecode==1.3
