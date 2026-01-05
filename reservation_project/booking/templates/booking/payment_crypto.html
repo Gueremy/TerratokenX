@@ -343,7 +343,7 @@
                 .then(res => res.json())
                 .then(data => {
                     if (data.success) {
-                        window.location.href = `/booking/success/${reservaId}/?status=approved`;
+                        window.location.href = `{% url 'reservation_success' 0 %}`.replace('0', reservaId) + "?status=approved";
                     } else {
                         alert("Error al reportar pago: " + (data.error || "Desconocido"));
                         btn.disabled = false;
@@ -374,7 +374,7 @@
                         if (data.confirmed) {
                             clearInterval(pollInterval);
                             // Corrected success URL (without /booking prefix)
-                            window.location.href = `/success/${reservaId}/?status=approved`;
+                            window.location.href = `{% url 'reservation_success' 0 %}`.replace('0', reservaId) + "?status=approved";
                         }
                     });
             }, 10000); // Check every 10 seconds
