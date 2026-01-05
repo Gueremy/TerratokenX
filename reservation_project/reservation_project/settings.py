@@ -36,9 +36,11 @@ ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
-    CSRF_TRUSTED_ORIGINS = [f'https://{RENDER_EXTERNAL_HOSTNAME}', 'https://terratokenx.onrender.com']
+    CSRF_TRUSTED_ORIGINS = [f'https://{RENDER_EXTERNAL_HOSTNAME}', 'https://terratokenx.onrender.com', 'https://terratokenx-q7u4.onrender.com']
 else:
-    CSRF_TRUSTED_ORIGINS = ['https://terratokenx.onrender.com']
+    CSRF_TRUSTED_ORIGINS = ['https://terratokenx.onrender.com', 'https://terratokenx-q7u4.onrender.com']
+
+ALLOWED_HOSTS.append('terratokenx-q7u4.onrender.com')
 
 # Configuración de Seguridad para Producción
 if not DEBUG:
