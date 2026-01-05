@@ -204,6 +204,16 @@
                 <br>
                 <small>La página se actualizará automáticamente al recibir el pago.</small>
             </div>
+
+            <!-- Manual Confirmation Button -->
+            <div class="text-center mt-3">
+                <button id="btn-manual-confirm" class="btn btn-outline-warning btn-sm" onclick="manualConfirm()">
+                    <i class="fas fa-check-circle me-1"></i> Ya realicé el pago
+                </button>
+                <small class="d-block text-muted mt-2" style="font-size: 0.8rem;">
+                    (Usa esto si ya enviaste los fondos y la página no se actualiza)
+                </small>
+            </div>
         </div>
 
         <!-- Success/Error Messages -->
@@ -309,6 +319,43 @@
                     // Disable everything
                 }
             }, 1000);
+        }
+
+        function manualConfirm() {
+            const reservaId = document.getElementById('reserva-id').value;
+            const btn = document.getElementById('btn-manual-confirm');
+
+            if (!confirm("¿Confirma que ya has enviado los fondos desde tu billetera?")) {
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"></div> Procesando...';
+
+            fetch("{% url 'api_manual_confirm_payment' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.getElementById('csrf-token').value
+                },
+                body: JSON.stringify({ 'reserva_id': reservaId })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = `/booking/success/${reservaId}/?status=approved`;
+                    } else {
+                        alert("Error al reportar pago: " + (data.error || "Desconocido"));
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-check-circle me-1"></i> Ya realicé el pago';
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("Error de conexión");
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-check-circle me-1"></i> Ya realicé el pago';
+                });
         }
 
         function startPolling() {

@@ -691,3 +691,62 @@ def api_check_payment_status(request):
         
     except Exception:
         return JsonResponse({'confirmed': False})
+
+def api_manual_confirm_payment(request):
+    """
+    AJAX: El usuario confirma manualmente que ha enviado el pago.
+    Envia correo al administrador y redirige al usuario.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Método no permitido'})
+        
+    try:
+        data = json.loads(request.body)
+        reserva_id = data.get('reserva_id')
+        reserva = get_object_or_404(Reserva, id=reserva_id)
+        
+        # Marcar como pagado (o pendiente de validación manual si prefieres)
+        # Para desbloquear el flujo, lo marcaremos pagado, pero con aviso al admin.
+        # Podríamos agregar un campo 'verification_status'='MANUAL_PENDING' si quisiéramos ser más estrictos.
+        reserva.pagado = True
+        reserva.metodo_pago = 'CRYPTO_MANUAL'
+        reserva.save()
+        
+        # Enviar correo de confirmación al CLIENTE
+        try:
+            context = {'reserva': reserva}
+            msg_html = render_to_string('booking/email/reservation_confirmation.html', context)
+            send_mail(
+                subject=f'Pago Reportado - Reserva #{reserva.numero_reserva}',
+                message='',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[reserva.correo],
+                html_message=msg_html
+            )
+        except Exception as e:
+            logger.error(f"Error enviando email cliente manual: {e}")
+
+        # Enviar alerta al ADMIN (Joan)
+        try:
+            admin_email = "contacto@terratokenx.com" # O el correo de Joan
+            msg_admin = f"""
+            El usuario {reserva.nombre} ha reportado un pago manual.
+            Reserva: #{reserva.numero_reserva}
+            Monto: {reserva.crypto_amount} {reserva.crypto_currency}
+            Dirección: {reserva.crypto_address}
+            
+            POR FAVOR VERIFICA EN CRYPTOMARKET.
+            """
+            send_mail(
+                subject=f'⚠️ VERIFICAR PAGO CRYPTO #{reserva.numero_reserva}',
+                message=msg_admin,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[admin_email],
+            )
+        except Exception as e:
+            logger.error(f"Error enviando alerta admin: {e}")
+            
+        return JsonResponse({'success': True})
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})

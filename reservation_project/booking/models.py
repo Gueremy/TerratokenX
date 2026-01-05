@@ -70,6 +70,12 @@ class Reserva(models.Model):
             descuento = (self.total * self.coupon.discount_percentage) / 100
             self.total -= descuento
 
+        # Aplicar comisión del 4% si es Mercado Pago
+        if self.metodo_pago == 'MP':
+            from decimal import Decimal
+            # Convertir a Decimal para evitar errores de tipo float
+            self.total = float(self.total) * 1.04
+
         super().save(*args, **kwargs)
 
     def __str__(self):

@@ -31,6 +31,7 @@ urlpatterns = [
     path('payment/crypto/<int:reserva_id>/', views.payment_crypto_view, name='payment_crypto_view'),
     path('api/crypto/get-details/', views.api_get_crypto_details, name='api_get_crypto_details'),
     path('api/crypto/check-payment/', views.api_check_payment_status, name='api_check_payment_status'),
+    path('api/crypto/manual-confirm/', views.api_manual_confirm_payment, name='api_manual_confirm_payment'),
 
     # Crypto Payment Simulation (Development Only)
     path('simulate-crypto-payment/<int:reserva_id>/', views.simulate_crypto_payment, name='simulate_crypto_payment'),

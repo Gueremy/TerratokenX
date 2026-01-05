@@ -88,12 +88,7 @@
     style="background: linear-gradient(to top right, #000000, #374151); min-height: 100vh;">
 
     <!-- Icono de acceso para administradores -->
-    <a href="{% url 'login' %}" title="Acceso Administrador"
-        class="fixed top-4 left-4 text-gray-500 hover:text-gold-500 transition-colors z-10">
-        <span class="material-icons" style="font-size: 32px;">
-            account_circle
-        </span>
-    </a>
+
 
     <div class="container mx-auto px-2 py-6 sm:px-4 sm:py-8 max-w-3xl">
         <!-- Mensaje Importante -->
@@ -178,6 +173,12 @@
                         <span id="discount-amount" class="font-semibold">-$0</span>
                     </div>
 
+                    <!-- Fila de Comisión (Oculta por defecto) -->
+                    <div id="row-comision" class="flex justify-between items-center text-sm mb-1 text-gray-400 hidden">
+                        <span>Comisión Mercado Pago (4%)</span>
+                        <span id="comision-amount" class="font-semibold text-gray-300">+$0</span>
+                    </div>
+
                     <div
                         class="flex justify-between items-center text-lg font-bold text-gold-400 mt-2 border-t border-gray-600 pt-2">
                         <span>Total a Pagar</span>
@@ -201,6 +202,10 @@
                                     class="material-icons text-blue-400 text-3xl mb-2 group-hover:scale-110 transition-transform">credit_card</span>
                                 <span class="text-white font-bold">Webpay / Tarjetas</span>
                                 <span class="text-xs text-gray-400 mt-1">Vía Mercado Pago</span>
+                                <span
+                                    class="mt-2 px-2 py-0.5 bg-yellow-500/20 text-yellow-400 text-[10px] font-bold uppercase tracking-wider rounded border border-yellow-500/50">
+                                    Comisión 4%
+                                </span>
                             </div>
                             <div class="absolute top-2 right-2 opacity-0 peer-checked:opacity-100 transition-opacity">
                                 <span class="material-icons text-gold-500 text-sm">check_circle</span>
@@ -315,9 +320,13 @@
             const rowDescuento = document.getElementById('row-descuento');
             const discountPercentDisplay = document.getElementById('discount-percent');
             const discountAmountDisplay = document.getElementById('discount-amount');
+            const rowComision = document.getElementById('row-comision');
+            const comisionAmountDisplay = document.getElementById('comision-amount');
+            const radioButtons = document.querySelectorAll('input[name="metodo_pago"]');
 
-            // Values - FIXED: proper Django template tag closure
-            const precioBase = {{ precio_base_token|stringformat:"d" }};
+            // Values
+            const precioBase = {{ precio_base_token|default: 0
+        }};
         let currentDiscountPercent = 0;
 
         console.log("Base Price:", precioBase);
@@ -352,8 +361,32 @@
                 if (rowDescuento) rowDescuento.classList.add('hidden');
             }
 
-            const total = subtotal - discountAmount;
+            let total = subtotal - discountAmount;
+
+            // Lógica para calcular comisión MP
+            const metodoPago = document.querySelector('input[name="metodo_pago"]:checked').value;
+            let commissionAmount = 0;
+
+            if (metodoPago === 'MP') {
+                commissionAmount = total * 0.04;
+                if (rowComision) {
+                    rowComision.classList.remove('hidden');
+                    if (comisionAmountDisplay) comisionAmountDisplay.textContent = '+' + formatCurrency(commissionAmount);
+                }
+            } else {
+                if (rowComision) rowComision.classList.add('hidden');
+            }
+
+            total += commissionAmount;
+
             if (precioTotalDisplay) precioTotalDisplay.textContent = formatCurrency(total);
+        }
+
+        // Event Listeners for Payment Method Logic
+        if (radioButtons) {
+            radioButtons.forEach(radio => {
+                radio.addEventListener('change', actualizarTotal);
+            });
         }
 
         // Event Listeners for Quantity
