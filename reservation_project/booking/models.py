@@ -21,14 +21,32 @@ class Coupon(models.Model):
         return self.is_active and self.valid_from <= today <= self.valid_to
 
 class Reserva(models.Model):
+    # --- Estados de Pago ---
+    ESTADO_PENDIENTE = 'PENDIENTE'
+    ESTADO_EN_REVISION = 'EN_REVISION'
+    ESTADO_CONFIRMADO = 'CONFIRMADO'
+    
+    ESTADO_PAGO_CHOICES = [
+        (ESTADO_PENDIENTE, 'Pendiente'),
+        (ESTADO_EN_REVISION, 'En Revisión'),
+        (ESTADO_CONFIRMADO, 'Confirmado'),
+    ]
+
     # --- Campos existentes ---
     nombre = models.CharField(max_length=100)
     correo = models.EmailField()
     telefono = models.CharField(max_length=20)
     direccion = models.CharField(max_length=200)
-    # fecha, dias, espacio_techado REMOVED
-    pagado = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)  # Added timestamp as requested
+    
+    # Nuevo campo de estado de pago (reemplaza pagado boolean)
+    estado_pago = models.CharField(
+        max_length=15,
+        choices=ESTADO_PAGO_CHOICES,
+        default=ESTADO_PENDIENTE,
+        verbose_name="Estado de Pago"
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     # Campos para pago Crypto (DIY Flow)
@@ -46,13 +64,28 @@ class Reserva(models.Model):
     PAYMENT_METHOD_CHOICES = [
         ('MP', 'Mercado Pago'),
         ('CRYPTO', 'CryptoMarket'),
+        ('CRYPTO_MANUAL', 'Crypto (Manual)'),
     ]
     metodo_pago = models.CharField(
-        max_length=10,
+        max_length=15,
         choices=PAYMENT_METHOD_CHOICES,
         default='MP',
         verbose_name="Método de Pago"
     )
+
+    # Propiedad computada para compatibilidad con código existente
+    @property
+    def pagado(self):
+        """Retorna True si el pago está confirmado (para compatibilidad)."""
+        return self.estado_pago == self.ESTADO_CONFIRMADO
+    
+    @pagado.setter
+    def pagado(self, value):
+        """Permite asignar pagado=True/False para compatibilidad."""
+        if value:
+            self.estado_pago = self.ESTADO_CONFIRMADO
+        else:
+            self.estado_pago = self.ESTADO_PENDIENTE
 
     def save(self, *args, **kwargs):
         # Generar número de reserva único si es una nueva reserva

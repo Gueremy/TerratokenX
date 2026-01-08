@@ -131,9 +131,10 @@ def _get_filtered_reservas(request):
     
     # Filtros para GET
     reservas = Reserva.objects.all()
-    pagado = request.GET.get('pagado')
+    estado_pago = request.GET.get('estado_pago')
 
-    if pagado in ['true', 'false']: reservas = reservas.filter(pagado=(pagado == 'true'))
+    if estado_pago in ['PENDIENTE', 'EN_REVISION', 'CONFIRMADO']:
+        reservas = reservas.filter(estado_pago=estado_pago)
     
     return reservas.order_by('-created_at')
 
@@ -705,10 +706,8 @@ def api_manual_confirm_payment(request):
         reserva_id = data.get('reserva_id')
         reserva = get_object_or_404(Reserva, id=reserva_id)
         
-        # Marcar como pagado (o pendiente de validación manual si prefieres)
-        # Para desbloquear el flujo, lo marcaremos pagado, pero con aviso al admin.
-        # Podríamos agregar un campo 'verification_status'='MANUAL_PENDING' si quisiéramos ser más estrictos.
-        reserva.pagado = True
+        # Marcar como "En Revisión" - el admin debe verificar manualmente antes de confirmar
+        reserva.estado_pago = Reserva.ESTADO_EN_REVISION
         reserva.metodo_pago = 'CRYPTO_MANUAL'
         reserva.save()
         

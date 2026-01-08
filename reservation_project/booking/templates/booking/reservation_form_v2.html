@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>TerraTokenX - Reserva token</title>
+    <title>TerraTokenx-Compra token lanzamiento</title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -96,8 +96,8 @@
         <div class="flex flex-col items-center justify-center mb-6">
             <img src="{% static 'booking/img/Terratoken_logo-removebg-preview2.png' %}" alt="TerraTokenX Logo"
                 class="w-72 sm:w-80 h-auto object-contain mb-2">
-            <p class="text-gray-500 text-xs sm:text-sm uppercase tracking-widest font-medium">Reserva de Cupo de
-                Inversión</p>
+            <p class="text-gray-500 text-xs sm:text-sm uppercase tracking-widest font-medium">Real Assets. Digital
+                Trust.</p>
         </div>
         <!-- Mensaje para el usuario -->
         <div id="mensaje-usuario" style="display:none;"
@@ -109,6 +109,8 @@
             {% endfor %}
         </ul>
         {% endif %}
+
+        <!-- Formulario centrado -->
         <div class="bg-dark-800 p-4 sm:p-6 rounded-lg shadow-2xl border border-gray-800 max-w-lg mx-auto w-full">
             <form id="reserva-form" method="post" novalidate>
                 {% csrf_token %}
@@ -134,7 +136,7 @@
                         {{ form.direccion.errors }}
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-1">{{ form.coupon_code.label }}</label>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Código de Cupón</label>
                         <div class="flex items-center gap-2">
                             <span class="material-icons text-gold-500">local_offer</span>
                             <div class="flex-1">
@@ -190,7 +192,8 @@
 
                 <!-- Selector de Medio de Pago -->
                 <div class="mt-8 mb-6">
-                    <h3 class="text-lg font-semibold text-gold-400 mb-4 border-b border-gray-700 pb-2">Selecciona Método
+                    <h3 class="text-lg font-semibold text-gold-400 mb-4 border-b border-gray-700 pb-2">Selecciona
+                        Método
                         de Pago</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <!-- Opción Mercado Pago -->
@@ -237,217 +240,300 @@
                 </div>
             </form>
         </div>
-    </div>
-    <!-- Botón flotante de WhatsApp y mensaje -->
-    <div id="whatsapp-label"
-        class="fixed bottom-24 right-6 sm:right-10 bg-[#25d366] text-white px-4 py-2 rounded-2xl text-base shadow font-bold z-50">
-        Dudas y consultas
-    </div>
-    <a href="https://wa.me/56928839093?text=Hola%2C%20tengo%20una%20duda%20sobre%20TerraTokenX" target="_blank"
-        class="fixed w-14 h-14 bottom-6 right-6 sm:right-10 bg-[#25d366] text-white rounded-full flex items-center justify-center text-3xl shadow z-50"
-        title="Contáctanos por WhatsApp">
-        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="white" viewBox="0 0 24 24">
-            <path
-                d="M20.52 3.48A11.93 11.93 0 0 0 12 0C5.37 0 0 5.37 0 12c0 2.11.55 4.16 1.6 5.97L0 24l6.18-1.62A11.93 11.93 0 0 0 12 24c6.63 0 12-5.37 12-12 0-3.19-1.24-6.19-3.48-8.52zM12 22c-1.85 0-3.67-.5-5.23-1.44l-.37-.22-3.67.97.98-3.58-.24-.37A9.94 9.94 0 0 1 2 12c0-5.52 4.48-10 10-10s10 4.48 10 10-4.48 10-10 10zm5.2-7.8c-.28-.14-1.65-.81-1.9-.9-.25-.09-.43-.14-.61.14-.18.28-.7.9-.86 1.08-.16.18-.32.2-.6.07-.28-.14-1.18-.44-2.25-1.4-.83-.74-1.39-1.65-1.55-1.93-.16-.28-.02-.43.12-.57.13-.13.28-.34.42-.51.14-.17.18-.29.28-.48.09-.19.05-.36-.02-.5-.07-.14-.61-1.47-.84-2.01-.22-.53-.45-.46-.61-.47-.16-.01-.36-.01-.56-.01-.19 0-.5.07-.76.36-.26.29-1 1-.97 2.43.03 1.43 1.03 2.81 1.18 3 .15.19 2.02 3.09 4.9 4.21.68.29 1.21.46 1.62.59.68.22 1.3.19 1.79.12.55-.08 1.65-.67 1.88-1.32.23-.65.23-1.21.16-1.32-.07-.11-.25-.18-.53-.32z" />
-        </svg>
-    </a>
-    <!-- Modal Info Popup -->
-    <!-- Modal Info Popup (Corner Toast) -->
-    <div id="infoModal"
-        class="fixed bottom-6 left-6 z-50 invisible opacity-0 transition-all duration-500 transform translate-y-10">
 
-        <!-- Modal Content -->
-        <div class="bg-dark-800 border-2 border-gold-500 rounded-xl p-6 max-w-sm shadow-2xl relative" id="modalContent">
-            <button onclick="closeModal()"
-                class="absolute top-2 right-2 text-gray-500 hover:text-white transition-colors">
-                <span class="material-icons text-xl">close</span>
+        <!-- Botón flotante "Saber más" -->
+        <button onclick="openPromoPanel()"
+            class="fixed top-1/2 -translate-y-1/2 right-0 bg-gold-500 text-black font-bold py-3 px-2 rounded-l-lg shadow-lg hover:bg-gold-600 transition-all z-40 flex items-center gap-1 writing-mode-vertical"
+            style="writing-mode: vertical-rl; text-orientation: mixed;">
+            <span class="material-icons text-sm">info</span>
+            Saber más
+        </button>
+
+        <!-- Panel deslizante desde la derecha -->
+        <div id="promoPanel"
+            class="fixed top-0 right-0 h-full w-full sm:w-96 bg-dark-800 border-l-2 border-gold-500 shadow-2xl z-50 transform translate-x-full transition-transform duration-300 ease-in-out overflow-y-auto">
+
+            <!-- Botón cerrar -->
+            <button onclick="closePromoPanel()"
+                class="absolute top-4 left-4 text-gray-400 hover:text-white transition-colors">
+                <span class="material-icons text-2xl">close</span>
             </button>
 
-            <div class="flex flex-col items-center text-center">
-                <div class="bg-gold-500/10 p-3 rounded-full mb-3">
-                    <span class="material-icons text-gold-500 text-3xl">info</span>
+            <div class="p-6 pt-16">
+                <!-- Headline -->
+                <div class="mb-6">
+                    <span class="text-3xl mb-3 block">🎯</span>
+                    <h2 class="text-xl font-bold text-gold-400 leading-tight mb-4 text-justify">
+                        Acceso exclusivo por tiempo limitado al precio de pre-venta para miembros fundadores de la
+                        Comunidad V.I.P. de TerraTokenX.
+                    </h2>
                 </div>
 
-                <h3 class="text-lg font-bold text-white mb-2">Información Importante</h3>
+                <!-- Subheadline -->
+                <div class="border-t border-gray-700 pt-4 mb-6">
+                    <p class="text-gray-300 text-sm leading-relaxed">
+                        <span class="inline-block mr-2">✨</span> Cupos limitados · Acceso preferente · Participación
+                        temprana en el ecosistema TerraTokenX.
+                    </p>
+                </div>
 
-                <p class="text-gray-300 text-sm leading-relaxed mb-4">
-                    Al reservar tu cupo, aseguras tu participación en el lanzamiento de
-                    <span class="font-bold text-gold-400">TerraTokenX</span>.
-                </p>
+                <!-- CTA -->
+                <div
+                    class="bg-gradient-to-r from-gold-500/10 to-gold-600/10 border border-gold-500/40 rounded-lg p-4 mb-6">
+                    <p class="text-white font-semibold text-center text-sm">
+                        🚀 <span class="text-gold-400">Compra tu TOKEN de Pre-Venta</span> y obtendrás acceso automático
+                        a <span class="font-bold text-gold-400">#VIPTTX</span>
+                    </p>
+                </div>
 
-                <button onclick="closeModal()"
-                    class="bg-gold-500 text-black font-bold py-2 px-6 rounded-lg hover:bg-gold-600 transition-colors text-sm shadow-lg">
-                    Entendido
-                </button>
+                <!-- Badges -->
+                <div class="flex flex-wrap justify-center gap-3">
+                    <span
+                        class="px-3 py-1 bg-green-900/30 text-green-400 text-xs font-bold rounded-full border border-green-700">
+                        ✓ Cupos Limitados
+                    </span>
+                    <span
+                        class="px-3 py-1 bg-blue-900/30 text-blue-400 text-xs font-bold rounded-full border border-blue-700">
+                        ✓ Acceso VIP
+                    </span>
+                    <span
+                        class="px-3 py-1 bg-purple-900/30 text-purple-400 text-xs font-bold rounded-full border border-purple-700">
+                        ✓ Miembro Fundador
+                    </span>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Modal Popup Logic & Main Form Logic (Combined at the end) -->
-    <script>
-        // Modal Logic
-        const modal = document.getElementById('infoModal');
-        const modalContent = document.getElementById('modalContent');
+        <!-- Overlay oscuro -->
+        <div id="promoOverlay" onclick="closePromoPanel()" class="fixed inset-0 bg-black/50 z-40 hidden"></div>
 
-        function openModal() {
-            modal.classList.remove('invisible', 'opacity-0', 'translate-y-10');
-        }
+        <!-- Botón flotante de WhatsApp y mensaje -->
+        <div id="whatsapp-label"
+            class="fixed bottom-24 right-6 sm:right-10 bg-[#25d366] text-white px-4 py-2 rounded-2xl text-base shadow font-bold z-50">
+            Dudas y consultas
+        </div>
+        <a href="https://wa.me/56928839093?text=Hola%2C%20tengo%20una%20duda%20sobre%20TerraTokenX" target="_blank"
+            class="fixed w-14 h-14 bottom-6 right-6 sm:right-10 bg-[#25d366] text-white rounded-full flex items-center justify-center text-3xl shadow z-50"
+            title="Contáctanos por WhatsApp">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="white" viewBox="0 0 24 24">
+                <path
+                    d="M20.52 3.48A11.93 11.93 0 0 0 12 0C5.37 0 0 5.37 0 12c0 2.11.55 4.16 1.6 5.97L0 24l6.18-1.62A11.93 11.93 0 0 0 12 24c6.63 0 12-5.37 12-12 0-3.19-1.24-6.19-3.48-8.52zM12 22c-1.85 0-3.67-.5-5.23-1.44l-.37-.22-3.67.97.98-3.58-.24-.37A9.94 9.94 0 0 1 2 12c0-5.52 4.48-10 10-10s10 4.48 10 10-4.48 10-10 10zm5.2-7.8c-.28-.14-1.65-.81-1.9-.9-.25-.09-.43-.14-.61.14-.18.28-.7.9-.86 1.08-.16.18-.32.2-.6.07-.28-.14-1.18-.44-2.25-1.4-.83-.74-1.39-1.65-1.55-1.93-.16-.28-.02-.43.12-.57.13-.13.28-.34.42-.51.14-.17.18-.29.28-.48.09-.19.05-.36-.02-.5-.07-.14-.61-1.47-.84-2.01-.22-.53-.45-.46-.61-.47-.16-.01-.36-.01-.56-.01-.19 0-.5.07-.76.36-.26.29-1 1-.97 2.43.03 1.43 1.03 2.81 1.18 3 .15.19 2.02 3.09 4.9 4.21.68.29 1.21.46 1.62.59.68.22 1.3.19 1.79.12.55-.08 1.65-.67 1.88-1.32.23-.65.23-1.21.16-1.32-.07-.11-.25-.18-.53-.32z" />
+            </svg>
+        </a>
+        <!-- Modal Info Popup -->
+        <!-- Modal Info Popup (Corner Toast) -->
+        <div id="infoModal"
+            class="fixed bottom-6 left-6 z-50 invisible opacity-0 transition-all duration-500 transform translate-y-10">
 
-        function closeModal() {
-            modal.classList.add('opacity-0', 'translate-y-10');
-            setTimeout(() => {
-                modal.classList.add('invisible');
-            }, 500);
-        }
+            <!-- Modal Content -->
+            <div class="bg-dark-800 border-2 border-gold-500 rounded-xl p-6 max-w-sm shadow-2xl relative"
+                id="modalContent">
+                <button onclick="closeModal()"
+                    class="absolute top-2 right-2 text-gray-500 hover:text-white transition-colors">
+                    <span class="material-icons text-xl">close</span>
+                </button>
 
-        // Auto Open on Load
-        window.addEventListener('load', () => {
-            setTimeout(openModal, 500); // Small delay for effect
-        });
+                <div class="flex flex-col items-center text-center">
+                    <div class="bg-gold-500/10 p-3 rounded-full mb-3">
+                        <span class="material-icons text-gold-500 text-3xl">info</span>
+                    </div>
 
-        // Price Calculation & Coupon Logic
-        document.addEventListener('DOMContentLoaded', function () {
-            console.log("DOM loaded - Initializing Price Script");
+                    <h3 class="text-lg font-bold text-white mb-2">Información Importante</h3>
 
-            // Selectors
-            const cantidadInput = document.querySelector('input[name="cantidad_tokens"]');
-            const couponInput = document.querySelector('input[name="coupon_code"]');
-            const btnValidar = document.getElementById('btn-validar-cupon');
-            const couponMessage = document.getElementById('coupon-message');
+                    <p class="text-gray-300 text-sm leading-relaxed mb-4">
+                        SI QUIERES SABER MÁS SOBRE NUESTRA PLATAFORMA, ÚNETE A LA PRIMERA COMUNIDAD DE INVERSIONISTAS
+                        TOKENIZACIÓN DE TERRENOS DE LATAM Y NO TE PIERDAS NUESTRO LANZAMIENTO!!🚀
+                    </p>
 
-            const cantidadDisplay = document.getElementById('cantidad-display');
-            const precioTotalDisplay = document.getElementById('precio-total');
-            const rowDescuento = document.getElementById('row-descuento');
-            const discountPercentDisplay = document.getElementById('discount-percent');
-            const discountAmountDisplay = document.getElementById('discount-amount');
-            const rowComision = document.getElementById('row-comision');
-            const comisionAmountDisplay = document.getElementById('comision-amount');
-            const radioButtons = document.querySelectorAll('input[name="metodo_pago"]');
+                    <button onclick="closeModal()"
+                        class="bg-gold-500 text-black font-bold py-2 px-6 rounded-lg hover:bg-gold-600 transition-colors text-sm shadow-lg">
+                        Entendido
+                    </button>
+                </div>
+            </div>
+        </div>
 
-            // Values
-            const precioBase = parseInt("{{ precio_base_token|default:0 }}".replace(/\D/g, '')) || 0;
-            let currentDiscountPercent = 0;
+        <!-- Modal Popup Logic & Main Form Logic (Combined at the end) -->
+        <script>
+            // Modal Logic
+            const modal = document.getElementById('infoModal');
+            const modalContent = document.getElementById('modalContent');
 
-            console.log("Base Price:", precioBase);
-
-            function formatCurrency(amount) {
-                return '$' + Math.round(amount).toLocaleString('es-CL');
+            function openModal() {
+                modal.classList.remove('invisible', 'opacity-0', 'translate-y-10');
             }
 
-            function actualizarTotal() {
-                let cantidad = parseInt(cantidadInput.value) || 1;
-                if (cantidad < 1) {
-                    cantidad = 1;
-                    cantidadInput.value = 1;
+            function closeModal() {
+                modal.classList.add('opacity-0', 'translate-y-10');
+                setTimeout(() => {
+                    modal.classList.add('invisible');
+                }, 500);
+            }
+
+            // Auto Open on Load
+            window.addEventListener('load', () => {
+                setTimeout(openModal, 500); // Small delay for effect
+            });
+
+            // Promo Panel Logic
+            const promoPanel = document.getElementById('promoPanel');
+            const promoOverlay = document.getElementById('promoOverlay');
+
+            function openPromoPanel() {
+                promoPanel.classList.remove('translate-x-full');
+                promoOverlay.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closePromoPanel() {
+                promoPanel.classList.add('translate-x-full');
+                promoOverlay.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+
+            // Price Calculation & Coupon Logic
+            document.addEventListener('DOMContentLoaded', function () {
+                console.log("DOM loaded - Initializing Price Script");
+
+                // Selectors
+                const cantidadInput = document.querySelector('input[name="cantidad_tokens"]');
+                const couponInput = document.querySelector('input[name="coupon_code"]');
+                const btnValidar = document.getElementById('btn-validar-cupon');
+                const couponMessage = document.getElementById('coupon-message');
+
+                const cantidadDisplay = document.getElementById('cantidad-display');
+                const precioTotalDisplay = document.getElementById('precio-total');
+                const rowDescuento = document.getElementById('row-descuento');
+                const discountPercentDisplay = document.getElementById('discount-percent');
+                const discountAmountDisplay = document.getElementById('discount-amount');
+                const rowComision = document.getElementById('row-comision');
+                const comisionAmountDisplay = document.getElementById('comision-amount');
+                const radioButtons = document.querySelectorAll('input[name="metodo_pago"]');
+
+                // Values
+                const precioBase = parseInt("{{ precio_base_token|default:0 }}".replace(/\D/g, '')) || 0;
+                let currentDiscountPercent = 0;
+
+                console.log("Base Price:", precioBase);
+
+                function formatCurrency(amount) {
+                    return '$' + Math.round(amount).toLocaleString('es-CL');
                 }
 
-                console.log("Updating Total. Quantity:", cantidad, "Discount:", currentDiscountPercent);
-
-                if (cantidadDisplay) cantidadDisplay.textContent = cantidad;
-
-                const subtotal = precioBase * cantidad;
-                let discountAmount = 0;
-
-                if (currentDiscountPercent > 0) {
-                    discountAmount = (subtotal * currentDiscountPercent) / 100;
-
-                    if (rowDescuento) {
-                        rowDescuento.classList.remove('hidden');
-                        if (discountPercentDisplay) discountPercentDisplay.textContent = currentDiscountPercent;
-                        if (discountAmountDisplay) discountAmountDisplay.textContent = '-' + formatCurrency(discountAmount);
+                function actualizarTotal() {
+                    let cantidad = parseInt(cantidadInput.value) || 1;
+                    if (cantidad < 1) {
+                        cantidad = 1;
+                        cantidadInput.value = 1;
                     }
+
+                    console.log("Updating Total. Quantity:", cantidad, "Discount:", currentDiscountPercent);
+
+                    if (cantidadDisplay) cantidadDisplay.textContent = cantidad;
+
+                    const subtotal = precioBase * cantidad;
+                    let discountAmount = 0;
+
+                    if (currentDiscountPercent > 0) {
+                        discountAmount = (subtotal * currentDiscountPercent) / 100;
+
+                        if (rowDescuento) {
+                            rowDescuento.classList.remove('hidden');
+                            if (discountPercentDisplay) discountPercentDisplay.textContent = currentDiscountPercent;
+                            if (discountAmountDisplay) discountAmountDisplay.textContent = '-' + formatCurrency(discountAmount);
+                        }
+                    } else {
+                        if (rowDescuento) rowDescuento.classList.add('hidden');
+                    }
+
+                    let total = subtotal - discountAmount;
+
+                    // Lógica para calcular comisión MP
+                    const metodoPago = document.querySelector('input[name="metodo_pago"]:checked').value;
+                    let commissionAmount = 0;
+
+                    if (metodoPago === 'MP') {
+                        commissionAmount = total * 0.04;
+                        if (rowComision) {
+                            rowComision.classList.remove('hidden');
+                            if (comisionAmountDisplay) comisionAmountDisplay.textContent = '+' + formatCurrency(commissionAmount);
+                        }
+                    } else {
+                        if (rowComision) rowComision.classList.add('hidden');
+                    }
+
+                    total += commissionAmount;
+
+                    if (precioTotalDisplay) precioTotalDisplay.textContent = formatCurrency(total);
+                }
+
+                // Event Listeners for Payment Method Logic
+                if (radioButtons) {
+                    radioButtons.forEach(radio => {
+                        radio.addEventListener('change', actualizarTotal);
+                    });
+                }
+
+                // Event Listeners for Quantity
+                if (cantidadInput) {
+                    cantidadInput.addEventListener('input', actualizarTotal);
+                    cantidadInput.addEventListener('change', actualizarTotal);
+                    actualizarTotal();
                 } else {
-                    if (rowDescuento) rowDescuento.classList.add('hidden');
+                    console.error("Critical: Quantity input not found!");
                 }
 
-                let total = subtotal - discountAmount;
-
-                // Lógica para calcular comisión MP
-                const metodoPago = document.querySelector('input[name="metodo_pago"]:checked').value;
-                let commissionAmount = 0;
-
-                if (metodoPago === 'MP') {
-                    commissionAmount = total * 0.04;
-                    if (rowComision) {
-                        rowComision.classList.remove('hidden');
-                        if (comisionAmountDisplay) comisionAmountDisplay.textContent = '+' + formatCurrency(commissionAmount);
-                    }
-                } else {
-                    if (rowComision) rowComision.classList.add('hidden');
-                }
-
-                total += commissionAmount;
-
-                if (precioTotalDisplay) precioTotalDisplay.textContent = formatCurrency(total);
-            }
-
-            // Event Listeners for Payment Method Logic
-            if (radioButtons) {
-                radioButtons.forEach(radio => {
-                    radio.addEventListener('change', actualizarTotal);
-                });
-            }
-
-            // Event Listeners for Quantity
-            if (cantidadInput) {
-                cantidadInput.addEventListener('input', actualizarTotal);
-                cantidadInput.addEventListener('change', actualizarTotal);
-                actualizarTotal();
-            } else {
-                console.error("Critical: Quantity input not found!");
-            }
-
-            // Coupon Validation Logic
-            if (btnValidar) {
-                btnValidar.addEventListener('click', function () {
-                    console.log("Validating coupon...");
-                    const code = couponInput.value.trim();
-                    if (!code) {
-                        couponMessage.textContent = "Ingresa un codigo primero.";
-                        couponMessage.className = "text-red-500 block mt-1 h-5";
-                        return;
-                    }
-
-                    btnValidar.disabled = true;
-                    btnValidar.textContent = "...";
-
-                    fetch('{% url "validate_coupon" %}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                        },
-                        body: JSON.stringify({ code: code })
-                    })
-                        .then(response => response.json())
-                        .then(data => {
-                            console.log("Coupon Response:", data);
-                            btnValidar.disabled = false;
-                            btnValidar.textContent = "Validar";
-
-                            if (data.valid) {
-                                currentDiscountPercent = data.discount_percentage;
-                                couponMessage.textContent = "Cupon valido! " + data.discount_percentage + "% descuento";
-                                couponMessage.className = "text-green-400 block mt-1 h-5 font-medium";
-                                actualizarTotal();
-                            } else {
-                                currentDiscountPercent = 0;
-                                couponMessage.textContent = data.message || "Cupon invalido";
-                                couponMessage.className = "text-red-500 block mt-1 h-5";
-                                actualizarTotal();
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error fetching coupon:', error);
-                            btnValidar.disabled = false;
-                            btnValidar.textContent = "Validar";
-                            couponMessage.textContent = "Error al validar el cupon.";
+                // Coupon Validation Logic
+                if (btnValidar) {
+                    btnValidar.addEventListener('click', function () {
+                        console.log("Validating coupon...");
+                        const code = couponInput.value.trim();
+                        if (!code) {
+                            couponMessage.textContent = "Ingresa un codigo primero.";
                             couponMessage.className = "text-red-500 block mt-1 h-5";
-                        });
-                });
-            }
-        });
-    </script>
+                            return;
+                        }
+
+                        btnValidar.disabled = true;
+                        btnValidar.textContent = "...";
+
+                        fetch('{% url "validate_coupon" %}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                            },
+                            body: JSON.stringify({ code: code })
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+                                console.log("Coupon Response:", data);
+                                btnValidar.disabled = false;
+                                btnValidar.textContent = "Validar";
+
+                                if (data.valid) {
+                                    currentDiscountPercent = data.discount_percentage;
+                                    couponMessage.textContent = "Cupon valido! " + data.discount_percentage + "% descuento";
+                                    couponMessage.className = "text-green-400 block mt-1 h-5 font-medium";
+                                    actualizarTotal();
+                                } else {
+                                    currentDiscountPercent = 0;
+                                    couponMessage.textContent = data.message || "Cupon invalido";
+                                    couponMessage.className = "text-red-500 block mt-1 h-5";
+                                    actualizarTotal();
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error fetching coupon:', error);
+                                btnValidar.disabled = false;
+                                btnValidar.textContent = "Validar";
+                                couponMessage.textContent = "Error al validar el cupon.";
+                                couponMessage.className = "text-red-500 block mt-1 h-5";
+                            });
+                    });
+                }
+            });
+        </script>
 </body>
 
 </html>

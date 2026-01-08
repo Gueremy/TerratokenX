@@ -8,7 +8,7 @@ class ReservaForm(forms.ModelForm):
     coupon_code = forms.CharField(max_length=50, required=False, label="Código de Cupón", help_text="Opcional")
     class Meta:
         model = Reserva
-        fields = ['nombre', 'correo', 'telefono', 'direccion', 'cantidad_tokens']
+        fields = ['nombre', 'correo', 'telefono', 'direccion', 'cantidad_tokens', 'estado_pago']
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md'}),
             'correo': forms.EmailInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md'}),

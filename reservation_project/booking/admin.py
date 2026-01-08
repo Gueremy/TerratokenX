@@ -14,10 +14,10 @@ class ReservaAdmin(ImportExportModelAdmin):
         'nombre',
         'cantidad_tokens',
         'total_formatted',
-        'pagado',
+        'estado_pago',
         'created_at'
     )
-    list_filter = ('pagado', 'created_at')
+    list_filter = ('estado_pago', 'created_at')
     search_fields = ('nombre', 'numero_reserva')
     date_hierarchy = 'created_at'
     ordering = ('-created_at',)
