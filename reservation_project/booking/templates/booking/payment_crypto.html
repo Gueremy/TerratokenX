@@ -230,6 +230,22 @@
         let timerInterval;
         let windowSeconds = 900; // 15 minutes
 
+        // Helper to get CSRF token from cookie
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
         // MetaMask wallet address
         const METAMASK_WALLET = '0x1FE826766718D9Aa9fb0AE85277b7046e4aC3134';
 
@@ -273,7 +289,7 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': document.getElementById('csrf-token').value
+                    'X-CSRFToken': getCookie('csrftoken') || document.getElementById('csrf-token').value
                 },
                 body: JSON.stringify({
                     'reserva_id': reservaId,
@@ -360,7 +376,7 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': document.getElementById('csrf-token').value
+                    'X-CSRFToken': getCookie('csrftoken') || document.getElementById('csrf-token').value
                 },
                 body: JSON.stringify({ 'reserva_id': reservaId })
             })
@@ -389,7 +405,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRFToken': document.getElementById('csrf-token').value
+                        'X-CSRFToken': getCookie('csrftoken') || document.getElementById('csrf-token').value
                     },
                     body: JSON.stringify({ 'reserva_id': reservaId })
                 })
