@@ -277,6 +277,10 @@ def reservation_success(request, reserva_id):
                 reserva_a_pagar.pagado = True
                 reserva_a_pagar.save()
                 pago_procesado_ahora = True
+    elif payment_status == 'manual_review':
+        # No auto-confirmamos, pero podemos registrar algo si es necesario.
+        # El estado ya fue puesto en EN_REVISION por la API 'api_manual_confirm_payment'
+        pass
 
     # 2. Si el pago se procesó en esta visita, ejecuta las acciones externas (email, calendario).
     if pago_procesado_ahora:
@@ -709,6 +713,8 @@ def api_manual_confirm_payment(request):
         # Marcar como "En Revisión" - el admin debe verificar manualmente antes de confirmar
         reserva.estado_pago = Reserva.ESTADO_EN_REVISION
         reserva.metodo_pago = 'CRYPTO_MANUAL'
+        # Asegurar que la dirección es la fija para manual
+        reserva.crypto_address = '0x1FE826766718D9Aa9fb0AE85277b7046e4aC3134'
         reserva.save()
         
         # Enviar correo de confirmación al CLIENTE

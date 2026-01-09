@@ -53,6 +53,19 @@
         <p class="text-gray-400 mt-2">Estamos esperando la confirmación del pago. Te notificaremos por correo
             electrónico cuando se acredite. ¡No te preocupes, tu reserva está guardada!</p>
 
+        {% elif payment_status == 'manual_review' %}
+        <!-- Estado: En Revisión (Crypto Manual) -->
+        <div class="text-orange-500 mb-2">
+            <span class="material-icons" style="font-size: 64px;">manage_search</span>
+        </div>
+        <h1 class="text-3xl font-extrabold text-white mt-4 tracking-tight">Pago en Verificación</h1>
+        <p class="text-gray-400 mt-2">Hemos recibido tu reporte de pago manual. Nuestro admin verificará la transacción
+            en la blockchain y te enviará un correo de confirmación en breve.</p>
+        <div class="mt-4 p-4 bg-orange-900/20 border border-orange-700/50 rounded-lg">
+            <p class="text-sm text-orange-300"><i class="material-icons text-sm align-middle mr-1">info</i> Tu reserva
+                está segura mientras verificamos.</p>
+        </div>
+
         {% elif payment_status == 'failure' or payment_status == 'rejected' %}
         <!-- Estado: Fallido o Rechazado -->
         <div class="text-red-500 mb-2">

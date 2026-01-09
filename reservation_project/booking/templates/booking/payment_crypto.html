@@ -260,19 +260,49 @@
         });
 
         function showMetaMaskPayment() {
+            // 1. Show UI immediately
             document.getElementById('step-select').classList.add('d-none');
             document.getElementById('step-pay').classList.remove('d-none');
 
-            document.getElementById('display-amount').textContent = 'Ver monto en CLP arriba';
-            document.getElementById('display-ticker').textContent = 'USDT / ETH';
-            document.getElementById('display-address').textContent = METAMASK_WALLET;
+            // 2. Show loading state for amounts
+            document.getElementById('display-amount').innerHTML = '<div class="spinner-border spinner-border-sm" role="status"></div> Calculando...';
+            document.getElementById('display-ticker').textContent = 'ETH';
 
-            // Generate QR Code for MetaMask wallet
+            // 3. Set Fixed Wallet Address (Visual)
+            document.getElementById('display-address').textContent = METAMASK_WALLET;
             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${METAMASK_WALLET}`;
             document.getElementById('qr-image').src = qrUrl;
 
-            // Update timer text for manual payment
+            // 4. Update timer text
             document.getElementById('timer').parentElement.innerHTML = '<i class="fas fa-wallet me-1"></i> Pago Manual MetaMask';
+
+            // 5. Fetch Real Crypto Amount (USDT)
+            const reservaId = document.getElementById('reserva-id').value;
+            fetch("{% url 'api_get_crypto_details' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken') || document.getElementById('csrf-token').value
+                },
+                body: JSON.stringify({
+                    'reserva_id': reservaId,
+                    'currency': 'ETH' // Calculamos en ETH para MetaMask
+                })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update only amount, keep valid fixed address
+                        document.getElementById('display-amount').textContent = data.amount;
+                    } else {
+                        document.getElementById('display-amount').textContent = "Consultar al Admin";
+                        console.error("Error fetching rate:", data.error);
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    document.getElementById('display-amount').textContent = "Error de red";
+                });
         }
 
         function initPayment(currency) {
@@ -383,7 +413,7 @@
                 .then(res => res.json())
                 .then(data => {
                     if (data.success) {
-                        window.location.href = `{% url 'reservation_success' 0 %}`.replace('0', reservaId) + "?status=approved";
+                        window.location.href = `{% url 'reservation_success' 0 %}`.replace('0', reservaId) + "?status=manual_review";
                     } else {
                         alert("Error al reportar pago: " + (data.error || "Desconocido"));
                         btn.disabled = false;

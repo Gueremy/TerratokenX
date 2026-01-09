@@ -27,7 +27,7 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 # See https://docs.djangoproject.com/en/4.x/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env('SECRET_KEY')
+SECRET_KEY = env('SECRET_KEY', default='django-insecure-test-key-local-123')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
@@ -179,7 +179,7 @@ MERCADO_PAGO_ACCESS_TOKEN = env('MERCADO_PAGO_ACCESS_TOKEN', default='TEST_ACCES
 # Configuración de Correo (SendGrid Web API)
 # Usamos Web API en lugar de SMTP porque Render bloquea el puerto 587
 EMAIL_BACKEND = 'sendgrid_backend.SendgridBackend'
-SENDGRID_API_KEY = env('SENDGRID_API_KEY')
+SENDGRID_API_KEY = env('SENDGRID_API_KEY', default='SG.dummy-key-for-local-dev')
 CRYPTOMKT_API_KEY = env('CRYPTOMKT_API_KEY', default='')
 CRYPTOMKT_API_SECRET = env('CRYPTOMKT_API_SECRET', default='')
 
