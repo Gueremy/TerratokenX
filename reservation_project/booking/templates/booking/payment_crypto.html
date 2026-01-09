@@ -159,6 +159,7 @@
             <p>Selecciona tu criptomoneda preferida:</p>
             <select class="form-select currency-select mb-4" id="currency-selector">
                 <option value="" selected disabled>Elige una moneda...</option>
+                <option value="METAMASK">🦊 MetaMask (USDT/ETH Manual)</option>
                 <option value="ETH">Ethereum (ETH)</option>
                 <option value="BTC">Bitcoin (BTC)</option>
                 <option value="USDT">Tether (USDT - ERC20)</option>
@@ -229,11 +230,34 @@
         let timerInterval;
         let windowSeconds = 900; // 15 minutes
 
+        // MetaMask wallet address
+        const METAMASK_WALLET = '0x1FE826766718D9Aa9fb0AE85277b7046e4aC3134';
+
         document.getElementById('currency-selector').addEventListener('change', function () {
             if (this.value) {
-                initPayment(this.value);
+                if (this.value === 'METAMASK') {
+                    showMetaMaskPayment();
+                } else {
+                    initPayment(this.value);
+                }
             }
         });
+
+        function showMetaMaskPayment() {
+            document.getElementById('step-select').classList.add('d-none');
+            document.getElementById('step-pay').classList.remove('d-none');
+
+            document.getElementById('display-amount').textContent = 'Ver monto en CLP arriba';
+            document.getElementById('display-ticker').textContent = 'USDT / ETH';
+            document.getElementById('display-address').textContent = METAMASK_WALLET;
+
+            // Generate QR Code for MetaMask wallet
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${METAMASK_WALLET}`;
+            document.getElementById('qr-image').src = qrUrl;
+
+            // Update timer text for manual payment
+            document.getElementById('timer').parentElement.innerHTML = '<i class="fas fa-wallet me-1"></i> Pago Manual MetaMask';
+        }
 
         function initPayment(currency) {
             const reservaId = document.getElementById('reserva-id').value;

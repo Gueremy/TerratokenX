@@ -8,7 +8,7 @@ class ReservaForm(forms.ModelForm):
     coupon_code = forms.CharField(max_length=50, required=False, label="Código de Cupón", help_text="Opcional")
     class Meta:
         model = Reserva
-        fields = ['nombre', 'correo', 'telefono', 'direccion', 'cantidad_tokens', 'estado_pago']
+        fields = ['nombre', 'correo', 'telefono', 'direccion', 'cantidad_tokens']
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md'}),
             'correo': forms.EmailInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md'}),
@@ -16,6 +16,10 @@ class ReservaForm(forms.ModelForm):
             'direccion': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md'}),
             'cantidad_tokens': forms.NumberInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md', 'min': '1', 'value': '1'}),
         }
+
+class AdminReservaForm(ReservaForm):
+    class Meta(ReservaForm.Meta):
+        fields = ReservaForm.Meta.fields + ['estado_pago']
     
     def clean_coupon_code(self):
         code = self.cleaned_data.get('coupon_code')

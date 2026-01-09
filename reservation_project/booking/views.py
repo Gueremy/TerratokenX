@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm
-from .forms import ReservaForm
+from .forms import ReservaForm, AdminReservaForm
 from .models import Reserva, DiaFeriado, Coupon, Configuracion
 from django.contrib import messages
 from django.core.mail import send_mail
@@ -179,12 +179,12 @@ def admin_panel(request):
 def editar_reserva(request, reserva_id):
     reserva = get_object_or_404(Reserva, id=reserva_id)
     if request.method == 'POST':
-        form = ReservaForm(request.POST, instance=reserva)
+        form = AdminReservaForm(request.POST, instance=reserva)
         if form.is_valid():
             form.save()
             return redirect('admin_panel')
     else:
-        form = ReservaForm(instance=reserva)
+        form = AdminReservaForm(instance=reserva)
     return render(request, 'booking/editar_reserva.html', {'form': form, 'reserva': reserva})
 
 @staff_member_required
