@@ -204,4 +204,6 @@ LOGOUT_REDIRECT_URL = '/' # Redirigir a la página principal después de cerrar 
 
 # Configuración para archivos media (Imágenes subidas)
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# En Render, el disco persistente se monta en /var/data
+# En desarrollo local, usa la carpeta 'media' del proyecto
+MEDIA_ROOT = os.environ.get('RENDER_DISK_PATH', os.path.join(BASE_DIR, 'media'))
