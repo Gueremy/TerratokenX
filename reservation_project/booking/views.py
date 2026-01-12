@@ -699,30 +699,31 @@ def api_get_crypto_details(request):
             elif 'price' in ticker: rate = float(ticker['price'])
         
         if rate == 0:
-            return JsonResponse({'success': False, 'error': f'No se pudo obtener la tasa para {currency}. Intenta otra moneda.'})
+            # No hay par CLP, continuar con USDT
+            pass
             
         # 2. Calcular monto - reserva.total está en USD
-        # Necesitamos obtener rate en USD, no CLP
-        # Intentar obtener par directo USD (ej: BTCUSD)
-        symbol_usd = f"{currency}USD"
-        ticker_usd = api.get_ticker(symbol_usd)
+        # CryptoMarket usa USDT (no USD), USDT ≈ 1:1 con USD
+        # Intentar obtener par USDT (ej: BTCUSDT, ETHUSDT)
+        symbol_usdt = f"{currency}USDT"
+        ticker_usdt = api.get_ticker(symbol_usdt)
         
-        rate_usd = 0
-        if ticker_usd:
-            if 'last' in ticker_usd: rate_usd = float(ticker_usd['last'])
-            elif 'last_price' in ticker_usd: rate_usd = float(ticker_usd['last_price'])
-            elif 'price' in ticker_usd: rate_usd = float(ticker_usd['price'])
+        rate_usdt = 0
+        if ticker_usdt:
+            if 'last' in ticker_usdt: rate_usdt = float(ticker_usdt['last'])
+            elif 'last_price' in ticker_usdt: rate_usdt = float(ticker_usdt['last_price'])
+            elif 'price' in ticker_usdt: rate_usdt = float(ticker_usdt['price'])
         
-        # Si no hay par USD, usar CLP y convertir
-        if rate_usd == 0 and rate > 0:
+        # Si no hay par USDT, usar CLP y convertir
+        if rate_usdt == 0 and rate > 0:
             # Aproximación: 1 USD ≈ 970 CLP
-            rate_usd = rate / 970
+            rate_usdt = rate / 970
         
-        if rate_usd == 0:
+        if rate_usdt == 0:
             return JsonResponse({'success': False, 'error': f'No se pudo obtener la tasa para {currency}. Intenta otra moneda.'})
         
         total_usd = float(reserva.total)
-        crypto_amount = total_usd / rate_usd
+        crypto_amount = total_usd / rate_usdt
         crypto_amount = round(crypto_amount, 8)
         
         # 3. Obtener dirección
