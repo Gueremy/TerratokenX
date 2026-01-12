@@ -90,13 +90,28 @@ def create_mp_preference(request, reserva_id):
         "pending": request.build_absolute_uri(reverse('reservation_success', args=[reserva.id])), # También a éxito, pero con estado pendiente
     }
 
+    # Conversión USD a CLP (MercadoPago Chile solo acepta CLP)
+    # Usar API de tipo de cambio en tiempo real
+    try:
+        import requests
+        response = requests.get('https://api.exchangerate-api.com/v4/latest/USD', timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            USD_TO_CLP_RATE = data['rates'].get('CLP', 970)
+        else:
+            USD_TO_CLP_RATE = 970  # Fallback
+    except Exception:
+        USD_TO_CLP_RATE = 970  # Fallback si la API falla
+    
+    total_clp = float(reserva.total) * USD_TO_CLP_RATE
+
     preference_data = {
         "items": [
             {
                 "title": f"Reserva Inversión TerraTokenX - {reserva.numero_reserva}",
                 "quantity": 1,
-                "unit_price": float(reserva.total),
-                "currency_id": "CLP", # ¡IMPORTANTE! Asegúrate de que esta es tu moneda. Usa "ARS", "MXN", etc.
+                "unit_price": total_clp,
+                "currency_id": "CLP",
             }
         ],
         "payer": {
