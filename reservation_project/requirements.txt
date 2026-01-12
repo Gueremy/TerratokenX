@@ -10,7 +10,7 @@ requests
 django-environ
 dj-database-url
 django-widget-tweaks
-django-cors-headers
+django-cors-headers>=4.0
 django-import-export
 django-admin-interface
 django-colorfield
