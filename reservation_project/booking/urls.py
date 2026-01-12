@@ -23,6 +23,12 @@ urlpatterns = [
     
     # Preview Email
     path('preview-email/', views.preview_email, name='preview_email'),
+
+    # Project Management
+    path('admin-panel/projects/', views.admin_projects, name='admin_projects'),
+    path('admin-panel/projects/create/', views.admin_project_create, name='project_create'),
+    path('admin-panel/projects/edit/<int:project_id>/', views.admin_project_edit, name='project_edit'),
+    path('admin-panel/projects/delete/<int:project_id>/', views.admin_project_delete, name='project_delete'),
     
     # AJAX Coupon Validation
     path('validate-coupon/', views.validate_coupon, name='validate_coupon'),
@@ -35,4 +41,10 @@ urlpatterns = [
 
     # Crypto Payment Simulation (Development Only)
     path('simulate-crypto-payment/<int:reserva_id>/', views.simulate_crypto_payment, name='simulate_crypto_payment'),
+    
+    # Public API for Landing Page Progress Bar
+    path('api/stats/', views.api_stats, name='api_stats'),
+    path('api/config/', views.api_config, name='api_config'),
+    path('api/projects/', views.api_project_list, name='api_project_list'), # Catálogo
+    path('api/project-detail/', views.api_project_detail, name='api_project_detail'), # Detalle dinámico
 ]

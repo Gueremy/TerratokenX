@@ -75,11 +75,13 @@ INSTALLED_APPS = [
     'booking',       # Ruta a la app booking
     'django.contrib.humanize',
     'widget_tweaks',
+    'corsheaders',  # CORS Headers
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # CORS Middleware must be first
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # Middleware para servir archivos estáticos
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -87,6 +89,9 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+# Configuración CORS para pruebas locales
+CORS_ALLOW_ALL_ORIGINS = True
 
 ROOT_URLCONF = 'reservation_project.urls'
 
@@ -196,3 +201,7 @@ DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='contacto@terratokenx.com
 # --- URLs de Autenticación ---
 LOGIN_URL = 'login'
 LOGOUT_REDIRECT_URL = '/' # Redirigir a la página principal después de cerrar sesión
+
+# Configuración para archivos media (Imágenes subidas)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

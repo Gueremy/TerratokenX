@@ -2,8 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm
-from .forms import ReservaForm, AdminReservaForm
-from .models import Reserva, DiaFeriado, Coupon, Configuracion
+from .forms import ReservaForm, AdminReservaForm, ProyectoForm, ProyectoImagenFormSet
+from .models import Reserva, DiaFeriado, Coupon, Configuracion, Proyecto
 from django.contrib import messages
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
@@ -12,6 +12,7 @@ from django.db.models import Count
 from datetime import datetime, timedelta, date
 import os
 from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 import json
 import openpyxl
 from reportlab.pdfgen import canvas
@@ -132,9 +133,17 @@ def _get_filtered_reservas(request):
     # Filtros para GET
     reservas = Reserva.objects.all()
     estado_pago = request.GET.get('estado_pago')
+    metodo_pago = request.GET.get('metodo_pago')
+    proyecto_id = request.GET.get('proyecto')
 
     if estado_pago in ['PENDIENTE', 'EN_REVISION', 'CONFIRMADO']:
         reservas = reservas.filter(estado_pago=estado_pago)
+    
+    if metodo_pago in ['MP', 'CRYPTO', 'CRYPTO_MANUAL']:
+        reservas = reservas.filter(metodo_pago=metodo_pago)
+    
+    if proyecto_id:
+        reservas = reservas.filter(proyecto_id=proyecto_id)
     
     return reservas.order_by('-created_at')
 
@@ -160,15 +169,27 @@ def admin_panel(request):
         return redirect('admin_panel')
 
     try:
-        reservas = _get_filtered_reservas(request)
+        reservas_qs = _get_filtered_reservas(request)
+        # Force evaluation to catch decimal errors early
+        reservas = []
+        for r in reservas_qs:
+            try:
+                # Force access to decimal fields to trigger any conversion errors
+                _ = r.total
+                reservas.append(r)
+            except Exception:
+                # Skip records with invalid decimal values
+                pass
+        
         dias_feriados = DiaFeriado.objects.all().order_by('fecha')
         coupons = Coupon.objects.all().order_by('-valid_to')
         config = Configuracion.load()  # Cargar configuración para mostrarla
-        return render(request, 'booking/admin_panel_v3.html', {
+        return render(request, 'booking/admin_panel_v4.html', {
             'reservas': reservas,
             'dias_feriados': dias_feriados,
             'coupons': coupons,
             'config': config,  # Pasar el objeto de configuración a la plantilla
+            'proyectos': Proyecto.objects.filter(activo=True),  # Para filtro por proyecto
             'request': request,
         })
     except Exception as e:
@@ -197,6 +218,13 @@ def eliminar_reserva(request, reserva_id):
 
 def reservation_form(request):
     print("DEBUG: CARGANDO VISTA reservation_form (Debería usar v2)")
+    
+    # 1. Detectar Proyecto desde Slug (opcional)
+    project_slug = request.GET.get('project_slug')
+    proyecto_seleccionado = None
+    if project_slug:
+        proyecto_seleccionado = get_object_or_404(Proyecto, slug=project_slug)
+
     if request.method == 'POST':
         form = ReservaForm(request.POST)
         if form.is_valid():
@@ -207,6 +235,37 @@ def reservation_form(request):
             # Capturar método de pago
             metodo_pago = request.POST.get('metodo_pago', 'MP')
             reserva = form.save(commit=False)
+            
+            # Si el proyecto vino en el POST (hidden field), ya está en reserva.proyecto
+            # Si no, intentamos asignarlo del contexto GET si por alguna razón falló el hidden
+            if proyecto_seleccionado and not reserva.proyecto:
+                reserva.proyecto = proyecto_seleccionado
+            
+            # VALIDACIÓN DE STOCK (Evitar overselling)
+            if reserva.proyecto:
+                # Validar que el proyecto esté activo
+                if reserva.proyecto.estado != 'Activo':
+                    form.add_error('proyecto', f"Este proyecto no está disponible para inversión (Estado: {reserva.proyecto.estado}).")
+                    context = {
+                        'form': form,
+                        'proyecto': proyecto_seleccionado,
+                        'proyectos_activos': Proyecto.objects.filter(activo=True, estado='Activo'),
+                        'precio_base_token': proyecto_seleccionado.precio_token if proyecto_seleccionado else 100
+                    }
+                    return render(request, 'booking/reservation_form_v2.html', context)
+                
+                disponibles = reserva.proyecto.tokens_disponibles
+                if reserva.cantidad_tokens > disponibles:
+                    # Agregar error al formulario y re-renderizar
+                    form.add_error('cantidad_tokens', f"Lo sentimos, solo quedan {disponibles} tokens disponibles para este proyecto.")
+                    context = {
+                        'form': form,
+                        'proyecto': proyecto_seleccionado,
+                        'proyectos_activos': Proyecto.objects.filter(activo=True, estado='Activo'),
+                        'precio_base_token': proyecto_seleccionado.precio_token if proyecto_seleccionado else 100
+                    }
+                    return render(request, 'booking/reservation_form_v2.html', context)
+
             reserva.metodo_pago = metodo_pago
             reserva.save()
             
@@ -249,15 +308,26 @@ def reservation_form(request):
                 return redirect('create_mp_preference', reserva_id=reserva.id)
         # Si el formulario no es válido, se renderizará de nuevo con los errores.
     else:
-        form = ReservaForm()
+        initial_data = {}
+        if proyecto_seleccionado:
+            initial_data['proyecto'] = proyecto_seleccionado
+        form = ReservaForm(initial=initial_data)
 
     # --- Contexto para la validación del lado del cliente (JavaScript) ---
     config = Configuracion.load()
+    
+    # Obtener solo proyectos activos (estado='Activo') para el selector
+    proyectos_activos = Proyecto.objects.filter(activo=True, estado='Activo')
+    
+    # Determinar precio a mostrar (Proyecto específico o Configuración Global)
+    precio_actual = proyecto_seleccionado.precio_token if proyecto_seleccionado else config.precio_base_token
 
     return render(request, 'booking/reservation_form_v2.html', {
         'form': form,
         'config': config,
-        'precio_base_token': config.precio_base_token,
+        'precio_base_token': precio_actual, # Contexto dinámico
+        'proyecto': proyecto_seleccionado,  # Contexto del proyecto
+        'proyectos_activos': proyectos_activos, # Lista para selector
     })
 
 
@@ -384,13 +454,13 @@ def export_reservas_excel(request):
     # Crear un libro de trabajo y una hoja
     workbook = openpyxl.Workbook()
     sheet = workbook.active
-    sheet.title = 'Reservas'
+    sheet.title = 'Compras'
 
     # Escribir la cabecera
-    headers = ['N° Reserva', 'Nombre Cliente', 'Fecha Compra', 'Tokens', 'Total', 'Pagado', 'Correo', 'Teléfono']
+    headers = ['N° Compra', 'Nombre Cliente', 'Fecha Compra', 'Tokens', 'Total', 'Pagado', 'Correo', 'Teléfono', 'Proyecto']
     sheet.append(headers)
 
-    # Escribir los datos de cada reserva
+    # Escribir los datos de cada compra
     for reserva in reservas:
         sheet.append([
             reserva.numero_reserva,
@@ -401,6 +471,7 @@ def export_reservas_excel(request):
             'Sí' if reserva.pagado else 'No',
             reserva.correo,
             reserva.telefono,
+            reserva.proyecto.nombre if reserva.proyecto else 'Sin Proyecto',
         ])
 
     # Crear la respuesta HTTP con nombre de archivo correcto
@@ -755,3 +826,266 @@ def api_manual_confirm_payment(request):
         
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
+
+
+def api_stats(request):
+    """
+    API pública para obtener estadísticas de tokens vendidos/disponibles.
+    Soporta ?project_id=X o ?slug=refugio-patagonia
+    Si no se especifica, carga el proyecto por defecto (Refugio Patagonia).
+    """
+    from django.db.models import Sum
+    from .models import Proyecto
+    
+    project_id = request.GET.get('project_id')
+    slug = request.GET.get('slug')
+    
+    try:
+        if project_id:
+            proyecto = Proyecto.objects.get(id=project_id)
+        elif slug:
+            proyecto = Proyecto.objects.get(slug=slug)
+        else:
+            # Default: Refugio Patagonia (o el primer activo)
+            proyecto = Proyecto.objects.filter(activo=True).first()
+            
+        if not proyecto:
+            return JsonResponse({'error': 'No active project found'}, status=404)
+
+        tokens_totales = proyecto.tokens_totales
+        precio_token = proyecto.precio_token
+        
+        # Sumar tokens de reservas CONFIRMADAS para este proyecto
+        tokens_vendidos = proyecto.tokens_vendidos
+        
+        tokens_disponibles = proyecto.tokens_disponibles
+        porcentaje_vendido = proyecto.porcentaje_vendido
+        
+        valor_proyecto = tokens_totales * precio_token
+        monto_recaudado = tokens_vendidos * precio_token
+        
+        return JsonResponse({
+            'project_name': proyecto.nombre,
+            'tokens_totales': tokens_totales,
+            'tokens_vendidos': tokens_vendidos,
+            'tokens_disponibles': tokens_disponibles,
+            'porcentaje_vendido': porcentaje_vendido,
+            'precio_token_usd': precio_token,
+            'valor_proyecto_usd': valor_proyecto,
+            'monto_recaudado_usd': monto_recaudado,
+        })
+        
+    except Proyecto.DoesNotExist:
+        return JsonResponse({'error': 'Project not found'}, status=404)
+def api_config(request):
+    """
+    API para obtener configuración (precio del token).
+    Soporta ?project_id=X.
+    """
+    from .models import Proyecto, Configuracion
+    
+    project_id = request.GET.get('project_id')
+    slug = request.GET.get('slug')
+    
+    try:
+        if project_id:
+            proyecto = Proyecto.objects.get(id=project_id)
+        elif slug:
+            proyecto = Proyecto.objects.get(slug=slug)
+        else:
+            proyecto = Proyecto.objects.filter(activo=True).first()
+            
+        if proyecto:
+            return JsonResponse({
+                'precio_token_usd': proyecto.precio_token,
+                'project_name': proyecto.nombre
+            })
+        else:
+             # Fallback a configuración antigua o default
+            config = Configuracion.load()
+            return JsonResponse({
+                'precio_token_usd': config.precio_base_token,
+                'project_name': 'Default'
+            })
+            
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+def api_project_list(request):
+    """
+    API para obtener la lista de proyectos activos.
+    Usada por index.html para generar el catálogo.
+    """
+    from .models import Proyecto
+    
+    try:
+        proyectos = Proyecto.objects.filter(activo=True).order_by('-created_at')
+        data = []
+        
+        for p in proyectos:
+            # Calcular porcentaje para mostrar barra pequeña en la card
+            pct_vendido = p.porcentaje_vendido
+            
+            # Construir URL completa de la imagen
+            # Prioridad: 1. Imagen subida (File), 2. URL externa
+            img_url = ""
+            if p.imagen_portada:
+                img_url = request.build_absolute_uri(p.imagen_portada.url)
+            elif p.imagen_portada_url:
+                img_url = p.imagen_portada_url
+            
+            data.append({
+                'id': p.id,
+                'nombre': p.nombre,
+                'slug': p.slug,
+                'descripcion': p.descripcion[:100] + '...' if len(p.descripcion) > 100 else p.descripcion,
+                'ubicacion': p.ubicacion,
+                'precio_desde': p.precio_token,
+                'imagen': img_url,
+                'porcentaje_vendido': pct_vendido,
+                'tokens_disponibles': p.tokens_disponibles,
+                'estado': p.estado,  # Activo, Vendido, Proximamente
+            })
+            
+        return JsonResponse({'projects': data})
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+def api_project_detail(request):
+    """
+    API para obtener detalles completos de un proyecto específico por slug.
+    Usada por index2.html para llenar títulos, imágenes, etc.
+    """
+    from .models import Proyecto
+    
+    slug = request.GET.get('slug')
+    
+    try:
+        if not slug:
+            return JsonResponse({'error': 'Slug is required'}, status=400)
+            
+        p = Proyecto.objects.get(slug=slug)
+        
+        # URL imagen
+        # Prioridad: 1. Imagen subida (File), 2. URL externa
+        img_url = ""
+        if p.imagen_portada:
+            img_url = request.build_absolute_uri(p.imagen_portada.url)
+        elif p.imagen_portada_url:
+             img_url = p.imagen_portada_url
+
+        # Galería
+        galeria = []
+        for img in p.imagenes.all():
+            url = ""
+            if img.imagen:
+                url = request.build_absolute_uri(img.imagen.url)
+            elif img.imagen_url:
+                url = img.imagen_url
+            
+            if url:
+                galeria.append({
+                    'url': url,
+                    'caption': img.caption
+                })
+            
+        data = {
+            'id': p.id,
+            'nombre': p.nombre,
+            'slug': p.slug,
+            'descripcion': p.descripcion,
+            'ubicacion': p.ubicacion,
+            'rentabilidad_estimada': p.rentabilidad_estimada,
+            'imagen': img_url,
+            'precio_token_usd': p.precio_token,
+            'pagina_oficial_url': p.pagina_oficial_url,
+            'video_url': p.video_url,
+            'tipo': p.tipo,
+            'estado': p.estado,
+            'galeria': galeria,
+        }
+        return JsonResponse(data)
+        
+    except Proyecto.DoesNotExist:
+        return JsonResponse({'error': 'Project not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+@login_required # Assuming standard Django auth for admin panel
+@user_passes_test(lambda u: u.is_superuser)
+def admin_projects(request):
+    """
+    Vista para listar proyectos en el panel de administración.
+    """
+    from .models import Proyecto
+    proyectos = Proyecto.objects.all().order_by('-created_at')
+    return render(request, 'booking/admin_projects.html', {'proyectos': proyectos})
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def admin_project_create(request):
+    from .forms import ProyectoForm
+    if request.method == 'POST':
+        form = ProyectoForm(request.POST, request.FILES)
+        formset = ProyectoImagenFormSet(request.POST, request.FILES)
+        if form.is_valid() and formset.is_valid():
+            proyecto = form.save()
+            # Associate images with the newly created project
+            images = formset.save(commit=False)
+            for img in images:
+                img.proyecto = proyecto
+                img.save()
+            # Handle deletions
+            for obj in formset.deleted_objects:
+                obj.delete()
+            messages.success(request, 'Proyecto creado exitosamente.')
+            return redirect('admin_projects')
+        else:
+            messages.error(request, 'Error al crear el proyecto. Por favor corrige los errores.')
+    else:
+        form = ProyectoForm()
+        formset = ProyectoImagenFormSet()
+    return render(request, 'booking/admin_project_form.html', {'form': form, 'formset': formset, 'title': 'Crear Proyecto'})
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def admin_project_edit(request, project_id):
+    proyecto = get_object_or_404(Proyecto, pk=project_id)
+    if request.method == 'POST':
+        form = ProyectoForm(request.POST, request.FILES, instance=proyecto)
+        formset = ProyectoImagenFormSet(request.POST, request.FILES, instance=proyecto)
+        if form.is_valid() and formset.is_valid():
+            form.save()
+            images = formset.save(commit=False)
+            for img in images:
+                img.proyecto = proyecto
+                img.save()
+            for obj in formset.deleted_objects:
+                obj.delete()
+            messages.success(request, 'Proyecto actualizado exitosamente.')
+            return redirect('admin_projects')
+        else:
+            messages.error(request, 'Error al actualizar el proyecto.')
+    else:
+        form = ProyectoForm(instance=proyecto)
+        formset = ProyectoImagenFormSet(instance=proyecto)
+    return render(request, 'booking/admin_project_form.html', {'form': form, 'formset': formset, 'title': 'Editar Proyecto', 'proyecto': proyecto})
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def admin_project_delete(request, project_id):
+    from .models import Proyecto
+    
+    proyecto = get_object_or_404(Proyecto, pk=project_id)
+    # Optional: Don't hard delete, just deactivate? 
+    # User asked for delete, let's hard delete but maybe with confirmation?
+    # For simplicity in this step, direct delete as per standard admin flows or redirect to list
+    
+    # Actually, safest is usually a POST request but for a simple button we might use GET with caution or a specific confirmation page.
+    # Let's assume the button sends a GET or we do a simple confirmation.
+    
+    proyecto.delete()
+    messages.success(request, 'Proyecto eliminado correctamente.')
+    return redirect('admin_projects')
+

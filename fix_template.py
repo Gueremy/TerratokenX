@@ -1,28 +1,25 @@
+import re
 
-import os
+path = 'reservation_project/booking/templates/booking/admin_panel_v3.html'
+with open(path, 'r', encoding='utf-8') as f:
+    c = f.read()
 
-file_path = r'c:\Users\Guere\OneDrive\Escritorio\WAS DE PROGRAMACION\adaptar sistemas de reservas joan\chelooficial\reservation_project\booking\templates\booking\reservation_form_v2.html'
+# Fix comparison operators  
+c = c.replace("=='PENDIENTE'", " == 'PENDIENTE'")
+c = c.replace("=='EN_REVISION'", " == 'EN_REVISION'")
+c = c.replace("=='CONFIRMADO'", " == 'CONFIRMADO'")
 
-try:
-    with open(file_path, 'r', encoding='utf-8') as f:
-        content = f.read()
+# Fix split {% if tags
+c = re.sub(r'\{%\s*\r?\n\s*if\s+', '{% if ', c)
 
-    # The exact string we are looking for based on previous view_file
-    target_split = '${{ precio_base_token|intcomma\n                            }}'
-    replacement = '${{ precio_base_token|intcomma }}'
+# Fix split estado_pago == 'EN_REVISION'
+c = re.sub(r'reserva\.estado_pago\s*==\s*\r?\n\s*\'EN_REVISION\'', "reserva.estado_pago == 'EN_REVISION'", c)
 
-    if target_split in content:
-        new_content = content.replace(target_split, replacement)
-        with open(file_path, 'w', encoding='utf-8') as f:
-            f.write(new_content)
-        print("Successfully replaced content.")
-    else:
-        print("Target string not found. Dumping a snippet to check:")
-        start_index = content.find('precio-unitario')
-        if start_index != -1:
-            print(content[start_index:start_index+200])
-        else:
-            print("Could not find anchor 'precio-unitario'")
+# Fix split endif tags  
+c = re.sub(r'\{%\s*endif\s*\r?\n\s*%\}', '{% endif %}', c)
+c = re.sub(r'selected\s*\{%\s*endif\s*\r?\n\s*%\}', 'selected{% endif %}', c)
 
-except Exception as e:
-    print(f"Error: {e}")
+with open(path, 'w', encoding='utf-8') as f:
+    f.write(c)
+    
+print('Fixed!')

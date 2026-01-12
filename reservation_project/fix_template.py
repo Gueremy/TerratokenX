@@ -1,32 +1,59 @@
-import pathlib
-import re
+import os
 
-file_path = pathlib.Path('booking/templates/booking/admin_panel_v3.html')
-content = file_path.read_text(encoding='utf-8')
+path = r'booking\templates\booking\admin_panel_v4.html'
 
-# Fix 1: split endif tag
-pattern1 = r"check_circle\{%\s*\n\s*endif\s*%\}"
-replacement1 = "check_circle{% endif %}"
-content = re.sub(pattern1, replacement1, content)
+with open(path, 'r', encoding='utf-8') as f:
+    content = f.read()
 
-# Fix 2: comparison operators need spaces
-# Fix request.GET.pagado=='true' -> request.GET.pagado == 'true'
-content = content.replace("request.GET.pagado=='true'", "request.GET.pagado == 'true'")
-content = content.replace("request.GET.pagado=='false'", "request.GET.pagado == 'false'")
+# Fix split-line template tags by removing newlines inside {% %} blocks
+# This is a more aggressive fix that consolidates multi-line tags
 
-# Write back
-file_path.write_text(content, encoding='utf-8')
-print("Fixed all template issues!")
+# Fix the proyecto option that has split endif
+content = content.replace(
+    """{% if request.GET.proyecto == p.id|stringformat:'s' %}selected{%
+                                endif %}""",
+    """{% if request.GET.proyecto == p.id|stringformat:'s' %}selected{% endif %}"""
+)
 
-# Verify
-new_content = file_path.read_text(encoding='utf-8')
-issues = []
-if "check_circle{%" in new_content and "endif" in new_content[new_content.find("check_circle{%"):new_content.find("check_circle{%")+100]:
-    issues.append("Split endif still present")
-if "pagado=='" in new_content:
-    issues.append("Comparison operators still need spaces")
+# Fix estado_pago options with split endif
+content = content.replace(
+    """}selected{% endif %}>
+                                Pendiente""",
+    """}selected{% endif %}>Pendiente"""  
+)
 
-if issues:
-    print("WARNING:", issues)
-else:
-    print("All fixes verified successfully!")
+content = content.replace(
+    """{% if request.GET.estado_pago == 'EN_REVISION' %}selected{% endif
+                                %}>En Revision""",
+    """{% if request.GET.estado_pago == 'EN_REVISION' %}selected{% endif %}>En Revision"""
+)
+
+content = content.replace(
+    """{% if request.GET.estado_pago == 'CONFIRMADO' %}selected{% endif
+                                %}>Confirmado""",
+    """{% if request.GET.estado_pago == 'CONFIRMADO' %}selected{% endif %}>Confirmado"""
+)
+
+# Fix metodo_pago options with split endif  
+content = content.replace(
+    """}selected{% endif %}>Mercado Pago
+                            </option>""",
+    """}selected{% endif %}>Mercado Pago</option>"""
+)
+
+content = content.replace(
+    """}selected{% endif %}>Crypto
+                            </option>""",
+    """}selected{% endif %}>Crypto</option>"""
+)
+
+content = content.replace(
+    """{% if request.GET.metodo_pago == 'CRYPTO_MANUAL' %}selected{%
+                                endif %}>Crypto Manual""",
+    """{% if request.GET.metodo_pago == 'CRYPTO_MANUAL' %}selected{% endif %}>Crypto Manual"""
+)
+
+with open(path, 'w', encoding='utf-8') as f:
+    f.write(content)
+
+print("Template fixed - split lines consolidated!")

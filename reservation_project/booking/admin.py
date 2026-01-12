@@ -2,7 +2,13 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.contrib.humanize.templatetags.humanize import intcomma
 from import_export.admin import ImportExportModelAdmin
-from .models import Reserva, DiaFeriado, Coupon, Configuracion
+from .models import Reserva, DiaFeriado, Coupon, Configuracion, Proyecto
+
+@admin.register(Proyecto)
+class ProyectoAdmin(ImportExportModelAdmin):
+    list_display = ('nombre', 'precio_token', 'tokens_vendidos', 'activo')
+    prepopulated_fields = {'slug': ('nombre',)}
+    list_editable = ('activo', 'precio_token')
 
 @admin.register(Reserva)
 class ReservaAdmin(ImportExportModelAdmin):
@@ -11,16 +17,21 @@ class ReservaAdmin(ImportExportModelAdmin):
     """
     list_display = (
         'numero_reserva',
+        'proyecto_link', # Mostrar proyecto
         'nombre',
         'cantidad_tokens',
         'total_formatted',
         'estado_pago',
         'created_at'
     )
-    list_filter = ('estado_pago', 'created_at')
+    list_filter = ('proyecto', 'estado_pago', 'created_at') # Filtro por proyecto añadido
     search_fields = ('nombre', 'numero_reserva')
     date_hierarchy = 'created_at'
     ordering = ('-created_at',)
+
+    @admin.display(description='Proyecto', ordering='proyecto')
+    def proyecto_link(self, obj):
+        return obj.proyecto.nombre if obj.proyecto else "N/A"
 
     @admin.display(description='Total', ordering='total')
     def total_formatted(self, obj):
