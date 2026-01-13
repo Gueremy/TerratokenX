@@ -126,8 +126,19 @@ def create_mp_preference(request, reserva_id):
     try:
         preference_response = sdk.preference().create(preference_data)
         preference = preference_response["response"]
+        
+        # Verificar si la respuesta contiene init_point
+        if "init_point" not in preference:
+            logger.error(f"Mercado Pago respuesta sin init_point: {preference}")
+            messages.error(request, "Error: Mercado Pago no generó el enlace de pago. Revise las credenciales.")
+            return redirect('reservation_form')
+            
         # Redirigir al usuario a la URL de pago de Mercado Pago
         return redirect(preference["init_point"])
+    except KeyError as e:
+        logger.error(f"Error Mercado Pago KeyError: {e} - Respuesta: {preference_response}")
+        messages.error(request, "Error de Configuración: La API Key de Mercado Pago parece haber expirado o es inválida.")
+        return redirect('reservation_form')
     except Exception as e:
         # Mensaje amigable para el administrador/cliente
         logger.error(f"Error Mercado Pago: {e}")
