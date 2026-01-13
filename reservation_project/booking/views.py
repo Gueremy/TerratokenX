@@ -714,24 +714,28 @@ def api_get_crypto_details(request):
             pass
             
         # 2. Calcular monto - reserva.total está en USD
-        # CryptoMarket usa USDT (no USD), USDT ≈ 1:1 con USD
-        # Intentar obtener par USDT (ej: BTCUSDT, ETHUSDT)
-        symbol_usdt = f"{currency}USDT"
-        ticker_usdt = api.get_ticker(symbol_usdt)
-        
-        rate_usdt = 0
-        if ticker_usdt:
-            if 'last' in ticker_usdt: rate_usdt = float(ticker_usdt['last'])
-            elif 'last_price' in ticker_usdt: rate_usdt = float(ticker_usdt['last_price'])
-            elif 'price' in ticker_usdt: rate_usdt = float(ticker_usdt['price'])
-        
-        # Si no hay par USDT, usar CLP y convertir
-        if rate_usdt == 0 and rate > 0:
-            # Aproximación: 1 USD ≈ 970 CLP
-            rate_usdt = rate / 970
-        
-        if rate_usdt == 0:
-            return JsonResponse({'success': False, 'error': f'No se pudo obtener la tasa para {currency}. Intenta otra moneda.'})
+        # CASO ESPECIAL: USDT es 1:1 con USD
+        if currency == 'USDT':
+            rate_usdt = 1.0  # USDT = USD
+        else:
+            # CryptoMarket usa USDT (no USD), USDT ≈ 1:1 con USD
+            # Intentar obtener par USDT (ej: BTCUSDT, ETHUSDT)
+            symbol_usdt = f"{currency}USDT"
+            ticker_usdt = api.get_ticker(symbol_usdt)
+            
+            rate_usdt = 0
+            if ticker_usdt:
+                if 'last' in ticker_usdt: rate_usdt = float(ticker_usdt['last'])
+                elif 'last_price' in ticker_usdt: rate_usdt = float(ticker_usdt['last_price'])
+                elif 'price' in ticker_usdt: rate_usdt = float(ticker_usdt['price'])
+            
+            # Si no hay par USDT, usar CLP y convertir
+            if rate_usdt == 0 and rate > 0:
+                # Aproximación: 1 USD ≈ 970 CLP
+                rate_usdt = rate / 970
+            
+            if rate_usdt == 0:
+                return JsonResponse({'success': False, 'error': f'No se pudo obtener la tasa para {currency}. Intenta otra moneda.'})
         
         total_usd = float(reserva.total)
         crypto_amount = total_usd / rate_usdt
