@@ -36,9 +36,12 @@
                         <select name="estado_pago"
                             class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white">
                             <option value="">Todos</option>
-                            <option value="PENDIENTE" {% if request.GET.estado_pago == 'PENDIENTE' %}selected{% endif %}>Pendiente</option>
-                            <option value="EN_REVISION" {% if request.GET.estado_pago == 'EN_REVISION' %}selected{% endif %}>En Revision</option>
-                            <option value="CONFIRMADO" {% if request.GET.estado_pago == 'CONFIRMADO' %}selected{% endif %}>Confirmado</option>
+                            <option value="PENDIENTE" {% if request.GET.estado_pago=='PENDIENTE' %}selected{% endif %}>
+                                Pendiente</option>
+                            <option value="EN_REVISION" {% if request.GET.estado_pago=='EN_REVISION' %}selected{% endif
+                                %}>En Revision</option>
+                            <option value="CONFIRMADO" {% if request.GET.estado_pago=='CONFIRMADO' %}selected{% endif
+                                %}>Confirmado</option>
                         </select>
                     </div>
                     <div>
@@ -46,9 +49,12 @@
                         <select name="metodo_pago"
                             class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white">
                             <option value="">Todos</option>
-                            <option value="MP" {% if request.GET.metodo_pago == 'MP' %}selected{% endif %}>Mercado Pago</option>
-                            <option value="CRYPTO" {% if request.GET.metodo_pago == 'CRYPTO' %}selected{% endif %}>Crypto</option>
-                            <option value="CRYPTO_MANUAL" {% if request.GET.metodo_pago == 'CRYPTO_MANUAL' %}selected{% endif %}>Crypto Manual</option>
+                            <option value="MP" {% if request.GET.metodo_pago=='MP' %}selected{% endif %}>Mercado Pago
+                            </option>
+                            <option value="CRYPTO" {% if request.GET.metodo_pago=='CRYPTO' %}selected{% endif %}>Crypto
+                            </option>
+                            <option value="CRYPTO_MANUAL" {% if request.GET.metodo_pago=='CRYPTO_MANUAL' %}selected{%
+                                endif %}>Crypto Manual</option>
                         </select>
                     </div>
                     <div>
@@ -57,7 +63,8 @@
                             class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white">
                             <option value="">Todos</option>
                             {% for p in proyectos %}
-                            <option value="{{ p.id }}" {% if request.GET.proyecto == p.id|stringformat:'s' %}selected{% endif %}>{{ p.nombre }}</option>
+                            <option value="{{ p.id }}" {% if request.GET.proyecto==p.id|stringformat:'s' %}selected{%
+                                endif %}>{{ p.nombre }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -107,7 +114,8 @@
                         <div>Telefono: {{ reserva.telefono }}</div>
                         <div>Direccion: {{ reserva.direccion }}</div>
                         <div>Tokens: {{ reserva.cantidad_tokens }}</div>
-                        <div>Pago: {{ reserva.get_metodo_pago_display }}</div>
+                        <div>Pago: {{ reserva.get_metodo_pago_display }}{% if reserva.crypto_currency %} ({{
+                            reserva.crypto_currency }}){% endif %}</div>
                         <div>Total: USD {{ reserva.total|floatformat:0 }}</div>
                         <div class="md:col-span-2">
                             <span class="text-blue-400">Proyecto:</span>
@@ -115,7 +123,7 @@
                         </div>
                     </div>
                     {% if reserva.coupon %}<div class="mt-2"><span
-                            class="bg-green-900 text-green-400 px-2.5 py-0.5 rounded-full text-xs">Cupon: {{
+                            class="bg-green-900 text-green-400 px-2.5 py-0.5 rounded-full text-xs">Cupón: {{
                             reserva.coupon.code }} (-{{ reserva.coupon.discount_percentage }}%)</span></div>{% endif %}
                     <div class="mt-6 flex gap-3 border-t border-gray-700 pt-4">
                         <a href="{% url 'editar_reserva' reserva.id %}"

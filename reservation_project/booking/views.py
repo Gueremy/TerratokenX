@@ -199,7 +199,7 @@ def admin_panel(request):
         dias_feriados = DiaFeriado.objects.all().order_by('fecha')
         coupons = Coupon.objects.all().order_by('-valid_to')
         config = Configuracion.load()  # Cargar configuración para mostrarla
-        return render(request, 'booking/admin_panel_v4.html', {
+        return render(request, 'booking/admin_panel_v3.html', {
             'reservas': reservas,
             'dias_feriados': dias_feriados,
             'coupons': coupons,
