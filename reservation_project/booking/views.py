@@ -103,7 +103,7 @@ def create_mp_preference(request, reserva_id):
     except Exception:
         USD_TO_CLP_RATE = 970  # Fallback si la API falla
     
-    total_clp = float(reserva.total) * USD_TO_CLP_RATE
+    total_clp = int(float(reserva.total) * USD_TO_CLP_RATE)  # MP Chile requiere entero
 
     preference_data = {
         "items": [
