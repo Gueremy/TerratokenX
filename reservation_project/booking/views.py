@@ -108,7 +108,7 @@ def create_mp_preference(request, reserva_id):
     preference_data = {
         "items": [
             {
-                "title": f"Reserva Inversión TerraTokenX - {reserva.numero_reserva}",
+                "title": f"Compra Token Inversión TerraTokenX - {reserva.numero_reserva}",
                 "quantity": 1,
                 "unit_price": total_clp,
                 "currency_id": "CLP",
