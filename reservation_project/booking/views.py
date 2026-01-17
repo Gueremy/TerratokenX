@@ -215,7 +215,7 @@ def editar_reserva(request, reserva_id):
         form = AdminReservaForm(request.POST, instance=reserva)
         if form.is_valid():
             form.save()
-            return redirect('admin_panel')
+            return redirect('admin_sales')
     else:
         form = AdminReservaForm(instance=reserva)
     return render(request, 'booking/editar_reserva.html', {'form': form, 'reserva': reserva})
@@ -225,7 +225,7 @@ def eliminar_reserva(request, reserva_id):
     reserva = get_object_or_404(Reserva, id=reserva_id)
     if request.method == 'POST':
         reserva.delete()
-        return redirect('admin_panel')
+        return redirect('admin_sales')
     # return render(request, 'booking/eliminar_reserva_clean.html', {'reserva': reserva})
     # Solución definitiva para evitar conflictos de OneDrive: Template en línea
     from django.template import Template, Context
@@ -278,7 +278,8 @@ def eliminar_reserva(request, reserva_id):
     </body>
     </html>
     """
-    return HttpResponse(Template(html_template).render(Context({'reserva': reserva}, autoescape=False)))
+    from django.template import RequestContext
+    return HttpResponse(Template(html_template).render(RequestContext(request, {'reserva': reserva})))
 
 def reservation_form(request):
     print("DEBUG: CARGANDO VISTA reservation_form (Debería usar v2)")
