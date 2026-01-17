@@ -1299,7 +1299,20 @@ def admin_dashboard(request):
     
     # KPIs
     reservas_confirmadas = Reserva.objects.filter(estado_pago='CONFIRMADO')
-    total_revenue = reservas_confirmadas.aggregate(total=Sum('total'))['total'] or 0
+    
+    # Calcular ingresos NETOS (lo que realmente recibimos)
+    # MP: descontar la comisión 3.19% que se le cobró al cliente
+    # Crypto: llega el 100%
+    total_revenue_net = 0
+    for r in reservas_confirmadas:
+        if r.metodo_pago == 'MP':
+            # El total incluye +3.19%, dividir para obtener el neto
+            total_revenue_net += r.total / 1.0319
+        else:
+            # Crypto: llega completo
+            total_revenue_net += r.total
+    total_revenue_net = round(total_revenue_net, 2)
+    
     total_tokens = reservas_confirmadas.aggregate(total=Sum('cantidad_tokens'))['total'] or 0
     
     # Firmas
@@ -1311,42 +1324,57 @@ def admin_dashboard(request):
     # Proyectos Activos
     projects_active = Proyecto.objects.filter(activo=True, estado='Activo').count()
     
-    # === TOP PROYECTOS (Optimized) ===
+    # === TOP PROYECTOS (con ingresos NETOS) ===
     top_projects = []
     
-    # 1. Proyectos Reales (Activos e Inactivos si tienen ventas)
-    # Usamos annotate para ordenar por ingresos reales en DB
-    proyectos_con_ventas = Proyecto.objects.annotate(
-        ingresos_reales=Sum('reserva_set__total', filter=models.Q(reserva_set__estado_pago='CONFIRMADO')),
-        tokens_vendidos_reales=Sum('reserva_set__cantidad_tokens', filter=models.Q(reserva_set__estado_pago='CONFIRMADO'))
-    ).filter(ingresos_reales__gt=0).order_by('-ingresos_reales')
+    # 1. Proyectos con ventas - calcular ingresos netos
+    proyectos_activos = Proyecto.objects.filter(
+        reserva_set__estado_pago='CONFIRMADO'
+    ).distinct()
     
-    for p in proyectos_con_ventas[:5]:
-        top_projects.append({
-            'nombre': p.nombre,
-            'ubicacion': p.ubicacion,
-            'tokens_vendidos': p.tokens_vendidos_reales or 0,
-            'tokens_totales': p.tokens_totales,
-            'porcentaje_vendido': p.porcentaje_vendido,
-            'ingresos': p.ingresos_reales or 0,
-        })
+    for p in proyectos_activos:
+        reservas_proyecto = Reserva.objects.filter(proyecto=p, estado_pago='CONFIRMADO')
+        ingresos_netos = 0
+        tokens_vendidos = 0
+        for r in reservas_proyecto:
+            tokens_vendidos += r.cantidad_tokens
+            if r.metodo_pago == 'MP':
+                ingresos_netos += r.total / 1.0319
+            else:
+                ingresos_netos += r.total
+        
+        if ingresos_netos > 0:
+            top_projects.append({
+                'nombre': p.nombre,
+                'ubicacion': p.ubicacion,
+                'tokens_vendidos': tokens_vendidos,
+                'tokens_totales': p.tokens_totales,
+                'porcentaje_vendido': p.porcentaje_vendido,
+                'ingresos': round(ingresos_netos, 2),
+            })
 
     # 2. Ventas "Sin Proyecto" (Legacy / Huérfanos)
     orphaned_reservas = Reserva.objects.filter(
         estado_pago='CONFIRMADO', 
         proyecto__isnull=True
     )
-    orphaned_revenue = orphaned_reservas.aggregate(t=Sum('total'))['t'] or 0
-    orphaned_tokens = orphaned_reservas.aggregate(t=Sum('cantidad_tokens'))['t'] or 0
+    orphaned_revenue_net = 0
+    orphaned_tokens = 0
+    for r in orphaned_reservas:
+        orphaned_tokens += r.cantidad_tokens
+        if r.metodo_pago == 'MP':
+            orphaned_revenue_net += r.total / 1.0319
+        else:
+            orphaned_revenue_net += r.total
     
-    if orphaned_revenue > 0:
+    if orphaned_revenue_net > 0:
         top_projects.append({
             'nombre': 'Ventas Directas / Otros',
             'ubicacion': 'General',
             'tokens_vendidos': orphaned_tokens,
             'tokens_totales': '-', # No aplica
             'porcentaje_vendido': '-', 
-            'ingresos': orphaned_revenue,
+            'ingresos': round(orphaned_revenue_net, 2),
             'is_orphan': True # Flag por si queremos estilo diferente
         })
         
@@ -1372,7 +1400,7 @@ def admin_dashboard(request):
         'active_tab': 'dashboard',
         'pending_count': pending_count,
         'kpi': {
-            'total_revenue': total_revenue,
+            'total_revenue': total_revenue_net,  # Ingresos NETOS (sin comisión MP)
             'tokens_sold': total_tokens,
             'signed_contracts': signed_contracts,
             'pending_signatures': pending_signatures,
