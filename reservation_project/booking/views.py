@@ -49,7 +49,7 @@ def add_event_to_spa_calendar(reserva):
 
 def login_view(request):
     if request.user.is_authenticated and request.user.is_staff:
-        return redirect('admin_panel')
+        return redirect('admin_dashboard')
 
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
@@ -59,7 +59,7 @@ def login_view(request):
             user = authenticate(username=username, password=password)
             if user is not None and user.is_staff:
                 login(request, user)
-                return redirect('admin_panel')
+                return redirect('admin_dashboard')
             else:
                 messages.error(request, "Acceso denegado. Solo para administradores.")
         else:
