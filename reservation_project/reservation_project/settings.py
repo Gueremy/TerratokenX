@@ -204,7 +204,12 @@ LOGOUT_REDIRECT_URL = '/' # Redirigir a la página principal después de cerrar 
 
 # Configuración para archivos media (Imágenes subidas)
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# Usar disco persistente de Render si está configurado, sino usar local
+RENDER_DISK_PATH = env('RENDER_DISK_PATH', default='')
+if RENDER_DISK_PATH:
+    MEDIA_ROOT = RENDER_DISK_PATH
+else:
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # --- FirmaVirtual / Trámit Express Integration ---
 # IMPORTANTE: En producción, TODAS estas variables deben estar en el entorno
