@@ -97,7 +97,7 @@ def create_mp_preference(request, reserva_id):
                 "title": f"Reserva Inversión TerraTokenX - {reserva.numero_reserva}",
                 "quantity": 1,
                 "unit_price": float(reserva.total),
-                "currency_id": "CLP", # ¡IMPORTANTE! Asegúrate de que esta es tu moneda. Usa "ARS", "MXN", etc.
+                "currency_id": "USD",  # USD para clientes internacionales
             }
         ],
         "payer": {
