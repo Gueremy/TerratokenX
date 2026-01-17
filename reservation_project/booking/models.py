@@ -133,7 +133,7 @@ class Reserva(models.Model):
         if self.metodo_pago == 'MP':
             from decimal import Decimal
             # Convertir a Decimal para evitar errores de tipo float
-            self.total = float(self.total) * 1.04
+            self.total = float(self.total) * 1.0319
 
         # Detectar si el estado cambió a CONFIRMADO para disparar FirmaVirtual
         trigger_firmavirtual = False
