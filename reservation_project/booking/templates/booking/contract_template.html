@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Contrato de Compraventa de Tokens</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            line-height: 1.6;
+            color: #000;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 20px;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin: 0;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #555;
+            margin-top: 5px;
+        }
+
+        .section {
+            margin-bottom: 20px;
+            text-align: justify;
+        }
+
+        .section-title {
+            font-weight: bold;
+            text-decoration: underline;
+            margin-bottom: 10px;
+        }
+
+        .data-field {
+            font-weight: bold;
+            background-color: #f0f0f0;
+            padding: 0 5px;
+        }
+
+        .signature-section {
+            margin-top: 60px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .signature-box {
+            width: 45%;
+            border-top: 1px solid #000;
+            padding-top: 10px;
+            text-align: center;
+        }
+
+        .legal-footer {
+            margin-top: 50px;
+            font-size: 10px;
+            text-align: center;
+            color: #777;
+            border-top: 1px solid #ccc;
+            padding-top: 10px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        li {
+            margin-bottom: 10px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        li:before {
+            content: "•";
+            position: absolute;
+            left: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1 class="title">Contrato de Compraventa de Tokens Digitales</h1>
+        <p class="subtitle">Proyecto Inmobiliario: <span class="data-field">{{ project_name }}</span></p>
+    </div>
+
+    <div class="section">
+        <p>En Santiago de Chile, a <strong>{{ fecha_actual }}</strong>, comparecen:</p>
+
+        <p>Por una parte, <strong>TERRATOKENX SpA</strong>, en adelante "LA EMPRESA", debidamente representada por su
+            Gerente General.</p>
+
+        <p>Y por la otra,
+            {% if es_empresa %}
+            <strong><span class="data-field">{{ razon_social }}</span></strong>, RUT N° <span class="data-field">{{
+                rut_empresa }}</span>,
+            debidamente representada por don/ña <span class="data-field">{{ nombre }}</span>, Cédula de Identidad N°
+            <span class="data-field">{{ rut }}</span>,
+            en su calidad de <span class="data-field">{{ cargo_representante }}</span>,
+            {% else %}
+            <span class="data-field">{{ nombre }}</span>, Cédula de Identidad N° <span class="data-field">{{ rut
+                }}</span>,
+            {% endif %}
+            domiciliado en <span class="data-field">{{ direccion }}</span>, teléfono <span class="data-field">{{
+                telefono }}</span>, correo electrónico <span class="data-field">{{ email }}</span>, en adelante "EL
+            COMPRADOR".
+        </p>
+
+        <p>Ambas partes acuerdan celebrar el presente contrato de compraventa de activos digitales (Tokens), sujeto a
+            las siguientes cláusulas:</p>
+    </div>
+
+    <div class="section">
+        <div class="section-title">PRIMERO: OBJETO DEL CONTRATO</div>
+        <p>LA EMPRESA vende, cede y transfiere a EL COMPRADOR, quien compra, acepta y adquiere para sí, la cantidad de
+            <span class="data-field">{{ amount }} Tokens</span> asociados al proyecto inmobiliario denominado
+            <strong>"{{ project_name }}"</strong>.</p>
+    </div>
+
+    <div class="section">
+        <div class="section-title">SEGUNDO: PRECIO Y FORMA DE PAGO</div>
+        <p>El precio total de la compraventa asciende a la suma de <strong>USD {{ total }}</strong> (Dólares de los
+            Estados Unidos de América).</p>
+        <p>Las partes declaran que el precio ha sido pagado íntegramente por EL COMPRADOR a LA EMPRESA mediante
+            transferencias electrónicas o medios de pago digitales autorizados, declarando LA EMPRESA haberlo recibido a
+            su entera satisfacción.</p>
+    </div>
+
+    <div class="section">
+        <div class="section-title">TERCERO: NATURALEZA DE LOS TOKENS</div>
+        <p>EL COMPRADOR declara conocer y aceptar que:</p>
+        <ul>
+            <li>Los Tokens representan derechos contractuales sobre los flujos económicos o derechos de uso del proyecto
+                inmobiliario subyacente.</li>
+            <li>La adquisición de Tokens implica riesgos asociados a la tecnología Blockchain y al mercado inmobiliario,
+                los cuales declara conocer y asumir.</li>
+            <li>Este contrato se perfecciona mediante la firma electrónica avanzada a través de la plataforma
+                FirmaVirtual.</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <div class="section-title">CUARTO: DOMICILIO Y JURISDICCIÓN</div>
+        <p>Para todos los efectos legales derivados del presente contrato, las partes fijan su domicilio en la ciudad de
+            Santiago de Chile y se someten a la jurisdicción de sus Tribunales Ordinarios de Justicia.</p>
+    </div>
+
+    <div class="signature-section">
+        <div class="signature-box">
+            <p><strong>TERRATOKENX SpA</strong><br>Vendedor</p>
+        </div>
+        <div class="signature-box">
+            {% if es_empresa %}
+            <p><strong>{{ razon_social }}</strong><br>Rep. Legal: {{ nombre }}<br>Comprador</p>
+            {% else %}
+            <p><strong>{{ nombre }}</strong><br>RUT: {{ rut }}<br>Comprador</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="legal-footer">
+        <p>Documento generado electrónicamente el {{ fecha_actual }}. La validez de este documento puede ser verificada
+            a través de FirmaVirtual.</p>
+    </div>
+</body>
+
+</html>

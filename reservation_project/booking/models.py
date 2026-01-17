@@ -54,8 +54,27 @@ class Reserva(models.Model):
     crypto_currency = models.CharField(max_length=10, null=True, blank=True, help_text="Ej: ETH, BTC")
     crypto_address = models.CharField(max_length=255, null=True, blank=True, help_text="Dirección de depósito asignada")
     payment_window_start = models.DateTimeField(null=True, blank=True, help_text="Inicio de la ventana de espera del pago")
+    
+    # --- Datos para Contrato Legal (FirmaVirtual) ---
+    rut = models.CharField("RUT Firmante", max_length=20, blank=True, null=True, help_text="RUT de quien firma (Persona o Rep. Legal)")
+    telefono = models.CharField(max_length=20, blank=True, null=True, help_text="Fundamental para FirmaVirtual")
+    
+    # Datos para Persona Jurídica
+    es_empresa = models.BooleanField(default=False, verbose_name="¿Es Persona Jurídica?")
+    razon_social = models.CharField(max_length=200, blank=True, null=True, help_text="Solo si es empresa")
+    rut_empresa = models.CharField(max_length=20, blank=True, null=True, help_text="RUT de la empresa")
+    cargo_representante = models.CharField(max_length=100, blank=True, null=True, help_text="Ej: Gerente General")
 
-    # --- Nuevos campos ---
+    # Integración FirmaVirtual (Tracking)
+    firmavirtual_id = models.CharField(max_length=100, blank=True, null=True, help_text="ID del trámite en FV (request_id)")
+    firmavirtual_url = models.URLField(max_length=500, blank=True, null=True, help_text="Link para firmar")
+    firmavirtual_status = models.CharField(max_length=50, default='pending', help_text="Estado: pending, signed, rejected")
+    firmavirtual_files_ids = models.JSONField(default=list, blank=True, help_text="IDs de archivos asociados")
+    
+    # Archivo Final
+    contrato_firmado = models.FileField(upload_to='contratos_firmados/', blank=True, null=True)
+
+    # --- Nuevos campos (Tokens) ---
     cantidad_tokens = models.PositiveIntegerField("Cantidad de Tokens", default=1)
     numero_reserva = models.CharField(max_length=10, editable=False, unique=True, blank=True)
     total = models.PositiveIntegerField("Total", default=0)
@@ -116,7 +135,81 @@ class Reserva(models.Model):
             # Convertir a Decimal para evitar errores de tipo float
             self.total = float(self.total) * 1.04
 
+        # Detectar si el estado cambió a CONFIRMADO para disparar FirmaVirtual
+        trigger_firmavirtual = False
+        if self.pk:
+            # Si es una actualización, verificar si el estado cambió
+            try:
+                old_instance = Reserva.objects.get(pk=self.pk)
+                if old_instance.estado_pago != self.ESTADO_CONFIRMADO and self.estado_pago == self.ESTADO_CONFIRMADO:
+                    trigger_firmavirtual = True
+            except Reserva.DoesNotExist:
+                pass
+
         super().save(*args, **kwargs)
+        
+        # Después de guardar, si toca disparar acciones por confirmación de pago
+        if trigger_firmavirtual:
+            # 1. Enviar email de bienvenida al cliente
+            self._send_welcome_email()
+            
+            # 2. Disparar FirmaVirtual si no tiene contrato ya
+            if not self.firmavirtual_id:
+                self._trigger_firmavirtual_contract()
+
+    def _send_welcome_email(self):
+        """
+        Envía email de bienvenida cuando el pago es confirmado.
+        """
+        import threading
+        from django.core.mail import send_mail
+        from django.template.loader import render_to_string
+        from django.conf import settings
+        
+        def send_email():
+            try:
+                context = {'reserva': self}
+                html_message = render_to_string('booking/emails/payment_confirmed_welcome.html', context)
+                
+                send_mail(
+                    subject=f'🎉 ¡Bienvenido a TerraTokenX! - Reserva #{self.numero_reserva}',
+                    message='',
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[self.correo],
+                    fail_silently=False,
+                    html_message=html_message,
+                )
+                print(f"📧 Email de bienvenida enviado a {self.correo}")
+            except Exception as e:
+                print(f"❌ Error enviando email de bienvenida: {e}")
+        
+        # Ejecutar en hilo separado
+        email_thread = threading.Thread(target=send_email)
+        email_thread.start()
+
+    def _trigger_firmavirtual_contract(self):
+        """
+        Dispara la creación del contrato en FirmaVirtual.
+        Se ejecuta automáticamente cuando el pago pasa a CONFIRMADO.
+        """
+        try:
+            from booking.services.firmavirtual import FirmaVirtualService
+            service = FirmaVirtualService()
+            result = service.create_contract_request(self)
+            
+            if 'error' not in result and result.get('status') == 'success':
+                # Guardar el ID del trámite - está en message.contract.sContractID
+                contract_data = result.get('message', {}).get('contract', {})
+                fv_id = contract_data.get('sContractID')
+                if fv_id:
+                    self.firmavirtual_id = str(fv_id)
+                    self.firmavirtual_status = 'sent'
+                    self.save(update_fields=['firmavirtual_id', 'firmavirtual_status'])
+                print(f"FirmaVirtual: Contrato creado para reserva {self.numero_reserva} - ID: {fv_id}")
+            else:
+                print(f"FirmaVirtual Error para reserva {self.numero_reserva}: {result.get('error')}")
+        except Exception as e:
+            print(f"Excepción FirmaVirtual para reserva {self.numero_reserva}: {str(e)}")
 
     def __str__(self):
         return f"{self.nombre} - {self.numero_reserva}"
@@ -230,6 +323,29 @@ class ProyectoImagen(models.Model):
 
     def __str__(self):
         return f"Imagen de {self.proyecto.nombre}"
+
+
+# Modelo para secciones/tabs personalizables del proyecto
+class ProyectoSeccion(models.Model):
+    """
+    Secciones personalizables para cada proyecto (tabs como Resumen, Análisis, Números, etc.)
+    Estas secciones se muestran en la landing page via API.
+    """
+    proyecto = models.ForeignKey('Proyecto', related_name='secciones', on_delete=models.CASCADE)
+    nombre = models.CharField(max_length=100, help_text="Nombre del tab (ej: Resumen, Análisis, Números)")
+    icono = models.CharField(max_length=50, blank=True, null=True, help_text="Emoji o nombre de icono (ej: 📊, description)")
+    contenido = models.TextField(help_text="Contenido de la sección (puede ser HTML)")
+    orden = models.PositiveIntegerField(default=0, help_text="Orden de aparición (menor = primero)")
+    activo = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['orden', 'id']
+        verbose_name = "Sección de Proyecto"
+        verbose_name_plural = "Secciones de Proyecto"
+
+    def __str__(self):
+        return f"{self.proyecto.nombre} - {self.nombre}"
 
 class Configuracion(models.Model):
     precio_base_token = models.PositiveIntegerField(default=100, verbose_name="Precio Base Token (USD)")

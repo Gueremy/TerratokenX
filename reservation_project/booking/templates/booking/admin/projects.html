@@ -1,0 +1,91 @@
+{% extends 'booking/admin/base_admin.html' %}
+{% load humanize %}
+
+{% block title %}Proyectos{% endblock %}
+{% block page_title %}Gestion de Proyectos{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-8">
+    <h2 class="text-xl font-semibold text-white">Proyectos Existentes</h2>
+    <a href="{% url 'project_create' %}"
+        class="flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-xl transition-colors">
+        <span class="material-icons">add</span>
+        Nuevo Proyecto
+    </a>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for p in proyectos %}
+    <div class="glass-panel rounded-2xl overflow-hidden group hover:border-blue-500/50 transition-all">
+        <div class="relative h-48 bg-gray-800">
+            {% if p.imagen_portada_url %}
+            <img src="{{ p.imagen_portada_url }}" alt="{{ p.nombre }}" class="w-full h-full object-cover">
+            {% elif p.imagen_portada %}
+            <img src="{{ p.imagen_portada.url }}" alt="{{ p.nombre }}" class="w-full h-full object-cover">
+            {% else %}
+            <div class="flex items-center justify-center h-full text-gray-600">
+                <span class="material-icons text-5xl">image_not_supported</span>
+            </div>
+            {% endif %}
+            <div class="absolute top-3 right-3">
+                <span class="px-3 py-1 rounded-full text-xs font-bold 
+                    {% if p.estado == 'Activo' %}bg-green-500/20 text-green-400
+                    {% elif p.estado == 'Vendido' %}bg-purple-500/20 text-purple-400
+                    {% else %}bg-yellow-500/20 text-yellow-400{% endif %}">
+                    {{ p.estado }}
+                </span>
+            </div>
+        </div>
+
+        <div class="p-5">
+            <h3 class="text-lg font-bold text-white mb-1">{{ p.nombre }}</h3>
+            <p class="text-gray-500 text-xs mb-3">{{ p.ubicacion }}</p>
+            <p class="text-gray-400 text-sm mb-4 line-clamp-2">{{ p.descripcion|truncatewords:20 }}</p>
+
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <span class="text-green-400 font-bold text-lg">${{ p.precio_token|intcomma }}</span>
+                    <span class="text-gray-500 text-xs">USD/token</span>
+                </div>
+                <div class="text-right">
+                    <span class="text-blue-400 font-semibold">{{ p.tokens_vendidos }}</span>
+                    <span class="text-gray-500 text-xs">/ {{ p.tokens_totales }} tokens</span>
+                </div>
+            </div>
+
+            <div class="w-full bg-gray-700 rounded-full h-2 mb-4">
+                <div class="h-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-500"
+                    style="width: {{ p.porcentaje_vendido }}%"></div>
+            </div>
+
+            <div class="flex gap-2 pt-3 border-t border-gray-700">
+                <a href="{% url 'project_edit' p.id %}"
+                    class="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors">
+                    <span class="material-icons text-lg">edit</span>
+                    Editar
+                </a>
+                <form method="POST" action="{% url 'project_delete' p.id %}" class="flex-1"
+                    onsubmit="return confirm('¿Eliminar este proyecto?');">
+                    {% csrf_token %}
+                    <button type="submit"
+                        class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm transition-colors">
+                        <span class="material-icons text-lg">delete</span>
+                        Eliminar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-span-full py-16 text-center glass-panel rounded-2xl">
+        <span class="material-icons text-5xl text-gray-600 mb-4 block">apartment</span>
+        <p class="text-gray-400 text-lg mb-4">No hay proyectos creados aun</p>
+        <a href="{% url 'project_create' %}"
+            class="inline-flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-colors">
+            <span class="material-icons">add</span>
+            Crear Primer Proyecto
+        </a>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

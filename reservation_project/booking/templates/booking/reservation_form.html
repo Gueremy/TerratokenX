@@ -128,9 +128,14 @@
                         {{ form.correo.errors }}
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-1">Teléfono*</label>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Teléfono* <span class="text-xs text-gray-500">(para recibir el contrato)</span></label>
                         {{ form.telefono }}
                         {{ form.telefono.errors }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">RUT* <span class="text-xs text-gray-500">(obligatorio para contrato)</span></label>
+                        {{ form.rut }}
+                        {{ form.rut.errors }}
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-300 mb-1">Dirección*</label>

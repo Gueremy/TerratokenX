@@ -205,3 +205,16 @@ LOGOUT_REDIRECT_URL = '/' # Redirigir a la página principal después de cerrar 
 # Configuración para archivos media (Imágenes subidas)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# --- FirmaVirtual / Trámit Express Integration ---
+# IMPORTANTE: En producción, TODAS estas variables deben estar en el entorno
+FIRMAVIRTUAL_BASE_URL = env('FIRMAVIRTUAL_BASE_URL', default='https://api.firmavirtual.legal')
+# Credenciales - SIN defaults para forzar configuración en producción
+FIRMAVIRTUAL_USER = env('FIRMAVIRTUAL_USER', default='')
+FIRMAVIRTUAL_PASS = env('FIRMAVIRTUAL_PASS', default='')
+# Callback URL para webhooks (debe coincidir con tu dominio en producción)
+TRAMIT_CALLBACK_URL = env('TRAMIT_CALLBACK_URL', default='')
+FIRMAVIRTUAL_CALLBACK_URL = TRAMIT_CALLBACK_URL
+# Modo Prueba: True = NO cobra, False = SÍ cobra
+# Cambiar a False cuando quieras empezar a facturar
+FIRMAVIRTUAL_TEST_MODE = env.bool('FIRMAVIRTUAL_TEST_MODE', default=True)

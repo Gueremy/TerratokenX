@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contrato Firmado - TerraTokenX</title>
+</head>
+
+<body
+    style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0a0a0a;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0"
+        style="background-color: #0a0a0a; padding: 40px 20px;">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="600" cellspacing="0" cellpadding="0"
+                    style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.5);">
+
+                    <!-- Header -->
+                    <tr>
+                        <td
+                            style="background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%); padding: 30px; text-align: center;">
+                            <div
+                                style="width: 60px; height: 60px; background: rgba(255,255,255,0.2); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 15px;">
+                                <span style="font-size: 30px;">✓</span>
+                            </div>
+                            <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700;">¡Contrato Firmado!
+                            </h1>
+                            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">Tu inversión
+                                está confirmada</p>
+                        </td>
+                    </tr>
+
+                    <!-- Body -->
+                    <tr>
+                        <td style="padding: 40px 30px;">
+                            <p style="color: #e5e7eb; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+                                Hola <strong style="color: #22c55e;">{{ reserva.nombre }}</strong>,
+                            </p>
+
+                            <p style="color: #9ca3af; font-size: 15px; line-height: 1.6; margin: 0 0 25px 0;">
+                                Hemos recibido correctamente tu firma electrónica. Tu contrato de compra de tokens está
+                                ahora completamente validado y en regla.
+                            </p>
+
+                            <!-- Details Box -->
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0"
+                                style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 12px; margin-bottom: 25px;">
+                                <tr>
+                                    <td style="padding: 20px;">
+                                        <h3
+                                            style="color: #22c55e; margin: 0 0 15px 0; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">
+                                            Detalles de tu Inversión</h3>
+
+                                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                                            <tr>
+                                                <td
+                                                    style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                                    <span style="color: #9ca3af; font-size: 14px;">Número de
+                                                        Reserva</span>
+                                                </td>
+                                                <td
+                                                    style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">
+                                                    <span style="color: #ffffff; font-size: 14px; font-weight: 600;">{{
+                                                        reserva.numero_reserva }}</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td
+                                                    style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                                    <span style="color: #9ca3af; font-size: 14px;">Proyecto</span>
+                                                </td>
+                                                <td
+                                                    style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">
+                                                    <span style="color: #ffffff; font-size: 14px; font-weight: 600;">{{
+                                                        reserva.proyecto.nombre }}</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td
+                                                    style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                                    <span style="color: #9ca3af; font-size: 14px;">Tokens
+                                                        Adquiridos</span>
+                                                </td>
+                                                <td
+                                                    style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">
+                                                    <span style="color: #22c55e; font-size: 14px; font-weight: 600;">{{
+                                                        reserva.cantidad_tokens }} tokens</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 8px 0;">
+                                                    <span style="color: #9ca3af; font-size: 14px;">Total
+                                                        Invertido</span>
+                                                </td>
+                                                <td style="padding: 8px 0; text-align: right;">
+                                                    <span style="color: #22c55e; font-size: 18px; font-weight: 700;">${{
+                                                        reserva.total }} USD</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- Info -->
+                            <p style="color: #9ca3af; font-size: 14px; line-height: 1.6; margin: 0 0 20px 0;">
+                                📄 Una copia de tu contrato firmado ha sido guardada en nuestros sistemas. Si necesitas
+                                una copia, puedes solicitarla respondiendo a este correo.
+                            </p>
+
+                            <p style="color: #9ca3af; font-size: 14px; line-height: 1.6; margin: 0;">
+                                Gracias por confiar en TerraTokenX. Estamos emocionados de tenerte como inversionista.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td
+                            style="background: rgba(0,0,0,0.3); padding: 25px 30px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);">
+                            <p style="color: #6b7280; font-size: 12px; margin: 0 0 10px 0;">
+                                © 2024 TerraTokenX - Inversión Inmobiliaria Tokenizada
+                            </p>
+                            <p style="color: #4b5563; font-size: 11px; margin: 0;">
+                                Este es un correo automático, por favor no respondas directamente.
+                            </p>
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+
+</html>

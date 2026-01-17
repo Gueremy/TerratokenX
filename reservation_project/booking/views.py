@@ -4,6 +4,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm
 from .forms import ReservaForm, AdminReservaForm, ProyectoForm, ProyectoImagenFormSet
 from .models import Reserva, DiaFeriado, Coupon, Configuracion, Proyecto
+from .services.firmavirtual import FirmaVirtualService
 from django.contrib import messages
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
@@ -184,13 +185,24 @@ def admin_panel(request):
         dias_feriados = DiaFeriado.objects.all().order_by('fecha')
         coupons = Coupon.objects.all().order_by('-valid_to')
         config = Configuracion.load()  # Cargar configuración para mostrarla
-        return render(request, 'booking/admin_panel_v4.html', {
+        
+        # Estadísticas de FirmaVirtual
+        fv_stats = {
+            'total': Reserva.objects.exclude(firmavirtual_id__isnull=True).exclude(firmavirtual_id='').count(),
+            'pending': Reserva.objects.filter(firmavirtual_status='pending').exclude(firmavirtual_id__isnull=True).exclude(firmavirtual_id='').count(),
+            'sent': Reserva.objects.filter(firmavirtual_status='sent').count(),
+            'signed': Reserva.objects.filter(firmavirtual_status='signed').count(),
+            'rejected': Reserva.objects.filter(firmavirtual_status='rejected').count(),
+        }
+        
+        return render(request, 'booking/admin_panel_final.html', {
             'reservas': reservas,
             'dias_feriados': dias_feriados,
             'coupons': coupons,
             'config': config,  # Pasar el objeto de configuración a la plantilla
             'proyectos': Proyecto.objects.filter(activo=True),  # Para filtro por proyecto
             'request': request,
+            'fv_stats': fv_stats,  # Estadísticas FirmaVirtual
         })
     except Exception as e:
         import traceback
@@ -214,7 +226,59 @@ def eliminar_reserva(request, reserva_id):
     if request.method == 'POST':
         reserva.delete()
         return redirect('admin_panel')
-    return render(request, 'booking/eliminar_reserva.html', {'reserva': reserva})
+    # return render(request, 'booking/eliminar_reserva_clean.html', {'reserva': reserva})
+    # Solución definitiva para evitar conflictos de OneDrive: Template en línea
+    from django.template import Template, Context
+    html_template = """
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Eliminar Compra de Token - TerraTokenX</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script>
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        colors: {
+                            gold: { 400: '#E5C453', 500: '#D4AF37', 600: '#B5952F' },
+                            dark: { 800: '#121212', 900: '#050505', 700: '#1e1e1e', card: '#1e1e1e' }
+                        }
+                    }
+                }
+            }
+        </script>
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+        <style>body { font-family: 'Inter', sans-serif; }</style>
+    </head>
+    <body class="flex items-center justify-center min-h-screen p-4 text-gray-100" style="background: linear-gradient(to top right, #000000, #374151);">
+        <main class="w-full max-w-lg">
+            <div class="bg-dark-800 p-8 rounded-xl shadow-2xl border border-gray-800 text-center">
+                <div class="text-red-500 mb-4"><span class="material-icons" style="font-size: 64px;">warning</span></div>
+                <h1 class="text-2xl font-bold text-white mb-4">¿Eliminar Compra de Token?</h1>
+                <div class="bg-red-900/20 border border-red-900/50 rounded-lg p-6 mb-8">
+                    <p class="text-gray-300 text-lg leading-relaxed">
+                        ¿Estás seguro que deseas eliminar la Compra de Token de <span class="font-bold text-white">{{ reserva.nombre }}</span> creada el <span class="font-bold text-white">{{ reserva.created_at|date:"d M Y" }}</span>?
+                    </p>
+                    <p class="text-red-400 text-sm mt-4 font-semibold">Esta acción no se puede deshacer.</p>
+                </div>
+                <form method="post" class="flex flex-col sm:flex-row gap-4">
+                    {% csrf_token %}
+                    <button type="submit" class="flex-1 flex justify-center items-center gap-2 bg-red-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-red-700 shadow-lg shadow-red-900/20 transition-all transform hover:scale-[1.02]">
+                        <span class="material-icons">delete_forever</span> Sí, Eliminar
+                    </button>
+                    <a href="/admin-panel/sales/" class="flex-1 flex justify-center items-center gap-2 bg-dark-700 text-gray-300 border border-gray-600 font-semibold py-3 px-6 rounded-lg hover:bg-gray-800 hover:text-white transition-colors">
+                        <span class="material-icons">arrow_back</span> Cancelar
+                    </a>
+                </form>
+            </div>
+        </main>
+    </body>
+    </html>
+    """
+    return HttpResponse(Template(html_template).render(Context({'reserva': reserva}, autoescape=False)))
 
 def reservation_form(request):
     print("DEBUG: CARGANDO VISTA reservation_form (Debería usar v2)")
@@ -990,6 +1054,16 @@ def api_project_detail(request):
                     'caption': img.caption
                 })
             
+        # Secciones/Tabs del proyecto
+        secciones = []
+        for sec in p.secciones.filter(activo=True):
+            secciones.append({
+                'nombre': sec.nombre,
+                'icono': sec.icono,
+                'contenido': sec.contenido,
+                'orden': sec.orden,
+            })
+            
         data = {
             'id': p.id,
             'nombre': p.nombre,
@@ -1004,6 +1078,7 @@ def api_project_detail(request):
             'tipo': p.tipo,
             'estado': p.estado,
             'galeria': galeria,
+            'secciones': secciones,
         }
         return JsonResponse(data)
         
@@ -1020,7 +1095,12 @@ def admin_projects(request):
     """
     from .models import Proyecto
     proyectos = Proyecto.objects.all().order_by('-created_at')
-    return render(request, 'booking/admin_projects.html', {'proyectos': proyectos})
+    pending_count = Reserva.objects.filter(estado_pago='PENDIENTE').count()
+    return render(request, 'booking/admin/projects.html', {
+        'proyectos': proyectos,
+        'active_tab': 'projects',
+        'pending_count': pending_count,
+    })
 
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
@@ -1070,7 +1150,84 @@ def admin_project_edit(request, project_id):
     else:
         form = ProyectoForm(instance=proyecto)
         formset = ProyectoImagenFormSet(instance=proyecto)
-    return render(request, 'booking/admin_project_form.html', {'form': form, 'formset': formset, 'title': 'Editar Proyecto', 'proyecto': proyecto})
+    
+    # Get sections for this project
+    secciones = proyecto.secciones.all()
+    
+    return render(request, 'booking/admin_project_form.html', {
+        'form': form, 
+        'formset': formset, 
+        'title': 'Editar Proyecto', 
+        'proyecto': proyecto,
+        'secciones': secciones,
+    })
+
+
+# ==================== CRUD SECCIONES DE PROYECTO ====================
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def admin_section_create(request, project_id):
+    """Crear nueva sección para un proyecto"""
+    from .models import Proyecto, ProyectoSeccion
+    
+    proyecto = get_object_or_404(Proyecto, pk=project_id)
+    
+    if request.method == 'POST':
+        nombre = request.POST.get('nombre', '').strip()
+        icono = request.POST.get('icono', '').strip()
+        contenido = request.POST.get('contenido', '').strip()
+        orden = request.POST.get('orden', 0)
+        
+        if nombre and contenido:
+            ProyectoSeccion.objects.create(
+                proyecto=proyecto,
+                nombre=nombre,
+                icono=icono if icono else None,
+                contenido=contenido,
+                orden=int(orden) if orden else 0,
+                activo=True
+            )
+            messages.success(request, f'Sección "{nombre}" creada exitosamente.')
+        else:
+            messages.error(request, 'Nombre y contenido son requeridos.')
+    
+    return redirect('project_edit', project_id=project_id)
+
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def admin_section_edit(request, section_id):
+    """Editar sección existente"""
+    from .models import ProyectoSeccion
+    
+    seccion = get_object_or_404(ProyectoSeccion, pk=section_id)
+    
+    if request.method == 'POST':
+        seccion.nombre = request.POST.get('nombre', seccion.nombre).strip()
+        seccion.icono = request.POST.get('icono', '').strip() or None
+        seccion.contenido = request.POST.get('contenido', seccion.contenido).strip()
+        seccion.orden = int(request.POST.get('orden', seccion.orden) or 0)
+        seccion.activo = request.POST.get('activo') == 'on'
+        seccion.save()
+        messages.success(request, f'Sección "{seccion.nombre}" actualizada.')
+    
+    return redirect('project_edit', project_id=seccion.proyecto.id)
+
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def admin_section_delete(request, section_id):
+    """Eliminar sección"""
+    from .models import ProyectoSeccion
+    
+    seccion = get_object_or_404(ProyectoSeccion, pk=section_id)
+    project_id = seccion.proyecto.id
+    nombre = seccion.nombre
+    seccion.delete()
+    messages.success(request, f'Sección "{nombre}" eliminada.')
+    
+    return redirect('project_edit', project_id=project_id)
 
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
@@ -1088,4 +1245,297 @@ def admin_project_delete(request, project_id):
     proyecto.delete()
     messages.success(request, 'Proyecto eliminado correctamente.')
     return redirect('admin_projects')
+
+# Import FirmaVirtual webhook from api_views
+from .api_views import firmavirtual_webhook, firmavirtual_status
+
+@staff_member_required
+def reenviar_contrato(request, reserva_id):
+    """
+    Vista para que el admin pueda reintentar manualmente el envío del contrato
+    a FirmaVirtual si falló el primer intento automático.
+    """
+    reserva = get_object_or_404(Reserva, id=reserva_id)
+    
+    # Solo permitir envío si no se ha enviado ya o si fue rechazado/fallido
+    # Permitimos reenvío si está 'sent' por si el email se perdió, pero avisamos.
+    if reserva.firmavirtual_status == 'signed':
+        messages.warning(request, f"El contrato ya está FIRMADO. No se puede re-enviar.")
+        return redirect('admin_panel')
+        
+    fv_service = FirmaVirtualService()
+    resultado = fv_service.create_contract_request(reserva)
+    
+    if "error" in resultado:
+        messages.error(request, f"Error reenviando contrato: {resultado['error']}")
+    else:
+        # Éxito: Actualizar estado local
+        reserva.firmavirtual_id = str(resultado.get('request_id'))
+        # FirmaVirtual a veces retorna url, a veces no en v1/contract/clean
+        # Si no la trae, no importa, llegará al correo del cliente.
+        if resultado.get('url'):
+            reserva.firmavirtual_url = resultado.get('url')
+            
+        reserva.firmavirtual_status = 'sent'
+        reserva.save()
+        messages.success(request, f"Contrato enviado correctamente a FirmaVirtual. ID: {reserva.firmavirtual_id}")
+        
+    return redirect('admin_panel')
+
+
+# ============================================
+# NUEVAS VISTAS DASHBOARD PROFESIONAL
+# ============================================
+from django.db.models import Sum
+
+@staff_member_required
+def admin_dashboard(request):
+    """
+    Vista principal del dashboard ERP con KPIs y resumen.
+    """
+    from django.db.models import Sum
+    from django.db import models # Import models here to use models.Q
+    
+    # KPIs
+    reservas_confirmadas = Reserva.objects.filter(estado_pago='CONFIRMADO')
+    total_revenue = reservas_confirmadas.aggregate(total=Sum('total'))['total'] or 0
+    total_tokens = reservas_confirmadas.aggregate(total=Sum('cantidad_tokens'))['total'] or 0
+    
+    # Firmas
+    signed_contracts = Reserva.objects.filter(firmavirtual_status='signed').count()
+    pending_signatures = Reserva.objects.filter(
+        firmavirtual_status__in=['sent', 'pending']
+    ).exclude(firmavirtual_id__isnull=True).exclude(firmavirtual_id='').count()
+    
+    # Proyectos Activos
+    projects_active = Proyecto.objects.filter(activo=True, estado='Activo').count()
+    
+    # === TOP PROYECTOS (Optimized) ===
+    top_projects = []
+    
+    # 1. Proyectos Reales (Activos e Inactivos si tienen ventas)
+    # Usamos annotate para ordenar por ingresos reales en DB
+    proyectos_con_ventas = Proyecto.objects.annotate(
+        ingresos_reales=Sum('reserva_set__total', filter=models.Q(reserva_set__estado_pago='CONFIRMADO')),
+        tokens_vendidos_reales=Sum('reserva_set__cantidad_tokens', filter=models.Q(reserva_set__estado_pago='CONFIRMADO'))
+    ).filter(ingresos_reales__gt=0).order_by('-ingresos_reales')
+    
+    for p in proyectos_con_ventas[:5]:
+        top_projects.append({
+            'nombre': p.nombre,
+            'ubicacion': p.ubicacion,
+            'tokens_vendidos': p.tokens_vendidos_reales or 0,
+            'tokens_totales': p.tokens_totales,
+            'porcentaje_vendido': p.porcentaje_vendido,
+            'ingresos': p.ingresos_reales or 0,
+        })
+
+    # 2. Ventas "Sin Proyecto" (Legacy / Huérfanos)
+    orphaned_reservas = Reserva.objects.filter(
+        estado_pago='CONFIRMADO', 
+        proyecto__isnull=True
+    )
+    orphaned_revenue = orphaned_reservas.aggregate(t=Sum('total'))['t'] or 0
+    orphaned_tokens = orphaned_reservas.aggregate(t=Sum('cantidad_tokens'))['t'] or 0
+    
+    if orphaned_revenue > 0:
+        top_projects.append({
+            'nombre': 'Ventas Directas / Otros',
+            'ubicacion': 'General',
+            'tokens_vendidos': orphaned_tokens,
+            'tokens_totales': '-', # No aplica
+            'porcentaje_vendido': '-', 
+            'ingresos': orphaned_revenue,
+            'is_orphan': True # Flag por si queremos estilo diferente
+        })
+        
+    # Re-ordenar final incluyendo huérfanos
+    top_projects.sort(key=lambda x: x['ingresos'], reverse=True)
+    
+    # Actividad reciente
+    recent_sales = Reserva.objects.order_by('-created_at')[:5]
+    
+    # Stats de firmas
+    signatures_stats = {
+        'total': Reserva.objects.exclude(firmavirtual_id__isnull=True).exclude(firmavirtual_id='').count(),
+        'pending': Reserva.objects.filter(firmavirtual_status='pending').exclude(firmavirtual_id__isnull=True).count(),
+        'sent': Reserva.objects.filter(firmavirtual_status='sent').count(),
+        'signed': Reserva.objects.filter(firmavirtual_status='signed').count(),
+        'rejected': Reserva.objects.filter(firmavirtual_status='rejected').count(),
+    }
+    
+    # Pending count para sidebar
+    pending_count = Reserva.objects.filter(estado_pago='PENDIENTE').count()
+    
+    context = {
+        'active_tab': 'dashboard',
+        'pending_count': pending_count,
+        'kpi': {
+            'total_revenue': total_revenue,
+            'tokens_sold': total_tokens,
+            'signed_contracts': signed_contracts,
+            'pending_signatures': pending_signatures,
+            'projects_active': projects_active,
+        },
+        'top_projects': top_projects,
+        'recent_sales': recent_sales,
+        'signatures_stats': signatures_stats,
+    }
+    
+    return render(request, 'booking/admin/dashboard.html', context)
+
+
+@staff_member_required
+def admin_sales(request):
+    """
+    Vista de gestión de ventas/compras de tokens con paginación.
+    """
+    from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+    
+    reservas_list = _get_filtered_reservas(request)
+    pending_count = Reserva.objects.filter(estado_pago='PENDIENTE').count()
+    
+    # Paginación - 10 por página
+    paginator = Paginator(reservas_list, 10)
+    page = request.GET.get('page', 1)
+    
+    try:
+        reservas = paginator.page(page)
+    except PageNotAnInteger:
+        reservas = paginator.page(1)
+    except EmptyPage:
+        reservas = paginator.page(paginator.num_pages)
+    
+    context = {
+        'active_tab': 'sales',
+        'pending_count': pending_count,
+        'reservas': reservas,
+        'paginator': paginator,
+    }
+    
+    return render(request, 'booking/admin/sales.html', context)
+
+
+@staff_member_required
+def admin_signatures(request):
+    """
+    Vista de gestión de firmas virtuales.
+    """
+    # Filtrar contratos con FirmaVirtual
+    contratos = Reserva.objects.exclude(
+        firmavirtual_id__isnull=True
+    ).exclude(firmavirtual_id='').order_by('-updated_at')
+    
+    # Filtro por status
+    status_filter = request.GET.get('status')
+    if status_filter in ['sent', 'signed', 'rejected']:
+        contratos = contratos.filter(firmavirtual_status=status_filter)
+    
+    # Stats
+    stats = {
+        'total': Reserva.objects.exclude(firmavirtual_id__isnull=True).exclude(firmavirtual_id='').count(),
+        'sent': Reserva.objects.filter(firmavirtual_status='sent').count(),
+        'signed': Reserva.objects.filter(firmavirtual_status='signed').count(),
+        'rejected': Reserva.objects.filter(firmavirtual_status='rejected').count(),
+    }
+    
+    pending_count = Reserva.objects.filter(estado_pago='PENDIENTE').count()
+    
+    context = {
+        'active_tab': 'signatures',
+        'pending_count': pending_count,
+        'contratos': contratos,
+        'stats': stats,
+    }
+    
+    return render(request, 'booking/admin/signatures_v2.html', context)
+
+
+@staff_member_required
+def admin_coupons(request):
+    """
+    Vista de gestión de cupones de descuento.
+    """
+    from datetime import date
+    
+    coupons = Coupon.objects.all().order_by('-id')
+    pending_count = Reserva.objects.filter(estado_pago='PENDIENTE').count()
+    
+    # Agregar conteo de uso a cada cupón
+    for coupon in coupons:
+        coupon.usage_count = Reserva.objects.filter(coupon=coupon).count()
+    
+    # Estadísticas
+    today = date.today()
+    stats = {
+        'total': Coupon.objects.count(),
+        'active': Coupon.objects.filter(is_active=True, valid_from__lte=today, valid_to__gte=today).count(),
+        'used': Reserva.objects.filter(coupon__isnull=False).count(),
+        'expired': Coupon.objects.filter(valid_to__lt=today).count(),
+    }
+    
+    context = {
+        'active_tab': 'coupons',
+        'pending_count': pending_count,
+        'coupons': coupons,
+        'stats': stats,
+    }
+    
+    return render(request, 'booking/admin/coupons.html', context)
+
+
+@staff_member_required
+def admin_coupon_create(request):
+    """
+    Crear un nuevo cupón.
+    """
+    if request.method == 'POST':
+        code = request.POST.get('code', '').upper().strip()
+        discount = request.POST.get('discount_percentage')
+        valid_from = request.POST.get('valid_from')
+        valid_to = request.POST.get('valid_to')
+        is_active = request.POST.get('is_active') == 'on'
+        
+        if code and discount and valid_from and valid_to:
+            Coupon.objects.create(
+                code=code,
+                discount_percentage=int(discount),
+                valid_from=valid_from,
+                valid_to=valid_to,
+                is_active=is_active
+            )
+    
+    return redirect('admin_coupons')
+
+
+@staff_member_required
+def admin_coupon_edit(request, coupon_id):
+    """
+    Editar un cupón existente.
+    """
+    coupon = get_object_or_404(Coupon, id=coupon_id)
+    
+    if request.method == 'POST':
+        coupon.code = request.POST.get('code', '').upper().strip()
+        coupon.discount_percentage = int(request.POST.get('discount_percentage', 0))
+        coupon.valid_from = request.POST.get('valid_from')
+        coupon.valid_to = request.POST.get('valid_to')
+        coupon.is_active = request.POST.get('is_active') == 'on'
+        coupon.save()
+    
+    return redirect('admin_coupons')
+
+
+@staff_member_required
+def admin_coupon_delete(request, coupon_id):
+    """
+    Eliminar un cupón.
+    """
+    if request.method == 'POST':
+        coupon = get_object_or_404(Coupon, id=coupon_id)
+        coupon.delete()
+    
+    return redirect('admin_coupons')
+
+# Force reload 
 

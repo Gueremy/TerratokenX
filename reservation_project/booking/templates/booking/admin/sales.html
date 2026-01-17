@@ -1,0 +1,182 @@
+{% extends 'booking/admin/base_admin.html' %}
+{% load humanize %}
+
+{% block title %}Compras Tokens{% endblock %}
+{% block page_title %}Gestion de Ventas{% endblock %}
+
+{% block content %}
+<div class="glass-panel rounded-2xl p-6 mb-6">
+    <form method="get" class="flex flex-col md:flex-row gap-4 items-end">
+        <div class="flex-1">
+            <label class="block text-xs text-gray-500 uppercase mb-2">Estado de Pago</label>
+            <select name="estado_pago"
+                class="w-full bg-gray-800 border border-gray-700 rounded-xl p-3 text-white outline-none">
+                <option value="">Todos</option>
+                <option value="PENDIENTE">Pendiente</option>
+                <option value="EN_REVISION">En Revision</option>
+                <option value="CONFIRMADO">Confirmado</option>
+            </select>
+        </div>
+        <div class="flex gap-2">
+            <a href="{% url 'admin_sales' %}"
+                class="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-xl">Limpiar</a>
+            <button type="submit"
+                class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl">Filtrar</button>
+        </div>
+    </form>
+</div>
+
+<div class="flex justify-between items-center mb-6">
+    <div class="flex gap-4">
+        <form method="post" action="{% url 'export_reservas_excel' %}">
+            {% csrf_token %}
+            <button type="submit"
+                class="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm">
+                <span class="material-icons text-lg">table_chart</span>Excel
+            </button>
+        </form>
+        <form method="post" action="{% url 'export_reservas_pdf' %}">
+            {% csrf_token %}
+            <button type="submit"
+                class="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm">
+                <span class="material-icons text-lg">picture_as_pdf</span>PDF
+            </button>
+        </form>
+    </div>
+    <div class="text-gray-400 text-sm">
+        Mostrando {{ reservas.start_index }}-{{ reservas.end_index }} de {{ paginator.count }} ventas
+    </div>
+</div>
+
+<div class="glass-panel rounded-2xl overflow-hidden mb-6">
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-gray-800/50">
+                <tr class="text-left text-xs text-gray-400 uppercase">
+                    <th class="px-4 py-4 font-medium">Cliente</th>
+                    <th class="px-4 py-4 font-medium">Proyecto</th>
+                    <th class="px-4 py-4 font-medium">Tokens</th>
+                    <th class="px-4 py-4 font-medium">Total</th>
+                    <th class="px-4 py-4 font-medium">Cupon</th>
+                    <th class="px-4 py-4 font-medium">Metodo</th>
+                    <th class="px-4 py-4 font-medium">Estado</th>
+                    <th class="px-4 py-4 font-medium">Contrato</th>
+                    <th class="px-4 py-4 font-medium text-right">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-800">
+                {% for reserva in reservas %}
+                <tr class="hover:bg-gray-800/30">
+                    <td class="px-4 py-4">
+                        <p class="font-medium text-white">{{ reserva.nombre }}</p>
+                        <p class="text-xs text-gray-500">{{ reserva.correo }}</p>
+                    </td>
+                    <td class="px-4 py-4 text-gray-300 text-sm">{{ reserva.proyecto.nombre|default:"-" }}</td>
+                    <td class="px-4 py-4 text-white font-semibold">{{ reserva.cantidad_tokens }}</td>
+                    <td class="px-4 py-4 text-green-400 font-semibold">${{ reserva.total|floatformat:0|intcomma }}</td>
+                    <td class="px-4 py-4">
+                        {% if reserva.coupon %}
+                        <div class="flex flex-col">
+                            <span class="px-2 py-1 rounded bg-purple-500/20 text-purple-400 text-xs font-medium">{{ reserva.coupon.code }}</span>
+                            <span class="text-[10px] text-gray-500 mt-1">-{{ reserva.coupon.discount_percentage }}%</span>
+                        </div>
+                        {% else %}
+                        <span class="text-gray-600 text-xs">-</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-4">
+                        {% if reserva.metodo_pago == 'MP' %}
+                        <span class="px-2 py-1 rounded-full bg-blue-500/20 text-blue-400 text-xs">Mercado Pago</span>
+                        {% elif reserva.metodo_pago == 'CRYPTO' %}
+                        <div class="flex flex-col">
+                            <span class="px-2 py-1 rounded-full bg-orange-500/20 text-orange-400 text-xs">Crypto</span>
+                            {% if reserva.crypto_currency %}
+                            <span class="text-[10px] text-yellow-400 mt-1 font-medium">{{ reserva.crypto_currency }}</span>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <span class="text-gray-500 text-xs">Manual</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-4">
+                        {% if reserva.estado_pago == 'CONFIRMADO' %}
+                        <span
+                            class="px-2 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-medium">Confirmado</span>
+                        {% elif reserva.estado_pago == 'EN_REVISION' %}
+                        <span class="px-2 py-1 rounded-full bg-yellow-500/20 text-yellow-400 text-xs font-medium">En
+                            Revision</span>
+                        {% else %}
+                        <span
+                            class="px-2 py-1 rounded-full bg-gray-500/20 text-gray-400 text-xs font-medium">Pendiente</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-4">
+                        {% if reserva.firmavirtual_id %}
+                        {% if reserva.firmavirtual_status == 'signed' %}
+                        <span class="text-green-400 text-xs">Firmado</span>
+                        {% else %}
+                        <span class="text-blue-400 text-xs">Enviado</span>
+                        {% endif %}
+                        {% elif reserva.estado_pago == 'CONFIRMADO' %}
+                        <a href="{% url 'reenviar_contrato' reserva.id %}"
+                            class="text-yellow-400 text-xs hover:underline">Re-enviar</a>
+                        {% else %}
+                        <span class="text-gray-600 text-xs">-</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-4 text-right">
+                        <div class="flex items-center justify-end gap-1">
+                            <a href="{% url 'editar_reserva' reserva.id %}"
+                                class="p-2 text-gray-400 hover:text-blue-400 rounded-lg"><span
+                                    class="material-icons text-lg">edit</span></a>
+                            <a href="{% url 'eliminar_reserva' reserva.id %}"
+                                class="p-2 text-gray-400 hover:text-red-400 rounded-lg"><span
+                                    class="material-icons text-lg">delete</span></a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" class="px-6 py-12 text-center text-gray-500">No hay ventas</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if paginator.num_pages > 1 %}
+<div class="flex justify-center items-center gap-2">
+    {% if reservas.has_previous %}
+    <a href="?page=1{% if request.GET.estado_pago %}&estado_pago={{ request.GET.estado_pago }}{% endif %}"
+        class="px-3 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg text-sm">
+        <span class="material-icons text-sm">first_page</span>
+    </a>
+    <a href="?page={{ reservas.previous_page_number }}{% if request.GET.estado_pago %}&estado_pago={{ request.GET.estado_pago }}{% endif %}"
+        class="px-3 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg text-sm">
+        <span class="material-icons text-sm">chevron_left</span>
+    </a>
+    {% endif %}
+
+    {% for num in paginator.page_range %}
+    {% if num == reservas.number %}
+    <span class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium">{{ num }}</span>
+    {% elif num > reservas.number|add:'-3' and num < reservas.number|add:'3' %} <a
+        href="?page={{ num }}{% if request.GET.estado_pago %}&estado_pago={{ request.GET.estado_pago }}{% endif %}"
+        class="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg text-sm">{{ num }}</a>
+        {% endif %}
+        {% endfor %}
+
+        {% if reservas.has_next %}
+        <a href="?page={{ reservas.next_page_number }}{% if request.GET.estado_pago %}&estado_pago={{ request.GET.estado_pago }}{% endif %}"
+            class="px-3 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg text-sm">
+            <span class="material-icons text-sm">chevron_right</span>
+        </a>
+        <a href="?page={{ paginator.num_pages }}{% if request.GET.estado_pago %}&estado_pago={{ request.GET.estado_pago }}{% endif %}"
+            class="px-3 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg text-sm">
+            <span class="material-icons text-sm">last_page</span>
+        </a>
+        {% endif %}
+</div>
+{% endif %}
+{% endblock %}
