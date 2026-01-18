@@ -39,4 +39,6 @@ django-cors-headers
 django-widget-tweaks
 sendgrid
 django-sendgrid-v5
+xhtml2pdf>=0.2.17
+psycopg2-binary
 
