@@ -168,18 +168,30 @@ class Reserva(models.Model):
         
         def send_email():
             try:
-                context = {'reserva': self}
+                # Recargar el objeto de la base de datos para asegurar datos frescos
+                from booking.models import Reserva
+                reserva_actual = Reserva.objects.get(pk=self.pk)
+                
+                context = {'reserva': reserva_actual}
+                print(f"DEBUG EMAIL: numero_reserva={reserva_actual.numero_reserva}, nombre={reserva_actual.nombre}")
+                
                 html_message = render_to_string('booking/emails/payment_confirmed_welcome.html', context)
                 
+                # Debug: verificar si el template se renderizó
+                if '{{ reserva' in html_message:
+                    print("ERROR: Template NO se renderizó correctamente!")
+                else:
+                    print("DEBUG: Template renderizado OK")
+                
                 send_mail(
-                    subject=f'🎉 ¡Bienvenido a TerraTokenX! - Reserva #{self.numero_reserva}',
+                    subject=f'🎉 ¡Bienvenido a TerraTokenX! - Reserva #{reserva_actual.numero_reserva}',
                     message='',
                     from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[self.correo],
+                    recipient_list=[reserva_actual.correo],
                     fail_silently=False,
                     html_message=html_message,
                 )
-                print(f"📧 Email de bienvenida enviado a {self.correo}")
+                print(f"📧 Email de bienvenida enviado a {reserva_actual.correo}")
             except Exception as e:
                 print(f"❌ Error enviando email de bienvenida: {e}")
         
