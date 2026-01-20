@@ -26,23 +26,41 @@ def firmavirtual_webhook(request):
         # Log para debug
         print(f"Webhook FirmaVirtual recibido: {json.dumps(data, indent=2)}")
         
-        # Extraer información del callback
-        # FirmaVirtual puede enviar diferentes formatos
-        contract_id = (
-            data.get('sContractID') or 
-            data.get('request_id') or 
-            data.get('contractId') or 
-            data.get('id')
-        )
+        # FirmaVirtual envía los datos dentro de "contract" como array
+        # Formato: {"contract": [{"sContractID": "...", "sStatus": "..."}], "signers": [...]}
+        contract_data = None
+        contract_id = None
+        status = None
         
-        status = (
-            data.get('sStatus') or 
-            data.get('status') or 
-            data.get('state')
-        )
+        # Intentar extraer del formato de array (formato principal de FirmaVirtual)
+        if 'contract' in data and isinstance(data['contract'], list) and len(data['contract']) > 0:
+            contract_data = data['contract'][0]
+            contract_id = contract_data.get('sContractID')
+            status = contract_data.get('sStatus')
+            print(f"Extraído de contract[0]: ID={contract_id}, Status={status}")
+        
+        # Fallback: buscar en el nivel raíz (por si cambian el formato)
+        if not contract_id:
+            contract_id = (
+                data.get('sContractID') or 
+                data.get('request_id') or 
+                data.get('contractId') or 
+                data.get('id')
+            )
+        
+        if not status:
+            status = (
+                data.get('sStatus') or 
+                data.get('status') or 
+                data.get('state')
+            )
         
         # URL del documento firmado (si viene)
-        signed_document_url = data.get('sSignedDocumentUrl') or data.get('document_url')
+        signed_document_url = (
+            (contract_data.get('sSignedDocumentUrl') if contract_data else None) or
+            data.get('sSignedDocumentUrl') or 
+            data.get('document_url')
+        )
         
         if not contract_id:
             print("Webhook sin contract_id, datos recibidos:", data)
