@@ -66,11 +66,51 @@ def firmavirtual_webhook(request):
             print("Webhook sin contract_id, datos recibidos:", data)
             return JsonResponse({"error": "No contract_id provided"}, status=400)
         
+        # Extraer nombre del contrato para buscar por ID de reserva si es necesario
+        contract_name = contract_data.get('sContractName', '') if contract_data else ''
+        
         # Buscar la reserva asociada
+        reserva = None
+        
+        # 1. Primero intentar por firmavirtual_id
         try:
             reserva = Reserva.objects.get(firmavirtual_id=contract_id)
+            print(f"Reserva encontrada por firmavirtual_id: {reserva.numero_reserva}")
         except Reserva.DoesNotExist:
-            print(f"Reserva no encontrada para FV ID: {contract_id}")
+            pass
+        
+        # 2. Si no se encontró, intentar extraer el ID de la reserva del nombre del contrato
+        # Formato: "Prueba Venta 39 - NO COBRAR" o "Compra Token XXXXXXXX"
+        if not reserva and contract_name:
+            import re
+            # Buscar número de reserva en el nombre (formato: "Venta XX" donde XX es el ID)
+            match = re.search(r'Venta (\d+)', contract_name)
+            if match:
+                reserva_id = match.group(1)
+                try:
+                    reserva = Reserva.objects.get(id=reserva_id)
+                    # Actualizar el firmavirtual_id para futuras referencias
+                    reserva.firmavirtual_id = contract_id
+                    reserva.save(update_fields=['firmavirtual_id'])
+                    print(f"Reserva encontrada por ID en nombre: {reserva.numero_reserva}, firmavirtual_id actualizado")
+                except Reserva.DoesNotExist:
+                    pass
+            
+            # También intentar con número de reserva (formato: "Compra Token XXXXXXXX")
+            if not reserva:
+                match = re.search(r'Token ([A-Z0-9]+)', contract_name)
+                if match:
+                    numero_reserva = match.group(1)
+                    try:
+                        reserva = Reserva.objects.get(numero_reserva=numero_reserva)
+                        reserva.firmavirtual_id = contract_id
+                        reserva.save(update_fields=['firmavirtual_id'])
+                        print(f"Reserva encontrada por numero_reserva: {reserva.numero_reserva}, firmavirtual_id actualizado")
+                    except Reserva.DoesNotExist:
+                        pass
+        
+        if not reserva:
+            print(f"Reserva no encontrada para FV ID: {contract_id}, nombre: {contract_name}")
             return JsonResponse({"error": "Reserva not found"}, status=404)
         
         # Normalizar status
