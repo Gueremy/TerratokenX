@@ -125,12 +125,14 @@
                             <option value="" disabled {% if not proyecto %}selected{% endif %}>-- Elige un proyecto --
                             </option>
                             {% for p in proyectos_activos %}
-                            <option value="{{ p.id }}" data-price="{{ p.precio_token|stringformat:'d' }}"
-                                data-stock="{{ p.tokens_disponibles|stringformat:'d' }}" data-name="{{ p.nombre }}"
-                                data-img="{% if p.imagen_portada_url %}{{ p.imagen_portada_url }}{% elif p.imagen_portada %}{{ p.imagen_portada.url }}{% endif %}"
-                                {% if proyecto and proyecto.id==p.id %}selected{% endif %}>
-                                {{ p.nombre }}
-                            </option>
+                            <option value="{{ p.id }}" 
+        data-price="{{ p.precio_token|stringformat:'d' }}"
+        data-stock="{{ p.tokens_disponibles|stringformat:'d' }}" 
+        data-name="{{ p.nombre }}"
+        data-img="{% if p.imagen_portada_url %}{{ p.imagen_portada_url }}{% elif p.imagen_portada %}{{ p.imagen_portada.url }}{% endif %}"
+        {% if proyecto and proyecto.id == p.id %}selected{% endif %}>
+    {{ p.nombre }}
+</option>
                             {% endfor %}
                         </select>
                         <div
