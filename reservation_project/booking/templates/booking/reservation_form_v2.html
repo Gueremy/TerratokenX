@@ -125,11 +125,13 @@
                             class="w-full bg-dark-800 border border-gray-600 text-white rounded-lg p-3 appearance-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500 transition-colors cursor-pointer">
                             <option value="" disabled {% if not proyecto %}selected{% endif %}>-- Elige un proyecto --
                             </option>
-                            {% for p in proyectos_activos %}
-                            <option value="{{ p.id }}" data-price="{{ p.precio_token }}"
-                                data-stock="{{ p.tokens_disponibles|stringformat:'d' }}" data-name="{{ p.nombre }}"
-                                data-img="{% if p.imagen_portada_url %}{{ p.imagen_portada_url }}{% elif p.imagen_portada %}{{ p.imagen_portada.url }}{% endif %}"
-                                {% if proyecto and proyecto.id==p.id %}selected{% endif %}>
+                                                        {% for p in proyectos_activos %}
+                            <option value="{{ p.id }}" 
+                                    data-price="{{ p.precio_token }}"
+                                    data-stock="{{ p.tokens_disponibles|stringformat:'d' }}" 
+                                    data-name="{{ p.nombre }}"
+                                    data-img="{% if p.imagen_portada_url %}{{ p.imagen_portada_url }}{% elif p.imagen_portada %}{{ p.imagen_portada.url }}{% endif %}"
+                                    {% if proyecto and proyecto.id == p.id %}selected{% endif %}>
                                 {{ p.nombre }}
                             </option>
                             {% endfor %}
