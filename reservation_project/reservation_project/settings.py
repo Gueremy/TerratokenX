@@ -36,11 +36,12 @@ ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
-    CSRF_TRUSTED_ORIGINS = [f'https://{RENDER_EXTERNAL_HOSTNAME}', 'https://terratokenx.onrender.com', 'https://terratokenx-q7u4.onrender.com']
+    CSRF_TRUSTED_ORIGINS = [f'https://{RENDER_EXTERNAL_HOSTNAME}', 'https://terratokenx.onrender.com', 'https://terratokenx-q7u4.onrender.com', 'https://rwa.terratokenx.com']
 else:
-    CSRF_TRUSTED_ORIGINS = ['https://terratokenx.onrender.com', 'https://terratokenx-q7u4.onrender.com']
+    CSRF_TRUSTED_ORIGINS = ['https://terratokenx.onrender.com', 'https://terratokenx-q7u4.onrender.com', 'https://rwa.terratokenx.com']
 
 ALLOWED_HOSTS.append('terratokenx-q7u4.onrender.com')
+ALLOWED_HOSTS.append('rwa.terratokenx.com')
 
 # Configuración de Seguridad para Producción
 if not DEBUG:
@@ -204,22 +205,4 @@ LOGOUT_REDIRECT_URL = '/' # Redirigir a la página principal después de cerrar 
 
 # Configuración para archivos media (Imágenes subidas)
 MEDIA_URL = '/media/'
-# Usar disco persistente de Render si está configurado, sino usar local
-RENDER_DISK_PATH = env('RENDER_DISK_PATH', default='')
-if RENDER_DISK_PATH:
-    MEDIA_ROOT = RENDER_DISK_PATH
-else:
-    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-# --- FirmaVirtual / Trámit Express Integration ---
-# IMPORTANTE: En producción, TODAS estas variables deben estar en el entorno
-FIRMAVIRTUAL_BASE_URL = env('FIRMAVIRTUAL_BASE_URL', default='https://api.firmavirtual.legal')
-# Credenciales - SIN defaults para forzar configuración en producción
-FIRMAVIRTUAL_USER = env('FIRMAVIRTUAL_USER', default='')
-FIRMAVIRTUAL_PASS = env('FIRMAVIRTUAL_PASS', default='')
-# Callback URL para webhooks (debe coincidir con tu dominio en producción)
-TRAMIT_CALLBACK_URL = env('TRAMIT_CALLBACK_URL', default='')
-FIRMAVIRTUAL_CALLBACK_URL = TRAMIT_CALLBACK_URL
-# Modo Prueba: True = NO cobra, False = SÍ cobra
-# Cambiar a False cuando quieras empezar a facturar
-FIRMAVIRTUAL_TEST_MODE = env.bool('FIRMAVIRTUAL_TEST_MODE', default=True)
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
