@@ -24,15 +24,40 @@ class ReservaForm(forms.ModelForm):
     coupon_code = forms.CharField(max_length=50, required=False, label="Código de Cupón", help_text="Opcional")
     class Meta:
         model = Reserva
-        fields = ['nombre', 'correo', 'telefono', 'direccion', 'cantidad_tokens', 'proyecto']
+        fields = ['nombre', 'correo', 'telefono', 'rut', 'direccion', 'cantidad_tokens', 'proyecto', 'es_empresa', 'razon_social', 'rut_empresa', 'cargo_representante']
         widgets = {
-            'nombre': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md'}),
-            'correo': forms.EmailInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md'}),
-            'telefono': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md'}),
+            'nombre': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md', 'placeholder': 'Nombre completo'}),
+            'correo': forms.EmailInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md', 'placeholder': 'correo@ejemplo.com'}),
+            'telefono': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md', 'placeholder': '+56912345678'}),
+            'rut': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md', 'placeholder': '12345678-9'}),
             'direccion': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md'}),
             'cantidad_tokens': forms.NumberInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md', 'min': '1', 'value': '1'}),
             'proyecto': forms.HiddenInput(),
+            
+            # Persona Jurídica
+            'es_empresa': forms.CheckboxInput(attrs={'class': 'w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500', 'id': 'check_es_empresa'}),
+            'razon_social': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md', 'placeholder': 'Razón Social S.A.'}),
+            'rut_empresa': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md', 'placeholder': '76.123.456-7'}),
+            'cargo_representante': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md', 'placeholder': 'Gerente General'}),
         }
+        labels = {
+            'rut': 'RUT (obligatorio para contrato)',
+            'telefono': 'Teléfono (para recibir el contrato)',
+        }
+    
+    def clean_rut(self):
+        rut = self.cleaned_data.get('rut')
+        if not rut:
+            raise ValidationError("El RUT es obligatorio para generar el contrato legal.")
+        # Limpiar puntos si los puso
+        rut = rut.replace(".", "")
+        return rut
+    
+    def clean_telefono(self):
+        telefono = self.cleaned_data.get('telefono')
+        if not telefono:
+            raise ValidationError("El teléfono es obligatorio para recibir el contrato.")
+        return telefono
     
     def clean_coupon_code(self):
         code = self.cleaned_data.get('coupon_code')

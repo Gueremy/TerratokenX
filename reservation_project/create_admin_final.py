@@ -1,4 +1,5 @@
-{% load humanize %}
+
+template_content = """{% load humanize %}
 <!DOCTYPE html>
 <html lang="es">
 
@@ -26,42 +27,18 @@
     <div class="container mx-auto px-4 py-8 flex flex-col lg:flex-row gap-8">
         <div class="flex-1 space-y-8">
             {% if messages %}<div class="space-y-4">{% for message in messages %}<div
-                    class="p-4 rounded-lg bg-blue-900 text-blue-200">{{ message }}</div>{% endfor %}</div>{% endif %}
-
+                    class="p-4 rounded-lg {% if message.tags == 'error' %}bg-red-900 text-red-200{% else %}bg-green-900 text-green-200{% endif %}">
+                    {{ message }}</div>{% endfor %}</div>{% endif %}
             <div class="bg-gray-800 p-6 rounded-xl border border-gray-700">
                 <h2 class="text-lg font-semibold text-yellow-400 mb-4">Filtrar Inversiones</h2>
-                <form method="get" class="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
-                    <div>
+                <form method="get" class="flex flex-col sm:flex-row gap-4 items-end">
+                    <div class="flex-1 w-full">
                         <label class="block text-sm text-gray-400 mb-1">Estado de Pago</label>
-                        <select name="estado_pago"
-                            class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white">
+                        <select name="estado_pago" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white">
                             <option value="">Todos</option>
-                            <option value="PENDIENTE" {% if request.GET.estado_pago == 'PENDIENTE' %}selected{% endif %}>
-                                Pendiente</option>
+                            <option value="PENDIENTE" {% if request.GET.estado_pago == 'PENDIENTE' %}selected{% endif %}>Pendiente</option>
                             <option value="EN_REVISION" {% if request.GET.estado_pago == 'EN_REVISION' %}selected{% endif %}>En Revision</option>
                             <option value="CONFIRMADO" {% if request.GET.estado_pago == 'CONFIRMADO' %}selected{% endif %}>Confirmado</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm text-gray-400 mb-1">Método de Pago</label>
-                        <select name="metodo_pago"
-                            class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white">
-                            <option value="">Todos</option>
-                            <option value="MP" {% if request.GET.metodo_pago == 'MP' %}selected{% endif %}>Mercado Pago
-                            </option>
-                            <option value="CRYPTO" {% if request.GET.metodo_pago == 'CRYPTO' %}selected{% endif %}>Crypto
-                            </option>
-                            <option value="CRYPTO_MANUAL" {% if request.GET.metodo_pago == 'CRYPTO_MANUAL' %}selected{% endif %}>Crypto Manual</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm text-gray-400 mb-1">Proyecto</label>
-                        <select name="proyecto"
-                            class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white">
-                            <option value="">Todos</option>
-                            {% for p in proyectos %}
-                            <option value="{{ p.id }}" {% if request.GET.proyecto == p.id|stringformat:'s' %}selected{% endif %}>{{ p.nombre }}</option>
-                            {% endfor %}
                         </select>
                     </div>
                     <div class="flex gap-2">
@@ -72,15 +49,12 @@
                     </div>
                 </form>
             </div>
-
-            <!-- Botón para Gestión de Proyectos Prominente -->
             <div class="mb-6">
                 <a href="{% url 'admin_projects' %}"
                     class="w-full block text-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition duration-200">
                     <span class="material-icons align-middle mr-2">apartment</span>Gestionar Proyectos
                 </a>
             </div>
-
             <form method="post" action="{% url 'export_reservas_excel' %}" id="exportForm" class="flex flex-wrap gap-4">
                 {% csrf_token %}
                 <button type="submit" name="export_excel"
@@ -88,7 +62,6 @@
                 <button type="submit" formaction="{% url 'export_reservas_pdf' %}"
                     class="bg-red-600 text-white px-5 py-2.5 rounded-lg">Exportar a PDF</button>
             </form>
-
             <div class="space-y-4">
                 {% for reserva in reservas %}
                 <div class="bg-gray-800 border border-gray-700 rounded-xl p-6 relative">
@@ -99,10 +72,7 @@
                             <h3 class="text-xl font-bold text-yellow-400">{{ reserva.nombre }}</h3>
                             <span class="text-xs text-gray-500">ID: {{ reserva.numero_reserva }}</span>
                         </div>
-                        <span
-                            class="px-3 py-1 rounded-full text-xs font-bold {% if reserva.pagado %}bg-green-900 text-green-400{% else %}bg-yellow-900 text-yellow-500{% endif %}">
-                            {{ reserva.get_estado_pago_display }}
-                        </span>
+                        <span class="px-3 py-1 rounded-full text-xs font-bold {% if reserva.estado_pago == 'CONFIRMADO' %}bg-green-900 text-green-400{% elif reserva.estado_pago == 'EN_REVISION' %}bg-orange-900 text-orange-400{% else %}bg-yellow-900 text-yellow-500{% endif %}">{% if reserva.estado_pago == 'CONFIRMADO' %}Confirmado{% elif reserva.estado_pago == 'EN_REVISION' %}En Revision{% else %}Pendiente{% endif %}</span>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-8 text-sm text-gray-300">
                         <div>Fecha: {{ reserva.created_at|date:'d M Y H:i' }}</div>
@@ -110,18 +80,10 @@
                         <div>Telefono: {{ reserva.telefono }}</div>
                         <div>Direccion: {{ reserva.direccion }}</div>
                         <div>Tokens: {{ reserva.cantidad_tokens }}</div>
-                        <div>Pago: {% if reserva.metodo_pago == 'MP' %}Mercado Pago{% elif reserva.metodo_pago ==
-                            'CRYPTO' %}CryptoMarket{% if reserva.crypto_currency %} ({{ reserva.crypto_currency }}){%
-                            endif %}{% else %}Crypto (Manual){% endif %}</div>
+                        <div>Pago: {% if reserva.metodo_pago == 'MP' %}Mercado Pago{% elif reserva.metodo_pago == 'CRYPTO' %}CryptoMarket{% if reserva.crypto_currency %} ({{ reserva.crypto_currency }}){% endif %}{% else %}Crypto (Manual){% endif %}</div>
                         <div>Total: USD {{ reserva.total|floatformat:0 }}</div>
-                        <div class="md:col-span-2">
-                            <span class="text-blue-400">Proyecto:</span>
-                            <span class="font-semibold">{{ reserva.proyecto.nombre|default:"Sin Proyecto" }}</span>
-                        </div>
                     </div>
-                    {% if reserva.coupon %}<div class="mt-2"><span
-                            class="bg-green-900 text-green-400 px-2.5 py-0.5 rounded-full text-xs">Cupón: {{
-                            reserva.coupon.code }} (-{{ reserva.coupon.discount_percentage }}%)</span></div>{% endif %}
+                    {% if reserva.coupon %}<div class="mt-2"><span class="bg-green-900 text-green-400 px-2.5 py-0.5 rounded-full text-xs">Cupon: {{ reserva.coupon.code }} (-{{ reserva.coupon.discount_percentage }}%)</span></div>{% endif %}
                     <div class="mt-6 flex gap-3 border-t border-gray-700 pt-4">
                         <a href="{% url 'editar_reserva' reserva.id %}"
                             class="bg-blue-600 text-white px-4 py-2 rounded text-sm">Editar</a>
@@ -136,12 +98,12 @@
                 {% endfor %}
             </div>
         </div>
-
         <div class="w-full lg:w-1/4 space-y-8">
             <div class="bg-gray-800 p-6 rounded-xl border border-gray-700">
                 <h3 class="text-lg font-bold text-yellow-400 mb-4 border-b border-gray-700 pb-2">Configuracion de
                     Precios (USD)</h3>
-                <form method="post" class="space-y-4">{% csrf_token %}
+                <form method="post" class="space-y-4">
+                    {% csrf_token %}
                     <div>
                         <label class="block text-xs text-gray-400 uppercase mb-2">Precio Base Token</label>
                         <input type="text" name="precio_base_token" value="{{ config.precio_base_token }}"
@@ -154,7 +116,8 @@
             <div class="bg-gray-800 p-6 rounded-xl border border-gray-700">
                 <h3 class="text-lg font-bold text-yellow-400 mb-4 border-b border-gray-700 pb-2">Cupones de Descuento
                 </h3>
-                <form method="post" action="{% url 'agregar_cupon' %}" class="space-y-3 mb-6">{% csrf_token %}
+                <form method="post" action="{% url 'agregar_cupon' %}" class="space-y-3 mb-6">
+                    {% csrf_token %}
                     <input type="text" name="code" placeholder="Codigo del cupon"
                         class="w-full bg-gray-700 rounded px-3 py-2 text-white text-sm uppercase" required>
                     <input type="number" name="discount_percentage" placeholder="Descuento (%)"
@@ -177,7 +140,8 @@
                             <div class="text-xs text-gray-500">{{ coupon.discount_percentage }}% OFF</div>
                         </div>
                         <form method="post" action="{% url 'eliminar_cupon' coupon.id %}"
-                            onsubmit="return confirm('Eliminar cupon?');">{% csrf_token %}
+                            onsubmit="return confirm('Eliminar cupon?');">
+                            {% csrf_token %}
                             <button type="submit" class="text-red-400 p-1">X</button>
                         </form>
                     </div>
@@ -190,4 +154,8 @@
     </div>
 </body>
 
-</html>
+</html>"""
+with open(r'c:\proyectos\chelooficial\reservation_project\booking\templates\booking\admin_panel_final.html', 'w', encoding='utf-8') as f:
+    f.write(template_content)
+
+print("Created admin_panel_final.html")

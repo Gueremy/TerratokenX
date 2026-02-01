@@ -1,59 +1,35 @@
-import os
+import re
 
-path = r'booking\templates\booking\admin_panel_v4.html'
+filepath = r'c:\proyectos\chelooficial\reservation_project\booking\templates\booking\admin_panel_final.html'
 
-with open(path, 'r', encoding='utf-8') as f:
+with open(filepath, 'r', encoding='utf-8') as f:
     content = f.read()
 
-# Fix split-line template tags by removing newlines inside {% %} blocks
-# This is a more aggressive fix that consolidates multi-line tags
+# Fix 1: Espacios alrededor de == en tags de Django
+content = content.replace("estado_pago=='PENDIENTE'", "estado_pago == 'PENDIENTE'")
+content = content.replace("estado_pago=='EN_REVISION'", "estado_pago == 'EN_REVISION'")
+content = content.replace("estado_pago=='CONFIRMADO'", "estado_pago == 'CONFIRMADO'")
 
-# Fix the proyecto option that has split endif
-content = content.replace(
-    """{% if request.GET.proyecto == p.id|stringformat:'s' %}selected{%
-                                endif %}""",
-    """{% if request.GET.proyecto == p.id|stringformat:'s' %}selected{% endif %}"""
-)
+# Fix 2: Arreglar el span con el if roto (lineas 110-113)
+old_span = '''<span
+                            class="px-3 py-1 rounded-full text-xs font-bold {% if reserva.estado_pago == 'CONFIRMADO' %}bg-green-900 text-green-400{% elif reserva.estado_pago == 'EN_REVISION' %}bg-orange-900 text-orange-400{% else %}bg-yellow-900 text-yellow-500{% endif %}">{%
+                            if reserva.estado_pago == 'CONFIRMADO' %}Confirmado{% elif reserva.estado_pago ==
+                            'EN_REVISION' %}En Revision{% else %}Pendiente{% endif %}</span>'''
 
-# Fix estado_pago options with split endif
-content = content.replace(
-    """}selected{% endif %}>
-                                Pendiente""",
-    """}selected{% endif %}>Pendiente"""  
-)
+new_span = '''<span class="px-3 py-1 rounded-full text-xs font-bold {% if reserva.estado_pago == 'CONFIRMADO' %}bg-green-900 text-green-400{% elif reserva.estado_pago == 'EN_REVISION' %}bg-orange-900 text-orange-400{% else %}bg-yellow-900 text-yellow-500{% endif %}">{% if reserva.estado_pago == 'CONFIRMADO' %}Confirmado{% elif reserva.estado_pago == 'EN_REVISION' %}En Revision{% else %}Pendiente{% endif %}</span>'''
 
-content = content.replace(
-    """{% if request.GET.estado_pago == 'EN_REVISION' %}selected{% endif
-                                %}>En Revision""",
-    """{% if request.GET.estado_pago == 'EN_REVISION' %}selected{% endif %}>En Revision"""
-)
+content = content.replace(old_span, new_span)
 
-content = content.replace(
-    """{% if request.GET.estado_pago == 'CONFIRMADO' %}selected{% endif
-                                %}>Confirmado""",
-    """{% if request.GET.estado_pago == 'CONFIRMADO' %}selected{% endif %}>Confirmado"""
-)
+# Fix 3: Arreglar el div de Pago (lineas 121-123) - consolidar en una linea
+old_pago = '''<div>Pago: {% if reserva.metodo_pago == 'MP' %}Mercado Pago{% elif reserva.metodo_pago ==
+                            'CRYPTO' %}CryptoMarket{% if reserva.crypto_currency %} ({{ reserva.crypto_currency }}){%
+                            endif %}{% else %}Crypto (Manual){% endif %}</div>'''
 
-# Fix metodo_pago options with split endif  
-content = content.replace(
-    """}selected{% endif %}>Mercado Pago
-                            </option>""",
-    """}selected{% endif %}>Mercado Pago</option>"""
-)
+new_pago = '''<div>Pago: {% if reserva.metodo_pago == 'MP' %}Mercado Pago{% elif reserva.metodo_pago == 'CRYPTO' %}CryptoMarket{% if reserva.crypto_currency %} ({{ reserva.crypto_currency }}){% endif %}{% else %}Crypto (Manual){% endif %}</div>'''
 
-content = content.replace(
-    """}selected{% endif %}>Crypto
-                            </option>""",
-    """}selected{% endif %}>Crypto</option>"""
-)
+content = content.replace(old_pago, new_pago)
 
-content = content.replace(
-    """{% if request.GET.metodo_pago == 'CRYPTO_MANUAL' %}selected{%
-                                endif %}>Crypto Manual""",
-    """{% if request.GET.metodo_pago == 'CRYPTO_MANUAL' %}selected{% endif %}>Crypto Manual"""
-)
-
-with open(path, 'w', encoding='utf-8') as f:
+with open(filepath, 'w', encoding='utf-8') as f:
     f.write(content)
 
-print("Template fixed - split lines consolidated!")
+print("All fixes applied successfully!")

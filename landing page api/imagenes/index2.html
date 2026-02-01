@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terra Token X | Inversión Fraccionada Patagonia</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        crypto: {
+                            black: '#0a0a0a',
+                            dark: '#121212',
+                            card: '#1e1e1e',
+                            primary: '#10b981', // Emerald green
+                            accent: '#3b82f6', // Blue
+                            gold: '#fbbf24'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass-panel {
+            background: rgba(30, 35, 48, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+
+<body class="bg-crypto-black text-white font-sans antialiased">
+
+    <!-- Navbar -->
+    <nav class="fixed w-full z-50 bg-crypto-black/90 backdrop-blur-md border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <a href="index.html" class="flex items-center gap-3"> <!-- Link back to home -->
+                    <div
+                        class="w-10 h-10 bg-gradient-to-br from-crypto-primary to-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
+                        P</div>
+                    <div class="flex flex-col">
+                        <span id="navProjectTitle" class="font-bold text-xl tracking-tight">Cargando...</span>
+                        <span class="text-[10px] text-gray-400 uppercase tracking-widest">TerraTokenX</span>
+                    </div>
+                </a>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="index.html" class="text-sm text-gray-400 hover:text-white transition">← Volver al
+                        Catálogo</a>
+                    <a href="https://refugiopatagonia.cl/" target="_blank"
+                        class="text-sm text-gray-400 hover:text-white transition">Sitio Oficial <i
+                            class="fa-solid fa-arrow-up-right-from-square text-xs ml-1"></i></a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Layout -->
+    <div class="pt-28 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <!-- Breadcrumb & Title -->
+        <div class="mb-8">
+            <div class="flex items-center gap-2 text-xs text-gray-500 mb-4 uppercase tracking-wider">
+                <a href="index.html" class="hover:text-white transition">Proyectos</a>
+                <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                <span id="breadcrumbTitle" class="text-crypto-primary">...</span>
+            </div>
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+                <div>
+                    <h1 id="mainProjectTitle" class="text-3xl md:text-4xl font-bold text-white mb-2">Cargando
+                        Proyecto...</h1>
+                    <div class="flex items-center gap-4 text-sm text-gray-400">
+                        <span><i class="fa-solid fa-location-dot text-crypto-primary mr-1"></i> <span
+                                id="mainLocation">...</span></span>
+                        <span><i class="fa-solid fa-layer-group text-blue-500 mr-1"></i> Tokenización
+                            Inmobiliaria</span>
+                    </div>
+                </div>
+                <div class="flex gap-3">
+                    <button
+                        class="px-4 py-2 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition text-sm">
+                        <i class="fa-solid fa-share-nodes mr-2"></i> Compartir
+                    </button>
+                    <!-- Admin Link (Optional, might want to remove for prod) -->
+                    <!-- <a href="http://127.0.0.1:8000/admin/" target="_blank" class="px-4 py-2 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition text-sm"><i class="fa-solid fa-lock mr-2"></i> Admin</a> -->
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <!-- Left Column: Gallery & Details -->
+            <div class="lg:col-span-2 space-y-8">
+                <!-- Main Image -->
+                <div
+                    class="aspect-video bg-gray-800 rounded-2xl overflow-hidden relative shadow-2xl border border-white/5 group">
+                    <img id="mainProjectImage" src="" alt="Project Image" referrerpolicy="no-referrer"
+                        class="w-full h-full object-cover transition duration-700 group-hover:scale-105">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+
+                    <!-- CAPTION -->
+                    <div id="mainImageCaption" class="absolute bottom-12 left-4 z-20 hidden">
+                        <span
+                            class="text-white font-bold text-xl md:text-2xl drop-shadow-md tracking-tight bg-black/30 backdrop-blur-sm px-3 py-1 rounded-lg border border-white/5">
+                            ...
+                        </span>
+                    </div>
+
+                    <div class="absolute bottom-4 left-4">
+                        <span
+                            class="px-3 py-1 bg-black/50 backdrop-blur-md rounded-full text-xs border border-white/10">
+                            <i class="fa-solid fa-camera mr-1"></i> Galería
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Gallery Row (Horizontal Scroll) -->
+                <div id="projectGalleryGrid" class="flex gap-4 overflow-x-auto pb-4 hidden"
+                    style="scrollbar-width: thin;">
+                    <!-- Images will be injected here via JS -->
+                </div>
+
+                <!-- Video Container -->
+                <div id="projectVideoContainer"
+                    class="aspect-video bg-gray-800 rounded-2xl overflow-hidden relative shadow-2xl border border-white/5 hidden mt-8">
+                    <!-- Video iframe will be injected here -->
+                </div>
+
+                <!-- Description merged into Tabs -->
+
+                <!-- Project Sections (Tabs) - Clean Style -->
+                <div id="projectSectionsContainer" class="mt-8 hidden">
+                    <!-- Tabs Navigation (horizontal text links with underline) -->
+                    <div id="sectionsTabs" class="flex gap-8 mb-6 border-b border-white/10">
+                        <!-- Tabs will be injected here -->
+                    </div>
+
+                    <!-- Tab Content -->
+                    <div id="sectionsContent" class="text-gray-100 text-lg leading-relaxed">
+                        <!-- Content will be injected here -->
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Investment Card -->
+            <div class="lg:col-span-1">
+                <div class="sticky top-28 space-y-6">
+
+                    <!-- Stats Card -->
+                    <div class="glass-panel p-6 rounded-2xl shadow-xl relative overflow-hidden">
+                        <div class="absolute top-0 right-0 p-4 opacity-10">
+                            <i class="fa-solid fa-chart-pie text-9xl"></i>
+                        </div>
+
+                        <div class="flex justify-between items-start mb-6">
+                            <div>
+                                <p class="text-xs text-gray-400 uppercase tracking-widest mb-1">Valor Proyecto</p>
+                                <h3 id="valorProyecto" class="text-2xl font-bold text-white">$...</h3>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs text-gray-400 uppercase tracking-widest mb-1">Rentabilidad Base</p>
+                                <h3 id="rentabilidadEstimada" class="text-xl font-bold text-crypto-primary">...</h3>
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar -->
+                        <div class="mb-6">
+                            <div class="flex justify-between text-sm mb-2">
+                                <span class="text-gray-400">Recaudado: <span id="montoRecaudado"
+                                        class="text-white font-bold ml-1">$...</span></span>
+                                <span id="progressPercentage" class="text-crypto-primary font-bold">0%</span>
+                            </div>
+                            <div class="h-3 bg-gray-700 rounded-full overflow-hidden">
+                                <div id="progressBar"
+                                    class="h-full bg-gradient-to-r from-crypto-primary to-blue-500 rounded-full w-0 transition-all duration-1000">
+                                </div>
+                            </div>
+                            <p class="text-xs text-center mt-2 text-gray-500 animate-pulse">
+                                <i class="fa-solid fa-bolt text-yellow-500 mr-1"></i> Actualizando en tiempo real
+                            </p>
+                        </div>
+
+                        <!-- Info Grid -->
+                        <div class="grid grid-cols-2 gap-4 mb-6">
+                            <div class="bg-white/5 rounded-xl p-3 text-center border border-white/5">
+                                <p class="text-[10px] text-gray-500 uppercase">PRECIO TOKEN</p>
+                                <p id="precioTokenDisplay" class="font-bold text-lg text-white token-price-display">$...
+                                </p>
+                            </div>
+                            <div class="bg-white/5 rounded-xl p-3 text-center border border-white/5">
+                                <p class="text-[10px] text-gray-500 uppercase">DISPONIBLE</p>
+                                <p id="tokensDisponiblesFullValue" class="font-bold text-lg text-crypto-primary">...</p>
+                            </div>
+                        </div>
+
+                        <!-- CTA -->
+                        <!-- CTA -->
+                        <a id="investBtn" href="#" class="relative block w-full py-4 bg-gradient-to-r from-yellow-400 via-gold-500 to-yellow-600 text-black font-extrabold text-center rounded-xl 
+          transition-all duration-300 transform hover:scale-105 hover:brightness-110
+          shadow-[0_0_20px_rgba(234,179,8,0.5)] hover:shadow-[0_0_30px_rgba(234,179,8,0.8)] 
+          mb-3 text-2xl uppercase tracking-wider animate-pulse-slow">
+                            <span class="relative z-10 flex items-center justify-center gap-2">
+                                COMPRA TOKENS 🚀
+                            </span>
+                            <div
+                                class="absolute inset-0 rounded-xl bg-white/20 opacity-0 hover:opacity-100 transition-opacity">
+                            </div>
+                        </a>
+
+                        <a id="officialPageBtn" href="#" target="_blank"
+                            class="block w-full py-3 bg-gray-800 border border-blue-500/30 text-blue-400 hover:bg-gray-700 hover:text-white font-bold text-center rounded-xl transition mb-4 hidden">
+                            Ir a web oficial
+                        </a>
+
+                        <div class="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg flex gap-3">
+                            <i class="fa-solid fa-circle-info text-blue-400 mt-0.5"></i>
+                            <p class="text-xs text-blue-200">
+                                La inversión y compra de tokens se gestiona directamente en la web oficial.
+                            </p>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Script Implementation -->
+    <script>
+        // Configuration
+        const API_URL = "https://terratokenx-q7u4.onrender.com/api/";
+
+        // Helper: Get URL Parameter
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        // Determine effective SLUG
+        const urlSlug = getQueryParam('slug');
+        const PROJECT_SLUG = urlSlug ? urlSlug : 'refugio-patagonia'; // Default fallback
+
+        async function loadProjectDetails() {
+            try {
+                // 1. Fetch Metadata (Title, Desc, Image)
+                const detailResponse = await fetch(`${API_URL}project-detail/?slug=${PROJECT_SLUG}`);
+                if (!detailResponse.ok) throw new Error("Project not found");
+                const project = await detailResponse.json();
+
+                // Update DOM Elements
+                document.title = `${project.nombre} | TerraTokenX`;
+                document.getElementById('navProjectTitle').textContent = project.nombre;
+                document.getElementById('mainProjectTitle').textContent = project.nombre;
+                document.getElementById('breadcrumbTitle').textContent = project.nombre; // Short name for breadcrumb
+                document.getElementById('mainLocation').textContent = project.ubicacion;
+
+                // Description & Image
+                // Description is now handled in the tabs logic logic below
+                if (project.imagen) {
+                    document.getElementById('mainProjectImage').src = project.imagen;
+                }
+
+                if (project.galeria && project.galeria.length > 0) {
+                    const galleryGrid = document.getElementById('projectGalleryGrid');
+                    galleryGrid.classList.remove('hidden');
+                    galleryGrid.innerHTML = ''; // Clear existing
+
+                    project.galeria.forEach((img, index) => {
+                        const div = document.createElement('div');
+                        div.className = 'w-28 h-28 flex-shrink-0 bg-gray-800 rounded-xl overflow-hidden cursor-pointer border border-white/10 hover:border-white/30 transition shadow-lg relative group';
+
+                        // Icono de ojo al hover
+                        div.innerHTML = `
+                            <img src="${img.url}" referrerpolicy="no-referrer" alt="${img.caption || 'Galería'}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                                <i class="fa-solid fa-eye text-white"></i>
+                            </div>
+                        `;
+
+                        div.onclick = () => {
+                            // Update Main Image
+                            document.getElementById('mainProjectImage').src = img.url;
+
+                            // Update Caption
+                            const captionEl = document.getElementById('mainImageCaption');
+                            if (img.caption) {
+                                captionEl.textContent = img.caption;
+                                captionEl.classList.remove('hidden');
+                                captionEl.classList.add('animate-fadeIn'); // Simple animation class if available, or just toggle
+                            } else {
+                                captionEl.classList.add('hidden');
+                            }
+                        };
+                        galleryGrid.appendChild(div);
+                    });
+                }
+
+                // Video Logic
+                if (project.video_url) {
+                    const videoContainer = document.getElementById('projectVideoContainer');
+                    if (videoContainer) {
+                        videoContainer.classList.remove('hidden');
+                        let embedUrl = project.video_url;
+
+                        // Simple YouTube URL to Embed conversion
+                        if (project.video_url.includes('youtube.com/watch?v=')) {
+                            embedUrl = project.video_url.replace('watch?v=', 'embed/');
+                        } else if (project.video_url.includes('youtu.be/')) {
+                            embedUrl = project.video_url.replace('youtu.be/', 'www.youtube.com/embed/');
+                        }
+
+                        videoContainer.innerHTML = `
+                            <iframe 
+                                class="w-full h-full rounded-2xl" 
+                                src="${embedUrl}" 
+                                title="Project Video" 
+                                frameborder="0" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                allowfullscreen>
+                            </iframe>
+                        `;
+                    }
+                }
+
+                if (document.getElementById('rentabilidadEstimada'))
+                    document.getElementById('rentabilidadEstimada').textContent = project.rentabilidad_estimada;
+
+                // Update Official Page Button
+                const btn = document.getElementById('officialPageBtn');
+                if (btn) {
+                    if (project.pagina_oficial_url) {
+                        btn.href = project.pagina_oficial_url;
+                        btn.classList.remove('hidden');
+                    } else {
+                        btn.classList.add('hidden');
+                    }
+                }
+
+                // Update Invest Button (only show if project is Activo)
+                const investBtn = document.getElementById('investBtn');
+                if (investBtn) {
+                    if (project.estado === 'Activo') {
+                        // Asumimos que la pasarela está en la raíz del servidor Django (puerto 8000)
+                        const baseUrl = API_URL.replace('/api/', '/');
+                        investBtn.href = `${baseUrl}?project_slug=${PROJECT_SLUG}`;
+                        investBtn.classList.remove('hidden');
+                    } else {
+                        // Proyecto no disponible para inversión
+                        investBtn.classList.add('hidden');
+
+                        // Mostrar mensaje alternativo
+                        const estadoMsg = project.estado === 'Vendido'
+                            ? '<span class="text-red-400">🔒 Proyecto Vendido</span>'
+                            : '<span class="text-blue-400">⏳ Próximamente</span>';
+                        investBtn.insertAdjacentHTML('afterend', `<div class="py-4 text-center text-lg font-bold">${estadoMsg}</div>`);
+                    }
+                }
+
+                // 2. Load Stats (Re-using logic but now cleaner)
+                loadTokenStats();
+
+                // 3. Load Sections (Tabs) - Including Description
+                const sectionsContainer = document.getElementById('projectSectionsContainer');
+                const tabsNav = document.getElementById('sectionsTabs');
+                const tabsContent = document.getElementById('sectionsContent');
+
+                sectionsContainer.classList.remove('hidden');
+                tabsNav.innerHTML = '';
+
+                // Prepare tabs data: Description + Dynamic Sections
+                const allSections = [
+                    { nombre: 'Descripción', contenido: project.descripcion },
+                    ...(project.secciones || [])
+                ];
+
+                allSections.forEach((sec, index) => {
+                    // Create tab button - ZUBA style (text with underline)
+                    const tabBtn = document.createElement('button');
+
+                    // Colors: crypto-gold (#d4af37 is text-yellow-500 approx, or custom gold)
+                    // We use the hex or tailwind class. Let's use text-[#d4af37] for precision.
+                    const activeStyle = 'text-[#d4af37] font-bold border-b-2 border-[#d4af37] pb-3 -mb-px';
+                    const inactiveStyle = 'text-gray-400 hover:text-white pb-3 -mb-px transition font-medium';
+
+                    tabBtn.className = `text-lg ${index === 0 ? activeStyle : inactiveStyle}`;
+                    tabBtn.textContent = sec.nombre;
+
+                    tabBtn.onclick = () => {
+                        // Update active state
+                        tabsNav.querySelectorAll('button').forEach(b => b.className = `text-lg ${inactiveStyle}`);
+                        tabBtn.className = `text-lg ${activeStyle}`;
+
+                        // Update content with fade effect
+                        tabsContent.style.opacity = '0';
+                        setTimeout(() => {
+                            // If it's description, use simple text rendering (or whitespace-pre-line)
+                            // If it's HTML content from sections, assume safe HTML
+                            if (sec.nombre === 'Descripción') {
+                                tabsContent.className = 'text-gray-300 text-lg leading-relaxed whitespace-pre-line';
+                                tabsContent.innerText = sec.contenido;
+                            } else {
+                                tabsContent.className = 'text-gray-300 text-lg leading-relaxed prose prose-invert max-w-none';
+                                tabsContent.innerHTML = sec.contenido;
+                            }
+                            tabsContent.style.opacity = '1';
+                        }, 150);
+                    };
+                    tabsNav.appendChild(tabBtn);
+                });
+
+                // Show first tab content by default
+                tabsContent.className = 'text-gray-300 text-lg leading-relaxed whitespace-pre-line transition-opacity duration-300';
+                tabsContent.innerText = allSections[0].contenido;
+
+
+            } catch (error) {
+                console.error("Error loading project details:", error);
+                document.getElementById('mainProjectTitle').textContent = "Proyecto No Encontrado";
+                document.getElementById('projectDescription').textContent = "No pudimos cargar la información de este proyecto. Verifique la URL.";
+            }
+        }
+
+        async function loadTokenStats() {
+            try {
+                // Fetch Stats
+                const statsResponse = await fetch(`${API_URL}stats/?slug=${PROJECT_SLUG}`);
+                const statsData = await statsResponse.json();
+
+                // Fetch Config (Price)
+                const configResponse = await fetch(`${API_URL}config/?slug=${PROJECT_SLUG}`);
+                const configData = await configResponse.json();
+
+                if (statsData.error) throw new Error(statsData.error);
+
+                // Update UI - Stats
+                if (document.getElementById('valorProyecto'))
+                    document.getElementById('valorProyecto').textContent = '$' + statsData.valor_proyecto_usd.toLocaleString('en-US') + ' USD';
+
+                if (document.getElementById('montoRecaudado'))
+                    document.getElementById('montoRecaudado').textContent = '$' + statsData.monto_recaudado_usd.toLocaleString('en-US');
+
+                if (document.getElementById('progressPercentage'))
+                    document.getElementById('progressPercentage').textContent = `${statsData.porcentaje_vendido}%`;
+
+                if (document.getElementById('progressBar'))
+                    document.getElementById('progressBar').style.width = `${statsData.porcentaje_vendido}%`;
+
+                if (document.getElementById('tokensDisponiblesFullValue'))
+                    document.getElementById('tokensDisponiblesFullValue').textContent = statsData.tokens_disponibles.toLocaleString('en-US');
+
+                // Update Price
+                const priceElements = document.querySelectorAll('.token-price-display');
+                if (configData.precio_token_usd) {
+                    priceElements.forEach(el => el.textContent = '$' + configData.precio_token_usd + ' USD');
+                }
+
+                // Auto-hide invest button if tokens are sold out
+                const investBtn = document.getElementById('investBtn');
+                if (investBtn && statsData.tokens_disponibles === 0) {
+                    investBtn.classList.add('hidden');
+                    // Check if sold out message already exists
+                    if (!document.getElementById('soldOutMessage')) {
+                        investBtn.insertAdjacentHTML('afterend', '<div id="soldOutMessage" class="py-4 text-center text-lg font-bold"><span class="text-red-400">🔒 Tokens Agotados</span></div>');
+                    }
+                }
+
+            } catch (error) {
+                console.error('API Error:', error);
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', loadProjectDetails);
+        setInterval(loadTokenStats, 30000); // Poll Stats every 30s
+
+    </script>
+</body>
+
+</html>

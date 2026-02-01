@@ -97,7 +97,7 @@
             <img src="{% static 'booking/img/Terratoken_logo-removebg-preview2.png' %}" alt="TerraTokenX Logo"
                 class="w-72 sm:w-80 h-auto object-contain mb-2">
             <p class="text-gray-500 text-xs sm:text-sm uppercase tracking-widest font-medium">Real Assets. Digital
-                Trust.</p>
+                Trust</p>
         </div>
         <!-- Mensaje para el usuario -->
         <div id="mensaje-usuario" style="display:none;"
@@ -128,7 +128,7 @@
                             <option value="{{ p.id }}" data-price="{{ p.precio_token|stringformat:'d' }}"
                                 data-stock="{{ p.tokens_disponibles|stringformat:'d' }}" data-name="{{ p.nombre }}"
                                 data-img="{% if p.imagen_portada_url %}{{ p.imagen_portada_url }}{% elif p.imagen_portada %}{{ p.imagen_portada.url }}{% endif %}"
-                                {% if proyecto and proyecto.id == p.id %}selected{% endif %}>
+                                <option value="{{ p.id }}" {% if proyecto and proyecto.id==p.id %}selected{% endif %}>
                                 {{ p.nombre }}
                             </option>
                             {% endfor %}
@@ -170,15 +170,68 @@
                         {{ form.correo.errors }}
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-1">Teléfono*</label>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Teléfono* <span
+                                class="text-xs text-gray-500">(para recibir el contrato)</span></label>
                         {{ form.telefono }}
                         {{ form.telefono.errors }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">RUT* <span
+                                class="text-xs text-gray-500">(obligatorio para contrato)</span></label>
+                        {{ form.rut }}
+                        {{ form.rut.errors }}
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-300 mb-1">Dirección*</label>
                         {{ form.direccion }}
                         {{ form.direccion.errors }}
                     </div>
+
+                    <!-- Sección Persona Jurídica -->
+                    <div class="pt-4 border-t border-gray-700">
+                        <div class="flex items-center mb-4">
+                            {{ form.es_empresa }}
+                            <label for="check_es_empresa" class="ml-2 text-sm font-medium text-gray-300 cursor-pointer">
+                                Comprar como Empresa (Persona Jurídica)
+                            </label>
+                        </div>
+
+                        <div id="company-fields" class="space-y-4 pl-4 border-l-2 border-slate-600 hidden">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-1">Razón Social</label>
+                                {{ form.razon_social }}
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-1">RUT Empresa</label>
+                                {{ form.rut_empresa }}
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-1">Cargo Que Firma</label>
+                                {{ form.cargo_representante }}
+                                <span class="text-xs text-gray-500 block">Ej: Representante Legal, Gerente
+                                    General</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function () {
+                            const checkEmpresa = document.getElementById('check_es_empresa');
+                            const companyFields = document.getElementById('company-fields');
+
+                            function toggleCompanyFields() {
+                                if (checkEmpresa.checked) {
+                                    companyFields.classList.remove('hidden');
+                                } else {
+                                    companyFields.classList.add('hidden');
+                                }
+                            }
+
+                            checkEmpresa.addEventListener('change', toggleCompanyFields);
+                            // Initial check
+                            toggleCompanyFields();
+                        });
+                    </script>
                     <div>
                         <label class="block text-sm font-medium text-gray-300 mb-1">Código de Cupón</label>
                         <div class="flex items-center gap-2">
@@ -248,7 +301,7 @@
                                 class="p-4 rounded-lg border-2 border-gray-700 bg-dark-700 hover:border-gold-500/50 peer-checked:border-gold-500 peer-checked:bg-gold-500/10 transition-all duration-200 flex flex-col items-center">
                                 <span
                                     class="material-icons text-blue-400 text-3xl mb-2 group-hover:scale-110 transition-transform">credit_card</span>
-                                <span class="text-white font-bold">Webpay / Tarjetas</span>
+                                <span class="text-white font-bold">Tarjetas</span>
                                 <span class="text-xs text-gray-400 mt-1">Vía Mercado Pago</span>
                                 <span
                                     class="mt-2 px-2 py-0.5 bg-yellow-500/20 text-yellow-400 text-[10px] font-bold uppercase tracking-wider rounded border border-yellow-500/50">
@@ -400,7 +453,7 @@
                     <a href="https://chat.whatsapp.com/G7aHCdj9v6RAY8xRrbrjkn" target="_blank"
                         class="bg-[#d1a841] text-black font-bold py-2 px-6 rounded-lg hover:bg-[#b69237] transition-colors text-sm shadow-lg flex items-center gap-2">
                         <span class="material-icons text-lg">groups</span>
-                        Unirme al Grupo VIP
+                        Unirme a Comunidad
                     </a>
                 </div>
             </div>

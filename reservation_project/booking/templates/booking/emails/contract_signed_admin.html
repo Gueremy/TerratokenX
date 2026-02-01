@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nueva Firma - TerraTokenX Admin</title>
+</head>
+
+<body
+    style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0a0a0a;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0"
+        style="background-color: #0a0a0a; padding: 40px 20px;">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="600" cellspacing="0" cellpadding="0"
+                    style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.5);">
+
+                    <!-- Header -->
+                    <tr>
+                        <td
+                            style="background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%); padding: 25px; text-align: center;">
+                            <h1 style="color: #ffffff; margin: 0; font-size: 22px; font-weight: 700;">📝 Nueva Firma
+                                Recibida</h1>
+                        </td>
+                    </tr>
+
+                    <!-- Body -->
+                    <tr>
+                        <td style="padding: 30px;">
+                            <p style="color: #e5e7eb; font-size: 15px; line-height: 1.6; margin: 0 0 20px 0;">
+                                Un cliente ha firmado su contrato de compra de tokens:
+                            </p>
+
+                            <!-- Details Box -->
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0"
+                                style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 12px; margin-bottom: 20px;">
+                                <tr>
+                                    <td style="padding: 20px;">
+                                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                                            <tr>
+                                                <td style="padding: 6px 0;">
+                                                    <span style="color: #9ca3af; font-size: 13px;">Cliente:</span>
+                                                </td>
+                                                <td style="padding: 6px 0; text-align: right;">
+                                                    <span style="color: #ffffff; font-size: 13px; font-weight: 600;">{{
+                                                        reserva.nombre }}</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 6px 0;">
+                                                    <span style="color: #9ca3af; font-size: 13px;">Email:</span>
+                                                </td>
+                                                <td style="padding: 6px 0; text-align: right;">
+                                                    <span style="color: #3b82f6; font-size: 13px;">{{ reserva.correo
+                                                        }}</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 6px 0;">
+                                                    <span style="color: #9ca3af; font-size: 13px;">Reserva:</span>
+                                                </td>
+                                                <td style="padding: 6px 0; text-align: right;">
+                                                    <span style="color: #ffffff; font-size: 13px;">{{
+                                                        reserva.numero_reserva }}</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 6px 0;">
+                                                    <span style="color: #9ca3af; font-size: 13px;">Proyecto:</span>
+                                                </td>
+                                                <td style="padding: 6px 0; text-align: right;">
+                                                    <span style="color: #ffffff; font-size: 13px;">{{
+                                                        reserva.proyecto.nombre }}</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 6px 0;">
+                                                    <span style="color: #9ca3af; font-size: 13px;">Tokens:</span>
+                                                </td>
+                                                <td style="padding: 6px 0; text-align: right;">
+                                                    <span style="color: #22c55e; font-size: 13px; font-weight: 600;">{{
+                                                        reserva.cantidad_tokens }}</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 6px 0;">
+                                                    <span style="color: #9ca3af; font-size: 13px;">Total:</span>
+                                                </td>
+                                                <td style="padding: 6px 0; text-align: right;">
+                                                    <span style="color: #22c55e; font-size: 15px; font-weight: 700;">${{
+                                                        reserva.total }} USD</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p style="color: #6b7280; font-size: 12px; margin: 0; text-align: center;">
+                                Revisa el panel de administración para más detalles.
+                            </p>
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+
+</html>

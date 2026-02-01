@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bienvenido a TerraTokenX</title>
+</head>
+
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #0a0a0a;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0"
+        style="background-color: #0a0a0a; padding: 40px 20px;">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="600" cellspacing="0" cellpadding="0"
+                    style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; overflow: hidden;">
+                    <tr>
+                        <td
+                            style="background: linear-gradient(90deg, #d4af37 0%, #f4d03f 100%); padding: 30px; text-align: center;">
+                            <h1 style="color: #000; margin: 0; font-size: 28px;">Bienvenido a TerraTokenX!</h1>
+                            <p style="color: rgba(0,0,0,0.7); margin: 10px 0 0 0;">Tu pago ha sido confirmado</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 40px 30px;">
+                            <p style="color: #e5e7eb; font-size: 16px;">Hola <strong style="color: #d4af37;">{{ reserva.nombre }}</strong>,</p>
+                            <p style="color: #9ca3af; font-size: 15px;">Felicitaciones! Tu pago ha sido verificado y
+                                confirmado exitosamente.</p>
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0"
+                                style="background: rgba(212, 175, 55, 0.1); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 12px; margin: 25px 0;">
+                                <tr>
+                                    <td style="padding: 20px;">
+                                        <h3 style="color: #d4af37; margin: 0 0 15px 0;">RESUMEN DE TU COMPRA</h3>
+                                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                                            <tr>
+                                                <td
+                                                    style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1); color: #9ca3af;">
+                                                    Numero de Compra</td>
+                                                <td
+                                                    style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right; color: #fff;">
+                                                    #{{ reserva.numero_reserva }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td
+                                                    style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1); color: #9ca3af;">
+                                                    Proyecto</td>
+                                                <td
+                                                    style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right; color: #fff;">
+                                                    {{ reserva.proyecto.nombre|default:"TerraTokenX" }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td
+                                                    style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1); color: #9ca3af;">
+                                                    Tokens Adquiridos</td>
+                                                <td
+                                                    style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right; color: #d4af37;">
+                                                    {{ reserva.cantidad_tokens }} tokens</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 8px 0; color: #9ca3af;">Total Pagado</td>
+                                                <td
+                                                    style="padding: 8px 0; text-align: right; color: #22c55e; font-size: 18px; font-weight: bold;">
+                                                    ${{ reserva.total }} USD</td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                            <div
+                                style="background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; padding: 15px 20px; margin-bottom: 25px;">
+                                <h4 style="color: #3b82f6; margin: 0 0 10px 0;">Proximo Paso: Firma del Contrato</h4>
+                                <p style="color: #9ca3af; font-size: 13px; margin: 0;">En breve recibiras un correo de
+                                    FirmaVirtual con tu contrato legal para firmar electronicamente.</p>
+                            </div>
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0"
+                                style="background: linear-gradient(135deg, rgba(37, 211, 102, 0.15) 0%, rgba(18, 140, 126, 0.15) 100%); border: 1px solid rgba(37, 211, 102, 0.3); border-radius: 12px; margin-bottom: 25px;">
+                                <tr>
+                                    <td style="padding: 25px; text-align: center;">
+                                        <h3 style="color: #25d366; margin: 0 0 10px 0;">Bienvenido al Grupo VIP!</h3>
+                                        <p style="color: #9ca3af; font-size: 14px; margin: 0 0 20px 0;">Como inversor de
+                                            TerraTokenX, tienes acceso exclusivo a nuestra comunidad VIP de WhatsApp.
+                                        </p>
+                                        <a href="https://chat.whatsapp.com/D4mKR6CxOVH63jAHhZ22Iq"
+                                            style="display: inline-block; background-color: #25d366; color: #fff; text-decoration: none; padding: 14px 32px; border-radius: 50px; font-weight: bold;">Unirme
+                                            al Grupo VIP</a>
+                                    </td>
+                                </tr>
+                            </table>
+                            <p style="color: #9ca3af; font-size: 14px;">Si tienes alguna pregunta, no dudes en
+                                contactarnos. Gracias por confiar en TerraTokenX!</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="background: rgba(0,0,0,0.3); padding: 25px 30px; text-align: center;">
+                            <p style="color: #6b7280; font-size: 12px; margin: 0 0 10px 0;">2024 TerraTokenX - Inversion
+                                Inmobiliaria Tokenizada</p>
+                            <p style="color: #4b5563; font-size: 11px; margin: 0;">contacto@terratokenx.com |
+                                www.terratokenx.com</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+
+</html>

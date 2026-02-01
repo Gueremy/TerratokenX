@@ -9,9 +9,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
-        body {
-            font-family: Inter, sans-serif;
-        }
+        body { font-family: Inter, sans-serif; }
     </style>
 </head>
 
@@ -19,65 +17,50 @@
     <nav class="bg-gray-800 border-b border-gray-700 shadow-lg sticky top-0 z-50">
         <div class="container mx-auto px-6 py-4 flex justify-between items-center">
             <span class="text-yellow-400 font-bold text-xl">Panel de Administracion</span>
-            <a href="{% url 'logout' %}"
-                class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm">Salir</a>
+            <a href="{% url 'logout' %}" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm">Salir</a>
         </div>
     </nav>
     <div class="container mx-auto px-4 py-8 flex flex-col lg:flex-row gap-8">
         <div class="flex-1 space-y-8">
-            {% if messages %}<div class="space-y-4">{% for message in messages %}<div
-                    class="p-4 rounded-lg {% if message.tags == 'error' %}bg-red-900 text-red-200{% else %}bg-green-900 text-green-200{% endif %}">
-                    {{ message }}</div>{% endfor %}</div>{% endif %}
+            {% if messages %}<div class="space-y-4">{% for message in messages %}<div class="p-4 rounded-lg {% if message.tags == 'error' %}bg-red-900 text-red-200{% else %}bg-green-900 text-green-200{% endif %}">{{ message }}</div>{% endfor %}</div>{% endif %}
             <div class="bg-gray-800 p-6 rounded-xl border border-gray-700">
                 <h2 class="text-lg font-semibold text-yellow-400 mb-4">Filtrar Inversiones</h2>
                 <form method="get" class="flex flex-col sm:flex-row gap-4 items-end">
                     <div class="flex-1 w-full">
                         <label class="block text-sm text-gray-400 mb-1">Estado de Pago</label>
-                        <select name="estado_pago"
-                            class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white">
+                        <select name="estado_pago" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white">
                             <option value="">Todos</option>
-                            <option value="PENDIENTE" {% if request.GET.estado_pago=='PENDIENTE' %}selected{% endif %}>
-                                Pendiente</option>
-                            <option value="EN_REVISION" {% if request.GET.estado_pago=='EN_REVISION' %}selected{% endif
-                                %}>En Revision</option>
-                            <option value="CONFIRMADO" {% if request.GET.estado_pago=='CONFIRMADO' %}selected{% endif
-                                %}>Confirmado</option>
+                            <option value="PENDIENTE" {% if request.GET.estado_pago == 'PENDIENTE' %}selected{% endif %}>Pendiente</option>
+                            <option value="EN_REVISION" {% if request.GET.estado_pago == 'EN_REVISION' %}selected{% endif %}>En Revision</option>
+                            <option value="CONFIRMADO" {% if request.GET.estado_pago == 'CONFIRMADO' %}selected{% endif %}>Confirmado</option>
                         </select>
                     </div>
                     <div class="flex gap-2">
-                        <a href="{% url 'admin_panel' %}"
-                            class="px-4 py-2.5 bg-gray-700 text-white rounded-lg">Limpiar</a>
-                        <button type="submit"
-                            class="px-6 py-2.5 bg-yellow-500 text-black font-bold rounded-lg">Filtrar</button>
+                        <a href="{% url 'admin_panel' %}" class="px-4 py-2.5 bg-gray-700 text-white rounded-lg">Limpiar</a>
+                        <button type="submit" class="px-6 py-2.5 bg-yellow-500 text-black font-bold rounded-lg">Filtrar</button>
                     </div>
                 </form>
             </div>
-            <!-- Botón para Gestión de Proyectos -->
             <div class="mb-6">
-                <a href="{% url 'admin_projects' %}"
-                    class="w-full block text-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition duration-200">
+                <a href="{% url 'admin_projects' %}" class="w-full block text-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition duration-200">
                     <span class="material-icons align-middle mr-2">apartment</span>Gestionar Proyectos
                 </a>
             </div>
             <form method="post" action="{% url 'export_reservas_excel' %}" id="exportForm" class="flex flex-wrap gap-4">
-                {% csrf_token %}<button type="submit" name="export_excel"
-                    class="bg-green-600 text-white px-5 py-2.5 rounded-lg">Exportar a Excel</button><button
-                    type="submit" formaction="{% url 'export_reservas_pdf' %}"
-                    class="bg-red-600 text-white px-5 py-2.5 rounded-lg">Exportar a PDF</button></form>
+                {% csrf_token %}
+                <button type="submit" name="export_excel" class="bg-green-600 text-white px-5 py-2.5 rounded-lg">Exportar a Excel</button>
+                <button type="submit" formaction="{% url 'export_reservas_pdf' %}" class="bg-red-600 text-white px-5 py-2.5 rounded-lg">Exportar a PDF</button>
+            </form>
             <div class="space-y-4">
                 {% for reserva in reservas %}
                 <div class="bg-gray-800 border border-gray-700 rounded-xl p-6 relative">
-                    <input type="checkbox" name="selected_ids" value="{{ reserva.id }}" form="exportForm"
-                        class="absolute top-4 right-4 w-5 h-5">
+                    <input type="checkbox" name="selected_ids" value="{{ reserva.id }}" form="exportForm" class="absolute top-4 right-4 w-5 h-5">
                     <div class="flex justify-between items-start mb-4 pr-8">
                         <div>
-                            <h3 class="text-xl font-bold text-yellow-400">{{ reserva.nombre }}</h3><span
-                                class="text-xs text-gray-500">ID: {{ reserva.numero_reserva }}</span>
+                            <h3 class="text-xl font-bold text-yellow-400">{{ reserva.nombre }}</h3>
+                            <span class="text-xs text-gray-500">ID: {{ reserva.numero_reserva }}</span>
                         </div>
-                        <span
-                            class="px-3 py-1 rounded-full text-xs font-bold {% if reserva.estado_pago == 'CONFIRMADO' %}bg-green-900 text-green-400{% elif reserva.estado_pago == 'EN_REVISION' %}bg-orange-900 text-orange-400{% else %}bg-yellow-900 text-yellow-500{% endif %}">{%
-                            if reserva.estado_pago == 'CONFIRMADO' %}Confirmado{% elif reserva.estado_pago ==
-                            'EN_REVISION' %}En Revision{% else %}Pendiente{% endif %}</span>
+                        <span class="px-3 py-1 rounded-full text-xs font-bold {% if reserva.estado_pago == 'CONFIRMADO' %}bg-green-900 text-green-400{% elif reserva.estado_pago == 'EN_REVISION' %}bg-orange-900 text-orange-400{% else %}bg-yellow-900 text-yellow-500{% endif %}">{% if reserva.estado_pago == 'CONFIRMADO' %}Confirmado{% elif reserva.estado_pago == 'EN_REVISION' %}En Revision{% else %}Pendiente{% endif %}</span>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-8 text-sm text-gray-300">
                         <div>Fecha: {{ reserva.created_at|date:'d M Y H:i' }}</div>
@@ -85,17 +68,13 @@
                         <div>Telefono: {{ reserva.telefono }}</div>
                         <div>Direccion: {{ reserva.direccion }}</div>
                         <div>Tokens: {{ reserva.cantidad_tokens }}</div>
-                        <div>Pago: {% if reserva.metodo_pago == 'MP' %}Mercado Pago{% else %}Crypto{% endif %}</div>
+                        <div>Pago: {% if reserva.metodo_pago == 'MP' %}Mercado Pago{% elif reserva.metodo_pago == 'CRYPTO' %}CryptoMarket{% if reserva.crypto_currency %} ({{ reserva.crypto_currency }}){% endif %}{% else %}Crypto (Manual){% endif %}</div>
                         <div>Total: USD {{ reserva.total|floatformat:0 }}</div>
                     </div>
-                    {% if reserva.coupon %}<div class="mt-2"><span
-                            class="bg-green-900 text-green-400 px-2.5 py-0.5 rounded-full text-xs">Cupon: {{
-                            reserva.coupon.code }} (-{{ reserva.coupon.discount_percentage }}%)</span></div>{% endif %}
+                    {% if reserva.coupon %}<div class="mt-2"><span class="bg-green-900 text-green-400 px-2.5 py-0.5 rounded-full text-xs">Cupon: {{ reserva.coupon.code }} (-{{ reserva.coupon.discount_percentage }}%)</span></div>{% endif %}
                     <div class="mt-6 flex gap-3 border-t border-gray-700 pt-4">
-                        <a href="{% url 'editar_reserva' reserva.id %}"
-                            class="bg-blue-600 text-white px-4 py-2 rounded text-sm">Editar</a>
-                        <a href="{% url 'eliminar_reserva' reserva.id %}"
-                            class="bg-red-600 text-white px-4 py-2 rounded text-sm">Eliminar</a>
+                        <a href="{% url 'editar_reserva' reserva.id %}" class="bg-blue-600 text-white px-4 py-2 rounded text-sm">Editar</a>
+                        <a href="{% url 'eliminar_reserva' reserva.id %}" class="bg-red-600 text-white px-4 py-2 rounded text-sm">Eliminar</a>
                     </div>
                 </div>
                 {% empty %}
@@ -107,28 +86,27 @@
         </div>
         <div class="w-full lg:w-1/4 space-y-8">
             <div class="bg-gray-800 p-6 rounded-xl border border-gray-700">
-                <h3 class="text-lg font-bold text-yellow-400 mb-4 border-b border-gray-700 pb-2">Configuracion de
-                    Precios (USD)</h3>
-                <form method="post" class="space-y-4">{% csrf_token %}<div><label
-                            class="block text-xs text-gray-400 uppercase mb-2">Precio Base Token</label><input
-                            type="text" name="precio_base_token" value="{{ config.precio_base_token }}"
-                            class="w-full bg-gray-900 border border-gray-600 rounded-lg p-3 text-white text-lg font-semibold">
-                    </div><button type="submit" name="update_prices"
-                        class="w-full bg-yellow-500 text-black font-bold py-3 rounded-lg">Guardar Precio</button></form>
+                <h3 class="text-lg font-bold text-yellow-400 mb-4 border-b border-gray-700 pb-2">Configuracion de Precios (USD)</h3>
+                <form method="post" class="space-y-4">
+                    {% csrf_token %}
+                    <div>
+                        <label class="block text-xs text-gray-400 uppercase mb-2">Precio Base Token</label>
+                        <input type="text" name="precio_base_token" value="{{ config.precio_base_token }}" class="w-full bg-gray-900 border border-gray-600 rounded-lg p-3 text-white text-lg font-semibold">
+                    </div>
+                    <button type="submit" name="update_prices" class="w-full bg-yellow-500 text-black font-bold py-3 rounded-lg">Guardar Precio</button>
+                </form>
             </div>
             <div class="bg-gray-800 p-6 rounded-xl border border-gray-700">
-                <h3 class="text-lg font-bold text-yellow-400 mb-4 border-b border-gray-700 pb-2">Cupones de Descuento
-                </h3>
-                <form method="post" action="{% url 'agregar_cupon' %}" class="space-y-3 mb-6">{% csrf_token %}<input
-                        type="text" name="code" placeholder="Codigo del cupon"
-                        class="w-full bg-gray-700 rounded px-3 py-2 text-white text-sm uppercase" required><input
-                        type="number" name="discount_percentage" placeholder="Descuento (%)"
-                        class="w-full bg-gray-700 rounded px-3 py-2 text-white text-sm" required>
-                    <div class="flex gap-2"><input type="date" name="valid_from"
-                            class="w-1/2 bg-gray-700 rounded px-2 py-2 text-white text-xs" required><input type="date"
-                            name="valid_to" class="w-1/2 bg-gray-700 rounded px-2 py-2 text-white text-xs" required>
-                    </div><button type="submit"
-                        class="w-full bg-blue-600 text-white font-bold py-2 rounded text-xs">Agregar Cupon</button>
+                <h3 class="text-lg font-bold text-yellow-400 mb-4 border-b border-gray-700 pb-2">Cupones de Descuento</h3>
+                <form method="post" action="{% url 'agregar_cupon' %}" class="space-y-3 mb-6">
+                    {% csrf_token %}
+                    <input type="text" name="code" placeholder="Codigo del cupon" class="w-full bg-gray-700 rounded px-3 py-2 text-white text-sm uppercase" required>
+                    <input type="number" name="discount_percentage" placeholder="Descuento (%)" class="w-full bg-gray-700 rounded px-3 py-2 text-white text-sm" required>
+                    <div class="flex gap-2">
+                        <input type="date" name="valid_from" class="w-1/2 bg-gray-700 rounded px-2 py-2 text-white text-xs" required>
+                        <input type="date" name="valid_to" class="w-1/2 bg-gray-700 rounded px-2 py-2 text-white text-xs" required>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white font-bold py-2 rounded text-xs">Agregar Cupon</button>
                 </form>
                 <h4 class="text-sm text-gray-400 mb-3">Cupones Existentes</h4>
                 <div class="space-y-2 max-h-60 overflow-y-auto">
@@ -138,9 +116,10 @@
                             <div class="text-yellow-400 font-bold text-sm">{{ coupon.code }}</div>
                             <div class="text-xs text-gray-500">{{ coupon.discount_percentage }}% OFF</div>
                         </div>
-                        <form method="post" action="{% url 'eliminar_cupon' coupon.id %}"
-                            onsubmit="return confirm('Eliminar cupon?');">{% csrf_token %}<button type="submit"
-                                class="text-red-400 p-1">X</button></form>
+                        <form method="post" action="{% url 'eliminar_cupon' coupon.id %}" onsubmit="return confirm('Eliminar cupon?');">
+                            {% csrf_token %}
+                            <button type="submit" class="text-red-400 p-1">X</button>
+                        </form>
                     </div>
                     {% empty %}
                     <p class="text-xs text-gray-600 italic">No hay cupones registrados</p>

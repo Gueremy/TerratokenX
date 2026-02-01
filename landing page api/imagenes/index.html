@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proyectos Tokenizados - TerraTokenX</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1e2330;
+            /* Dark blue-gray from image */
+            color: white;
+        }
+
+        /* Glassmorphism Card Style - Based on Uiverse.io by SteveBloX */
+        .glass-card {
+            box-sizing: border-box;
+            background: rgba(30, 35, 48, 0.58);
+            /* Adjusted base color for dark theme */
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 12px 17px 51px rgba(0, 0, 0, 0.22);
+            backdrop-filter: blur(6px);
+            border-radius: 17px;
+            cursor: pointer;
+            transition: all 0.5s;
+        }
+
+        .glass-card:hover {
+            border: 1px solid rgba(251, 191, 36, 0.5);
+            /* Goldish border on hover */
+            transform: scale(1.02);
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.1);
+        }
+
+        .glass-card:active {
+            transform: scale(0.98);
+        }
+
+        .gold-text {
+            color: #d4af37;
+        }
+    </style>
+</head>
+
+<body class="flex flex-col items-center justify-center min-h-screen p-6 relative overflow-hidden">
+
+    <!-- Background Gradient Effect -->
+    <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-[#1e2330] to-[#11141c] -z-10"></div>
+    <div class="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl"></div>
+
+    <div class="mb-12 text-center z-10">
+        <h1 class="text-4xl md:text-5xl font-bold text-white mb-2 tracking-tight">Proyectos Tokenizados</h1>
+        <div class="w-32 h-1 bg-gradient-to-r from-transparent via-[#d4af37] to-transparent mx-auto"></div>
+    </div>
+
+    <!-- Main Card Container (Grid) -->
+    <div id="projects-grid" class="max-w-6xl w-full grid grid-cols-1 md:grid-cols-2 gap-8 z-20">
+        <!-- Projects will be injected here by JS -->
+        <p class="text-white text-center w-full col-span-full">Cargando proyectos...</p>
+    </div>
+
+    <!-- Footer Simple -->
+    <div class="mt-12 text-center text-gray-600 text-xs">
+        &copy; 2026 TerraTokenX. Real Assets, Digital Trust.
+    </div>
+
+    <script>
+        // Config
+        const API_URL = "https://terratokenx-q7u4.onrender.com/api/projects/";
+
+        async function loadProjects() {
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) throw new Error("Error fetching projects");
+                const data = await response.json();
+
+                const grid = document.getElementById('projects-grid');
+                grid.innerHTML = ''; // Clear loading message
+
+                if (data.projects && data.projects.length > 0) {
+                    data.projects.forEach(p => {
+                        const card = document.createElement('a');
+                        const isActive = p.estado === 'Activo';
+
+                        // Si el proyecto no está activo, solo permite ver (sin invertir)
+                        card.href = `index2.html?slug=${p.slug}`;
+                        card.className = `glass-card w-full flex flex-col md:flex-col overflow-hidden group block hover:no-underline ${!isActive ? 'opacity-70' : ''}`;
+
+                        // Default image if none provided
+                        const imageSrc = p.imagen ? p.imagen : "imagenes/patagonia aa.webp";
+
+                        // Badge de estado (solo si no es Activo)
+                        let estadoBadge = '';
+                        if (p.estado === 'Vendido') {
+                            estadoBadge = '<span class="absolute top-4 right-4 px-3 py-1 bg-red-600 text-white text-[10px] font-bold rounded-full uppercase">Vendido</span>';
+                        } else if (p.estado === 'Proximamente') {
+                            estadoBadge = '<span class="absolute top-4 right-4 px-3 py-1 bg-blue-600 text-white text-[10px] font-bold rounded-full uppercase">Próximamente</span>';
+                        }
+
+                        card.innerHTML = `
+                             <!-- Imagen -->
+                            <div class="w-full h-48 overflow-hidden relative">
+                                <img src="${imageSrc}" alt="${p.nombre}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                                ${estadoBadge}
+                                <div class="absolute bottom-4 left-4 text-white">
+                                    <span class="inline-block px-2 py-0.5 rounded border border-[#d4af37] text-[#d4af37] text-[10px] font-bold tracking-widest uppercase mb-1 bg-[#d4af37]/10">
+                                        ${p.ubicacion}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Contenido -->
+                            <div class="p-6 flex flex-col justify-between flex-grow text-left relative">
+                                <div>
+                                    <h2 class="text-2xl font-bold text-white mb-2 group-hover:text-[#d4af37] transition-colors">${p.nombre}</h2>
+                                    <p class="text-gray-400 mb-4 leading-relaxed text-xs line-clamp-2">
+                                        ${p.descripcion}
+                                    </p>
+                                </div>
+
+                                <div class="mt-4 pt-4 border-t border-white/10 flex justify-between items-center">
+                                    <div class="text-xs text-gray-500">
+                                        <p>Valor inicial Tokenización: <span class="text-green-400 font-bold">$${p.precio_desde} USD</span></p>
+                                    </div>
+                                    <div class="flex items-center gap-2 text-[#d4af37] font-bold text-xs group-hover:translate-x-2 transition-transform">
+                                        Ver Proyecto
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        grid.appendChild(card);
+                    });
+                } else {
+                    grid.innerHTML = '<p class="text-gray-400 text-center col-span-full">No hay proyectos activos en este momento.</p>';
+                }
+
+            } catch (error) {
+                console.error("Error:", error);
+                document.getElementById('projects-grid').innerHTML = '<p class="text-red-500 text-center col-span-full">Error cargando proyectos. Por favor intenta más tarde.</p>';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadProjects);
+    </script>
+
+</body>
+
+</html>

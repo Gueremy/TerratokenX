@@ -1,0 +1,238 @@
+{% extends 'booking/admin/base_admin.html' %}
+{% load humanize %}
+
+{% block title %}Cupones{% endblock %}
+{% block page_title %}Gestión de Cupones{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-8">
+    <div>
+        <h2 class="text-xl font-semibold text-white">Cupones de Descuento</h2>
+        <p class="text-gray-500 text-sm mt-1">Crea y administra cupones promocionales</p>
+    </div>
+    <button onclick="openModal()"
+        class="flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-xl transition-colors">
+        <span class="material-icons">add</span>
+        Nuevo Cupón
+    </button>
+</div>
+
+<!-- Stats Cards -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+    <div class="glass-panel rounded-xl p-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                <span class="material-icons text-blue-400">confirmation_number</span>
+            </div>
+            <div>
+                <p class="text-gray-500 text-xs">Total Cupones</p>
+                <p class="text-white text-xl font-bold">{{ stats.total }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="glass-panel rounded-xl p-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
+                <span class="material-icons text-green-400">check_circle</span>
+            </div>
+            <div>
+                <p class="text-gray-500 text-xs">Activos</p>
+                <p class="text-white text-xl font-bold">{{ stats.active }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="glass-panel rounded-xl p-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                <span class="material-icons text-purple-400">shopping_cart</span>
+            </div>
+            <div>
+                <p class="text-gray-500 text-xs">Usados</p>
+                <p class="text-white text-xl font-bold">{{ stats.used }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="glass-panel rounded-xl p-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-red-500/20 flex items-center justify-center">
+                <span class="material-icons text-red-400">timer_off</span>
+            </div>
+            <div>
+                <p class="text-gray-500 text-xs">Expirados</p>
+                <p class="text-white text-xl font-bold">{{ stats.expired }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Coupons Table -->
+<div class="glass-panel rounded-2xl overflow-hidden">
+    <table class="w-full">
+        <thead>
+            <tr class="border-b border-gray-700">
+                <th class="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase">Código</th>
+                <th class="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase">Descuento</th>
+                <th class="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase">Válido Desde</th>
+                <th class="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase">Válido Hasta</th>
+                <th class="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase">Estado</th>
+                <th class="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase">Usos</th>
+                <th class="text-center px-6 py-4 text-xs font-semibold text-gray-400 uppercase">Acciones</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-800">
+            {% for coupon in coupons %}
+            <tr class="hover:bg-gray-800/50 transition-colors">
+                <td class="px-6 py-4">
+                    <span class="px-3 py-1.5 rounded-lg bg-purple-500/20 text-purple-400 font-mono font-bold text-sm">{{ coupon.code }}</span>
+                </td>
+                <td class="px-6 py-4">
+                    <span class="text-green-400 font-bold text-lg">{{ coupon.discount_percentage }}%</span>
+                </td>
+                <td class="px-6 py-4 text-gray-400 text-sm">{{ coupon.valid_from|date:"d M Y" }}</td>
+                <td class="px-6 py-4 text-gray-400 text-sm">{{ coupon.valid_to|date:"d M Y" }}</td>
+                <td class="px-6 py-4">
+                    {% if coupon.is_valid %}
+                    <span
+                        class="px-2 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-medium">Activo</span>
+                    {% elif not coupon.is_active %}
+                    <span
+                        class="px-2 py-1 rounded-full bg-gray-500/20 text-gray-400 text-xs font-medium">Desactivado</span>
+                    {% else %}
+                    <span class="px-2 py-1 rounded-full bg-red-500/20 text-red-400 text-xs font-medium">Expirado</span>
+                    {% endif %}
+                </td>
+                <td class="px-6 py-4 text-white font-semibold">{{ coupon.usage_count }}</td>
+                <td class="px-6 py-4">
+                    <div class="flex items-center justify-center gap-2">
+                        <button
+                            onclick="editCoupon({{ coupon.id }}, '{{ coupon.code }}', {{ coupon.discount_percentage }}, '{{ coupon.valid_from|date:'Y-m-d' }}', '{{ coupon.valid_to|date:'Y-m-d' }}', {{ coupon.is_active|yesno:'true,false' }})"
+                            class="p-2 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-colors">
+                            <span class="material-icons text-lg">edit</span>
+                        </button>
+                        <form method="POST" action="{% url 'admin_coupon_delete' coupon.id %}" class="inline"
+                            onsubmit="return confirm('¿Eliminar cupón {{ coupon.code }}?');">
+                            {% csrf_token %}
+                            <button type="submit"
+                                class="p-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors">
+                                <span class="material-icons text-lg">delete</span>
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="px-6 py-16 text-center">
+                    <span class="material-icons text-5xl text-gray-600 mb-4 block">loyalty</span>
+                    <p class="text-gray-400 text-lg mb-2">No hay cupones creados</p>
+                    <p class="text-gray-500 text-sm">Crea tu primer cupón de descuento</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal Create/Edit Coupon -->
+<div id="couponModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50">
+    <div class="glass-panel rounded-2xl w-full max-w-md mx-4 overflow-hidden">
+        <div class="bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-4">
+            <h3 id="modalTitle" class="text-xl font-bold text-white">Nuevo Cupón</h3>
+        </div>
+        <form id="couponForm" method="POST" action="{% url 'admin_coupon_create' %}" class="p-6 space-y-4">
+            {% csrf_token %}
+            <input type="hidden" id="couponId" name="coupon_id" value="">
+
+            <div>
+                <label class="block text-gray-400 text-sm mb-2">Código del Cupón</label>
+                <input type="text" id="couponCode" name="code" required
+                    class="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 text-white focus:border-purple-500 focus:outline-none uppercase"
+                    placeholder="Ej: VERANO20">
+            </div>
+
+            <div>
+                <label class="block text-gray-400 text-sm mb-2">Porcentaje de Descuento</label>
+                <div class="relative">
+                    <input type="number" id="couponDiscount" name="discount_percentage" required min="1" max="100"
+                        class="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 text-white focus:border-purple-500 focus:outline-none"
+                        placeholder="Ej: 20">
+                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">%</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-gray-400 text-sm mb-2">Válido Desde</label>
+                    <input type="date" id="couponFrom" name="valid_from" required
+                        class="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 text-white focus:border-purple-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-gray-400 text-sm mb-2">Válido Hasta</label>
+                    <input type="date" id="couponTo" name="valid_to" required
+                        class="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 text-white focus:border-purple-500 focus:outline-none">
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <input type="checkbox" id="couponActive" name="is_active" checked
+                    class="w-5 h-5 rounded bg-gray-800 border-gray-700 text-purple-500 focus:ring-purple-500">
+                <label for="couponActive" class="text-gray-300">Cupón Activo</label>
+            </div>
+
+            <div class="flex gap-3 pt-4">
+                <button type="button" onclick="closeModal()"
+                    class="flex-1 px-4 py-3 rounded-xl bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors">
+                    Cancelar
+                </button>
+                <button type="submit"
+                    class="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium hover:opacity-90 transition-opacity">
+                    Guardar Cupón
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openModal() {
+        document.getElementById('couponModal').classList.remove('hidden');
+        document.getElementById('couponModal').classList.add('flex');
+        document.getElementById('modalTitle').textContent = 'Nuevo Cupón';
+        document.getElementById('couponForm').action = "{% url 'admin_coupon_create' %}";
+        document.getElementById('couponId').value = '';
+        document.getElementById('couponCode').value = '';
+        document.getElementById('couponDiscount').value = '';
+        document.getElementById('couponFrom').value = '';
+        document.getElementById('couponTo').value = '';
+        document.getElementById('couponActive').checked = true;
+    }
+
+    function editCoupon(id, code, discount, validFrom, validTo, isActive) {
+        document.getElementById('couponModal').classList.remove('hidden');
+        document.getElementById('couponModal').classList.add('flex');
+        document.getElementById('modalTitle').textContent = 'Editar Cupón';
+        document.getElementById('couponForm').action = "{% url 'admin_coupon_edit' 0 %}".replace('0', id);
+        document.getElementById('couponId').value = id;
+        document.getElementById('couponCode').value = code;
+        document.getElementById('couponDiscount').value = discount;
+        document.getElementById('couponFrom').value = validFrom;
+        document.getElementById('couponTo').value = validTo;
+        document.getElementById('couponActive').checked = isActive;
+    }
+
+    function closeModal() {
+        document.getElementById('couponModal').classList.add('hidden');
+        document.getElementById('couponModal').classList.remove('flex');
+    }
+
+    // Close modal on escape key
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeModal();
+    });
+
+    // Close modal on backdrop click
+    document.getElementById('couponModal').addEventListener('click', function (e) {
+        if (e.target === this) closeModal();
+    });
+</script>
+{% endblock %}
