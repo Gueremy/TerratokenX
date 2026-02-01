@@ -204,5 +204,15 @@ LOGIN_URL = 'login'
 LOGOUT_REDIRECT_URL = '/' # Redirigir a la página principal después de cerrar sesión
 
 # Configuración para archivos media (Imágenes subidas)
+# Configuración para archivos media (Imágenes subidas)
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# En Render, el disco persistente está montado en BASE_DIR / 'data'
+# Queremos guardar los medios dentro de ese disco para que no se borren.
+# Estructura final: .../reservation_project/data/media/
+if os.path.exists(os.path.join(BASE_DIR, 'data')):
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'data', 'media')
+else:
+    # Fallback para desarrollo local si no existe la carpeta data
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
