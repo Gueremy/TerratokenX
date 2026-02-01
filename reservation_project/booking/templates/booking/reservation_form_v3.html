@@ -97,7 +97,7 @@
             <img src="{% static 'booking/img/Terratoken_logo-removebg-preview2.png' %}" alt="TerraTokenX Logo"
                 class="w-72 sm:w-80 h-auto object-contain mb-2">
             <p class="text-gray-500 text-xs sm:text-sm uppercase tracking-widest font-medium">Real Assets. Digital
-                Trust.</p>
+                Trust</p>
         </div>
         <!-- Mensaje para el usuario -->
         <div id="mensaje-usuario" style="display:none;"
@@ -128,7 +128,7 @@
                             <option value="{{ p.id }}" data-price="{{ p.precio_token|stringformat:'d' }}"
                                 data-stock="{{ p.tokens_disponibles|stringformat:'d' }}" data-name="{{ p.nombre }}"
                                 data-img="{% if p.imagen_portada_url %}{{ p.imagen_portada_url }}{% elif p.imagen_portada %}{{ p.imagen_portada.url }}{% endif %}"
-                                {% if proyecto and proyecto.id == p.id %}selected{% endif %}>
+                                {% if proyecto and proyecto.id==p.id %}selected{% endif %}>
                                 {{ p.nombre }}
                             </option>
                             {% endfor %}
@@ -248,12 +248,8 @@
                                 class="p-4 rounded-lg border-2 border-gray-700 bg-dark-700 hover:border-gold-500/50 peer-checked:border-gold-500 peer-checked:bg-gold-500/10 transition-all duration-200 flex flex-col items-center">
                                 <span
                                     class="material-icons text-blue-400 text-3xl mb-2 group-hover:scale-110 transition-transform">credit_card</span>
-                                <span class="text-white font-bold">Webpay / Tarjetas</span>
+                                <span class="text-white font-bold">Tarjetas</span>
                                 <span class="text-xs text-gray-400 mt-1">Vía Mercado Pago</span>
-                                <span
-                                    class="mt-2 px-2 py-0.5 bg-yellow-500/20 text-yellow-400 text-[10px] font-bold uppercase tracking-wider rounded border border-yellow-500/50">
-                                    Comisión 3,19% + IVA
-                                </span>
                             </div>
                             <div class="absolute top-2 right-2 opacity-0 peer-checked:opacity-100 transition-opacity">
                                 <span class="material-icons text-gold-500 text-sm">check_circle</span>
@@ -400,7 +396,7 @@
                     <a href="https://chat.whatsapp.com/G7aHCdj9v6RAY8xRrbrjkn" target="_blank"
                         class="bg-[#d1a841] text-black font-bold py-2 px-6 rounded-lg hover:bg-[#b69237] transition-colors text-sm shadow-lg flex items-center gap-2">
                         <span class="material-icons text-lg">groups</span>
-                        Unirme al Grupo VIP
+                        Unirme a la Comunidad
                     </a>
                 </div>
             </div>
