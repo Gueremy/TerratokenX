@@ -121,11 +121,11 @@
                     <label class="block text-sm font-medium text-gray-300 mb-3">Selecciona el Proyecto</label>
                     <div class="relative">
                         <select id="project_select_dropdown"
-                            class="w-full bg-dark-700 border border-gray-600 text-white rounded-lg p-3 appearance-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500 transition-colors cursor-pointer">
+                            class="w-full bg-dark-800 border border-gray-600 text-white rounded-lg p-3 appearance-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500 transition-colors cursor-pointer">
                             <option value="" disabled {% if not proyecto %}selected{% endif %}>-- Elige un proyecto --
                             </option>
                             {% for p in proyectos_activos %}
-                            <option value="{{ p.id }}" data-price="{{ p.precio_token|stringformat:'d' }}"
+                            <option value="{{ p.id }}" data-price="{{ p.precio_token }}"
                                 data-stock="{{ p.tokens_disponibles|stringformat:'d' }}" data-name="{{ p.nombre }}"
                                 data-img="{% if p.imagen_portada_url %}{{ p.imagen_portada_url }}{% elif p.imagen_portada %}{{ p.imagen_portada.url }}{% endif %}"
                                 {% if proyecto and proyecto.id==p.id %}selected{% endif %}>
@@ -141,7 +141,7 @@
 
                     <!-- Info del proyecto seleccionado (Visible al seleccionar) -->
                     <div id="project-info-card"
-                        class="mt-4 hidden p-4 rounded-xl border border-gray-700 bg-dark-700 flex items-center gap-4 transition-all">
+                        class="mt-4 hidden p-4 rounded-xl border border-gray-700 bg-dark-800 flex items-center gap-4 transition-all">
                         <div
                             class="w-16 h-16 rounded-lg bg-gray-800 border border-gray-600 overflow-hidden flex-shrink-0">
                             <img id="selected-project-img" src="" alt="" class="w-full h-full object-cover hidden">
@@ -241,7 +241,7 @@
                                 {{ form.coupon_code.errors }}
                             </div>
                             <button type="button" id="btn-validar-cupon"
-                                class="px-3 py-2 bg-dark-700 border border-gold-500 text-gold-500 rounded hover:bg-gold-500 hover:text-black transition-colors text-sm font-bold">
+                                class="px-3 py-2 bg-dark-800 border border-gold-500 text-gold-500 rounded hover:bg-gold-500 hover:text-black transition-colors text-sm font-bold">
                                 Validar
                             </button>
                         </div>
@@ -256,7 +256,7 @@
                 </div>
 
                 <!-- Sección de Precios Mejorada -->
-                <div id="precio-info" class="mt-6 bg-dark-700 border border-gray-700 p-4 rounded-lg">
+                <div id="precio-info" class="mt-6 bg-dark-800 border border-gray-700 p-4 rounded-lg">
                     <div class="flex justify-between items-center text-sm mb-1 text-gray-400">
                         <span id="precio-dia-label">Valor del Token</span>
                         <span class="font-semibold text-gray-300">${{ precio_base_token }} USD</span>
@@ -298,7 +298,7 @@
                         <label class="cursor-pointer relative group">
                             <input type="radio" name="metodo_pago" value="MP" class="peer sr-only">
                             <div
-                                class="p-4 rounded-lg border-2 border-gray-700 bg-dark-700 hover:border-gold-500/50 peer-checked:border-gold-500 peer-checked:bg-gold-500/10 transition-all duration-200 flex flex-col items-center">
+                                class="p-4 rounded-lg border-2 border-gray-700 bg-dark-800 hover:border-gold-500/50 peer-checked:border-gold-500 peer-checked:bg-gold-500/10 transition-all duration-200 flex flex-col items-center">
                                 <span
                                     class="material-icons text-blue-400 text-3xl mb-2 group-hover:scale-110 transition-transform">credit_card</span>
                                 <span class="text-white font-bold">Tarjetas</span>
@@ -317,7 +317,7 @@
                         <label class="cursor-pointer relative group">
                             <input type="radio" name="metodo_pago" value="CRYPTO" class="peer sr-only" checked>
                             <div
-                                class="p-4 rounded-lg border-2 border-gray-700 bg-dark-700 hover:border-gold-500/50 peer-checked:border-gold-500 peer-checked:bg-gold-500/10 transition-all duration-200 flex flex-col items-center">
+                                class="p-4 rounded-lg border-2 border-gray-700 bg-dark-800 hover:border-gold-500/50 peer-checked:border-gold-500 peer-checked:bg-gold-500/10 transition-all duration-200 flex flex-col items-center">
                                 <span
                                     class="material-icons text-orange-400 text-3xl mb-2 group-hover:scale-110 transition-transform">currency_bitcoin</span>
                                 <span class="text-white font-bold">Criptomonedas</span>
@@ -518,7 +518,7 @@
                 const radioButtons = document.querySelectorAll('input[name="metodo_pago"]');
 
                 // Values
-                let precioBase = parseInt("{{ precio_base_token|default:0 }}".replace(/\D/g, '')) || 0;
+                let precioBase = parseFloat("{{ precio_base_token|default:'0' }}") || 0;
                 let currentDiscountPercent = 0;
 
                 console.log("Initial Base Price:", precioBase);
@@ -554,7 +554,10 @@
                     // Update UI Card
                     projectInfoCard.classList.remove('hidden');
                     if (selectedProjectName) selectedProjectName.textContent = name;
-                    if (selectedProjectPrice) selectedProjectPrice.textContent = '$' + parseInt(price) + ' USD';
+                    if (selectedProjectPrice) {
+                        const p = parseFloat(price) || 0;
+                        selectedProjectPrice.textContent = '$' + p.toFixed(2) + ' USD';
+                    }
 
                     if (imgUrl && imgUrl.trim() !== "") {
                         selectedProjectImg.src = imgUrl;
@@ -583,7 +586,7 @@
                     }
 
                     // Update Price Logic
-                    precioBase = parseInt(price) || 0;
+                    precioBase = parseFloat(price) || 0;
                     console.log("Project Selected via Dropdown:", name, "Price:", precioBase, "Stock:", stock);
 
                     // Update UI Unit Price Text
