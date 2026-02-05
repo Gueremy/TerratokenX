@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.models import User
 from .forms import ReservaForm, AdminReservaForm, ProyectoForm, ProyectoImagenFormSet
 from .models import Reserva, DiaFeriado, Coupon, Configuracion, Proyecto
 from .services.firmavirtual import FirmaVirtualService
@@ -39,6 +40,12 @@ def create_google_calendar_link(reserva):
     """Genera un enlace para agregar la reserva al Calendario de Google."""
     # Desactivado para tokens
     return "#"
+
+def landing_page(request):
+    """
+    Renderiza la nueva Landing Page Premium (index.html).
+    """
+    return render(request, 'booking/landing_premium.html')
 
 def add_event_to_spa_calendar(reserva):
     """
@@ -1152,8 +1159,9 @@ def admin_project_edit(request, project_id):
         form = ProyectoForm(instance=proyecto)
         formset = ProyectoImagenFormSet(instance=proyecto)
     
-    # Get sections for this project
+    # Get sections and documents for this project
     secciones = proyecto.secciones.all()
+    documentos = proyecto.documentos.all().order_by('-created_at')
     
     return render(request, 'booking/admin_project_form.html', {
         'form': form, 
@@ -1161,7 +1169,49 @@ def admin_project_edit(request, project_id):
         'title': 'Editar Proyecto', 
         'proyecto': proyecto,
         'secciones': secciones,
+        'documentos': documentos,
     })
+
+# ==================== CRUD DOCUMENTOS DE PROYECTO (DATA ROOM) ====================
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def admin_documento_create(request, project_id):
+    """Subir nuevo documento al Data Room de un proyecto"""
+    from .models import Proyecto, ProyectoDocumento
+    
+    proyecto = get_object_or_404(Proyecto, pk=project_id)
+    
+    if request.method == 'POST':
+        titulo = request.POST.get('titulo', '').strip()
+        archivo = request.FILES.get('archivo')
+        es_publico = request.POST.get('es_publico') == 'on'
+        requiere_nda = request.POST.get('requiere_nda') == 'on'
+        
+        if titulo and archivo:
+            ProyectoDocumento.objects.create(
+                proyecto=proyecto,
+                titulo=titulo,
+                archivo=archivo,
+                es_publico=es_publico,
+                requiere_nda=requiere_nda
+            )
+            messages.success(request, f'Documento "{titulo}" subido exitosamente.')
+        else:
+            messages.error(request, 'Título y archivo son requeridos.')
+    
+    return redirect('project_edit', project_id=project_id)
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def admin_documento_delete(request, doc_id):
+    """Eliminar un documento del Data Room"""
+    from .models import ProyectoDocumento
+    documento = get_object_or_404(ProyectoDocumento, pk=doc_id)
+    project_id = documento.proyecto.id
+    documento.delete()
+    messages.success(request, 'Documento eliminado.')
+    return redirect('project_edit', project_id=project_id)
 
 
 # ==================== CRUD SECCIONES DE PROYECTO ====================
@@ -1545,7 +1595,315 @@ def admin_coupon_delete(request, coupon_id):
         coupon = get_object_or_404(Coupon, id=coupon_id)
         coupon.delete()
     
-    return redirect('admin_coupons')
+@staff_member_required
+def admin_edit_user(request, user_id):
+    """
+    Editar datos básicos de un usuario (nombre, apellido, email).
+    """
+    user = get_object_or_404(User, id=user_id)
+    if request.method == 'POST':
+        user.first_name = request.POST.get('first_name')
+        user.last_name = request.POST.get('last_name')
+        user.email = request.POST.get('email')
+        user.save()
+        messages.success(request, f"Usuario {user.email} actualizado correctamente.")
+        return redirect('admin_users')
+    
+    # Si es GET (aunque no se use si es por modal, pero por seguridad)
+    return redirect('admin_users')
+
+@staff_member_required
+def admin_users(request):
+    """
+    Vista para gestionar usuarios (listado, bloqueo).
+    """
+    from django.db.models import Sum, Count, OuterRef, Subquery, Q
+    from django.db.models.functions import Coalesce
+    from .models import Reserva
+
+    # Subconsulta para obtener strings de proyectos por usuario
+    # Como SQLite no tiene group_concat nativo fácil en subqueries de Django, calculamos sumas básicas
+    # y los nombres los sacaremos en una propiedad o método si es necesario, 
+    # pero para el listado usaremos anotaciones de suma.
+    
+    usuarios = User.objects.annotate(
+        total_tokens=Coalesce(Sum('reserva_set__cantidad_tokens', filter=Q(reserva_set__estado_pago='CONFIRMADO')), 0),
+        cantidad_proyectos=Count('reserva_set__proyecto', distinct=True, filter=Q(reserva_set__estado_pago='CONFIRMADO'))
+    ).order_by('-date_joined')
+    
+        # Procesar filtros si es necesario (por email, nombre)
+    
+    # Agregar lista de proyectos manualmente para cada usuario (Evitar complejidad N+1 excesiva para listas pequeñas)
+    for u in usuarios:
+        if u.total_tokens > 0:
+            u.proyectos_lista = ", ".join(Reserva.objects.filter(
+                correo=u.email, 
+                estado_pago='CONFIRMADO',
+                proyecto__isnull=False
+            ).values_list('proyecto__nombre', flat=True).distinct())
+        else:
+            u.proyectos_lista = "-"
+
+    return render(request, 'booking/admin/users.html', {
+        'usuarios': usuarios,
+        'total_usuarios': usuarios.count(),
+        'menu_active': 'users'
+    })
+
+@staff_member_required
+def admin_kyc_list(request):
+    """
+    Lista de perfiles con su estado KYC para validación masiva.
+    """
+    from .models import UserProfile
+    perfiles = UserProfile.objects.all().order_by('-fecha_kyc')
+    
+    # Filtrar si es necesario
+    status_filter = request.GET.get('status')
+    if status_filter:
+        perfiles = perfiles.filter(kyc_status=status_filter)
+        
+    return render(request, 'booking/admin/kyc.html', {
+        'perfiles': perfiles,
+        'menu_active': 'kyc',
+        'status_filter': status_filter
+    })
+
+@staff_member_required
+def admin_kyc_process(request, profile_id):
+    """
+    Aprobar o rechazar un KYC.
+    """
+    from .models import UserProfile
+    profile = get_object_or_404(UserProfile, id=profile_id)
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        reason = request.POST.get('reason', '')
+        
+        if action == 'approve':
+            profile.kyc_status = UserProfile.KYC_APROBADO
+            profile.comentarios_admin = ""
+            messages.success(request, f"KYC de {profile.user.username} APROBADO.")
+        elif action == 'reject':
+            profile.kyc_status = UserProfile.KYC_RECHAZADO
+            profile.comentarios_admin = reason
+            messages.warning(request, f"KYC de {profile.user.username} RECHAZADO: {reason}")
+            
+        profile.save()
+        
+    return redirect('admin_kyc_list')
+
+@staff_member_required
+def admin_block_user(request, user_id):
+    """
+    Bloquear/Desbloquear un usuario.
+    """
+    if request.method == 'POST':
+        user = get_object_or_404(User, id=user_id)
+        # Evitar bloquearse a sí mismo
+        if user.id == request.user.id:
+            messages.error(request, "No puedes bloquear tu propia cuenta.")
+            return redirect('admin_users')
+            
+        # Toggle is_active
+        user.is_active = not user.is_active
+        user.save()
+        
+        status = "bloqueado" if not user.is_active else "activado"
+        msg_type = messages.WARNING if not user.is_active else messages.SUCCESS
+        messages.add_message(request, msg_type, f"Usuario {user.email} ha sido {status}.")
+        
+    return redirect('admin_users')
 
 # Force reload 
+
+# --- PORTAL INVERSIONISTA (Auth & Dashboard) ---
+
+def investor_login(request):
+    """
+    Vista de Login para Inversionistas.
+    """
+    if request.user.is_authenticated:
+        return redirect('investor_dashboard')
+
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            user = authenticate(username=username, password=password)
+            if user is not None:
+                login(request, user)
+                messages.success(request, f"¡Bienvenido de nuevo, {username}!")
+                return redirect('investor_dashboard')
+        else:
+            messages.error(request, "Usuario o contraseña incorrectos.")
+    else:
+        form = AuthenticationForm()
+
+    return render(request, 'booking/investor/login.html', {'form': form})
+
+def investor_register(request):
+    """
+    Vista de Registro rápido para Inversionistas.
+    """
+    if request.user.is_authenticated:
+        return redirect('investor_dashboard')
+
+    if request.method == 'POST':
+        # Simple Registration Logic (Username = Email)
+        nombre = request.POST.get('nombre')
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        password_confirm = request.POST.get('password_confirm')
+
+        if password != password_confirm:
+            messages.error(request, "Las contraseñas no coinciden.")
+            return render(request, 'booking/investor/register.html')
+
+        if User.objects.filter(email=email).exists():
+            messages.error(request, "Este correo ya está registrado.")
+            return render(request, 'booking/investor/register.html')
+
+        # Create User
+        try:
+            username = email.split('@')[0]
+            # Ensure unique username
+            counter = 1
+            original_username = username
+            while User.objects.filter(username=username).exists():
+                username = f"{original_username}{counter}"
+                counter += 1
+
+            user = User.objects.create_user(username=username, email=email, password=password)
+            user.first_name = nombre
+            user.save()
+            
+            # Create UserProfile
+            UserProfile.objects.create(user=user)
+
+            login(request, user)
+            messages.success(request, "Cuenta creada exitosamente. ¡Bienvenido!")
+            return redirect('investor_dashboard')
+        except Exception as e:
+            messages.error(request, f"Error al crear cuenta: {e}")
+
+    return render(request, 'booking/investor/register.html')
+
+@login_required(login_url='investor_login')
+def investor_profile(request):
+    from .models import UserProfile
+    profile, created = UserProfile.objects.get_or_create(user=request.user)
+    
+    if request.method == 'POST':
+        request.user.first_name = request.POST.get('first_name')
+        request.user.last_name = request.POST.get('last_name')
+        request.user.save()
+        
+        profile.rut = request.POST.get('rut')
+        profile.telefono = request.POST.get('telefono')
+        profile.direccion = request.POST.get('direccion')
+        profile.metodo_certificacion = request.POST.get('metodo_certificacion', profile.METODO_FIRMA_VIRTUAL)
+        profile.wallet_address = request.POST.get('wallet_address')
+        profile.save()
+        
+        messages.success(request, "Perfil actualizado correctamente.")
+        return redirect('investor_profile')
+        
+    return render(request, 'booking/investor/profile.html', {'profile': profile})
+
+@login_required(login_url='investor_login')
+def investor_kyc(request):
+    from .models import UserProfile
+    profile, created = UserProfile.objects.get_or_create(user=request.user)
+    
+    if request.method == 'POST':
+        if 'frontal' in request.FILES:
+            profile.documento_identidad_frontal = request.FILES['frontal']
+        if 'reverso' in request.FILES:
+            profile.documento_identidad_reverso = request.FILES['reverso']
+        if 'selfie' in request.FILES:
+            profile.selfie_verificacion = request.FILES['selfie']
+            
+        profile.kyc_status = UserProfile.KYC_EN_REVISION
+        profile.fecha_kyc = timezone.now()
+        profile.save()
+        
+        messages.success(request, "Documentos enviados. Tu identidad está en proceso de verificación.")
+        return redirect('investor_kyc')
+        
+    return render(request, 'booking/investor/kyc.html', {'profile': profile})
+
+@login_required(login_url='investor_login')
+def investor_dashboard(request):
+    """
+    Dashboard tipo ERP para el inversionista.
+    Muestra resumen de capital, proyectos activos y documentos.
+    """
+    user = request.user
+    
+    # Obtener todas las reservas de este usuario (por email o FK user)
+    # Priorizamos FK user si existe, sino fallback a email
+    reservas = Reserva.objects.filter(user=user) | Reserva.objects.filter(correo=user.email)
+    reservas = reservas.distinct().order_by('-created_at')
+
+    # Calcular KPIs
+    total_invertido = 0
+    tokens_totales = 0
+    proyectos_ids = set()
+    
+    for r in reservas:
+        if r.estado_pago in [Reserva.ESTADO_CONFIRMADO, Reserva.ESTADO_EN_REVISION]:
+            total_invertido += r.total
+            tokens_totales += r.cantidad_tokens
+            if r.proyecto:
+                proyectos_ids.add(r.proyecto.id)
+
+    cantidad_proyectos = len(proyectos_ids)
+    
+    # Plusvalía Estimada (Simulada hardcoded por ahora, luego puede venir del modelo Proyecto)
+    plusvalia_estimada = int(total_invertido * 0.12) # 12% conservador
+
+    context = {
+        'reservas': reservas,
+        'total_invertido': total_invertido,
+        'tokens_totales': tokens_totales,
+        'cantidad_proyectos': cantidad_proyectos,
+        'plusvalia_estimada': plusvalia_estimada,
+        'user': user
+    }
+
+    return render(request, 'booking/investor/dashboard.html', context)
+
+@login_required(login_url='investor_login')
+def investor_catalog(request):
+    """
+    Catálogo de proyectos protegido (Solo usuarios registrados).
+    """
+    proyectos = Proyecto.objects.filter(activo=True).order_by('-created_at')
+    return render(request, 'booking/investor/catalog.html', {
+        'proyectos': proyectos,
+        'user': request.user
+    })
+
+@login_required(login_url='investor_login')
+def investor_project_detail(request, slug):
+    """
+    Vista detallada del proyecto integrada totalmente en Django.
+    """
+    proyecto = get_object_or_404(Proyecto, slug=slug)
+    secciones = proyecto.secciones.filter(activo=True).order_by('orden')
+    imagenes = proyecto.imagenes.all()
+    documentos = proyecto.documentos.all() # El template decidirá qué mostrar según visibilidad
+
+    context = {
+        'proyecto': proyecto,
+        'secciones': secciones,
+        'imagenes': imagenes,
+        'documentos': documentos,
+        'user': request.user
+    }
+    return render(request, 'booking/investor/project_detail.html', context)
+
 

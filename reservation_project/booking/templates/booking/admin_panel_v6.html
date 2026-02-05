@@ -38,10 +38,8 @@
                             <option value="">Todos</option>
                             <option value="PENDIENTE" {% if request.GET.estado_pago=='PENDIENTE' %}selected{% endif %}>
                                 Pendiente</option>
-                            <option value="EN_REVISION" {% if request.GET.estado_pago=='EN_REVISION' %}selected{% endif
-                                %}>En Revision</option>
-                            <option value="CONFIRMADO" {% if request.GET.estado_pago=='CONFIRMADO' %}selected{% endif
-                                %}>Confirmado</option>
+                            <option value="EN_REVISION" {% if request.GET.estado_pago=='EN_REVISION' %}selected{% endif                 %}>En Revision</option>
+                            <option value="CONFIRMADO" {% if request.GET.estado_pago=='CONFIRMADO' %}selected{% endif                 %}>Confirmado</option>
                         </select>
                     </div>
                     <div class="flex gap-2">
@@ -76,9 +74,7 @@
                             <span class="text-xs text-gray-500">ID: {{ reserva.numero_reserva }}</span>
                         </div>
                         <span
-                            class="px-3 py-1 rounded-full text-xs font-bold {% if reserva.estado_pago == 'CONFIRMADO' %}bg-green-900 text-green-400{% elif reserva.estado_pago == 'EN_REVISION' %}bg-orange-900 text-orange-400{% else %}bg-yellow-900 text-yellow-500{% endif %}">{%
-                            if reserva.estado_pago == 'CONFIRMADO' %}Confirmado{% elif reserva.estado_pago ==
-                            'EN_REVISION' %}En Revision{% else %}Pendiente{% endif %}</span>
+                            class="px-3 py-1 rounded-full text-xs font-bold {% if reserva.estado_pago == 'CONFIRMADO' %}bg-green-900 text-green-400{% elif reserva.estado_pago == 'EN_REVISION' %}bg-orange-900 text-orange-400{% else %}bg-yellow-900 text-yellow-500{% endif %}">{%               if reserva.estado_pago == 'CONFIRMADO' %}Confirmado{% elif reserva.estado_pago ==               'EN_REVISION' %}En Revision{% else %}Pendiente{% endif %}</span>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-8 text-sm text-gray-300">
                         <div>Fecha: {{ reserva.created_at|date:'d M Y H:i' }}</div>
@@ -86,14 +82,11 @@
                         <div>Telefono: {{ reserva.telefono }}</div>
                         <div>Direccion: {{ reserva.direccion }}</div>
                         <div>Tokens: {{ reserva.cantidad_tokens }}</div>
-                        <div>Pago: {% if reserva.metodo_pago == 'MP' %}Mercado Pago{% elif reserva.metodo_pago ==
-                            'CRYPTO' %}CryptoMarket{% if reserva.crypto_currency %} ({{ reserva.crypto_currency }}){%
-                            endif %}{% else %}Crypto (Manual){% endif %}</div>
+                        <div>Pago: {% if reserva.metodo_pago == 'MP' %}Mercado Pago{% elif reserva.metodo_pago ==               'CRYPTO' %}CryptoMarket{% if reserva.crypto_currency %} ({{ reserva.crypto_currency }}){%               endif %}{% else %}Crypto (Manual){% endif %}</div>
                         <div>Total: USD {{ reserva.total|floatformat:0 }}</div>
                     </div>
                     {% if reserva.coupon %}<div class="mt-2"><span
-                            class="bg-green-900 text-green-400 px-2.5 py-0.5 rounded-full text-xs">Cupon: {{
-                            reserva.coupon.code }} (-{{ reserva.coupon.discount_percentage }}%)</span></div>{% endif %}
+                            class="bg-green-900 text-green-400 px-2.5 py-0.5 rounded-full text-xs">Cupon: {{               reserva.coupon.code }} (-{{ reserva.coupon.discount_percentage }}%)</span></div>{% endif %}
                     <div class="mt-6 flex gap-3 border-t border-gray-700 pt-4">
                         <a href="{% url 'editar_reserva' reserva.id %}"
                             class="bg-blue-600 text-white px-4 py-2 rounded text-sm">Editar</a>

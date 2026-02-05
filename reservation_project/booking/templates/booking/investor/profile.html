@@ -1,0 +1,276 @@
+{% load static humanize %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TerraTokenX | Mi Perfil</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gold: {
+                            50: '#fff9e6', 100: '#fef0c3', 200: '#fde68a', 300: '#fcd34d',
+                            400: '#f4c430', 500: '#d4af37', 600: '#b8960f', 700: '#92750c',
+                            800: '#6b5610', 900: '#4a3c12',
+                        },
+                        dark: {
+                            900: '#0a0a0a', 800: '#111111', 700: '#1a1a1a',
+                            600: '#242424', 500: '#2d2d2d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #111827 100%);
+        }
+
+        .glass-panel {
+            background: rgba(26, 26, 26, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(212, 175, 55, 0.15);
+        }
+
+        .gold-glow {
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+        }
+
+        .text-gold-gradient {
+            background: linear-gradient(135deg, #d4af37 0%, #f4d03f 50%, #d4af37 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-item.active {
+            background: linear-gradient(90deg, rgba(212, 175, 55, 0.15) 0%, transparent 100%);
+            border-left: 3px solid #d4af37;
+            color: #d4af37;
+        }
+
+        .nav-item:hover {
+            background: rgba(212, 175, 55, 0.1);
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #d4af37;
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
+        }
+    </style>
+</head>
+
+<body class="bg-dark-900 text-gray-100 h-screen overflow-hidden flex">
+
+    <!-- Sidebar -->
+    <aside
+        class="w-64 bg-dark-800 border-r border-gold-500/20 flex flex-col transition-all duration-300 z-20 hidden md:flex">
+        <div class="p-6 border-b border-gold-500/20 flex items-center gap-3">
+            <div
+                class="w-10 h-10 bg-gradient-to-br from-gold-500 to-gold-600 rounded-lg flex items-center justify-center font-bold text-dark-900 shadow-lg gold-glow">
+                <span class="text-xl">T</span>
+            </div>
+            <span class="text-xl font-bold tracking-tight">
+                <span class="text-gold-gradient">TerraToken</span><span class="text-gold-500">X</span>
+            </span>
+        </div>
+
+        <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
+            <p class="px-3 text-xs font-semibold text-gold-500/60 uppercase tracking-wider mb-2">Mi Portafolio</p>
+            <a href="{% url 'investor_dashboard' %}"
+                class="nav-item flex items-center gap-3 px-3 py-3 rounded-lg text-gray-400 transition-all">
+                <span class="material-icons text-xl">dashboard</span>
+                <span class="text-sm font-medium">Dashboard</span>
+            </a>
+            <a href="{% url 'investor_catalog' %}"
+                class="nav-item flex items-center gap-3 px-3 py-3 rounded-lg text-gray-400 transition-all">
+                <span class="material-icons text-xl">storefront</span>
+                <span class="text-sm font-medium">Catálogo Proyectos</span>
+            </a>
+
+            <p class="px-3 text-xs font-semibold text-gold-500/60 uppercase tracking-wider mt-6 mb-2">Configuración</p>
+            <a href="{% url 'investor_profile' %}"
+                class="nav-item active flex items-center gap-3 px-3 py-3 rounded-lg transition-all">
+                <span class="material-icons text-xl">person</span>
+                <span class="text-sm font-medium">Mi Perfil</span>
+            </a>
+            <a href="{% url 'investor_kyc' %}"
+                class="nav-item flex items-center gap-3 px-3 py-3 rounded-lg text-gray-400 transition-all">
+                <span class="material-icons text-xl">verified_user</span>
+                <span class="text-sm font-medium">Verificación KYC</span>
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-gold-500/20">
+            <form action="{% url 'logout' %}" method="post">
+                {% csrf_token %}
+                <button type="submit"
+                    class="flex items-center gap-2 text-red-400 hover:text-red-300 text-sm font-medium px-2 py-2 rounded hover:bg-red-500/10 transition-colors w-full">
+                    <span class="material-icons text-lg">logout</span> Salir
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+        <!-- Header -->
+        <header
+            class="h-16 border-b border-gold-500/20 flex items-center justify-between px-6 bg-dark-800/80 backdrop-blur-md sticky top-0 z-10">
+            <div class="flex items-center gap-4">
+                <h1 class="text-sm font-medium text-gray-400">Panel / <span class="text-gold-500">Mi Perfil</span></h1>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <div class="text-right hidden sm:block">
+                    <p class="text-xs font-bold text-white">{{ user.first_name }} {{ user.last_name }}</p>
+                    <p class="text-[10px] text-gold-500/60 uppercase tracking-widest">Inversionista</p>
+                </div>
+                <div
+                    class="w-10 h-10 rounded-full bg-dark-700 border border-gold-500/30 flex items-center justify-center text-gold-500">
+                    <span class="material-icons">account_circle</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Scrollable Area -->
+        <div class="flex-1 overflow-y-auto p-6 md:p-12">
+            <div class="max-w-4xl mx-auto">
+
+                <h2 class="text-3xl font-bold text-white mb-8">Información Personal</h2>
+
+                {% if messages %}
+                <div class="mb-8 space-y-3">
+                    {% for message in messages %}
+                    <div
+                        class="p-4 rounded-xl {% if message.tags == 'success' %}bg-green-500/10 border border-green-500/20 text-green-400{% else %}bg-red-500/10 border border-red-500/20 text-red-400{% endif %} flex items-center gap-3">
+                        <span class="material-icons text-xl">{% if message.tags == 'success' %}check_circle{% else
+                            %}error{% endif %}</span>
+                        <p class="text-sm font-medium">{{ message }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <form method="POST" class="space-y-8">
+                    {% csrf_token %}
+
+                    <div class="glass-panel rounded-3xl p-8 space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-2">
+                                <label class="text-xs font-bold text-gold-500 uppercase tracking-widest">Nombres</label>
+                                <input type="text" name="first_name" value="{{ user.first_name }}"
+                                    class="w-full bg-dark-900/50 border border-gold-500/10 rounded-xl px-4 py-3 text-white transition-all"
+                                    placeholder="Tus nombres">
+                            </div>
+                            <div class="space-y-2">
+                                <label
+                                    class="text-xs font-bold text-gold-500 uppercase tracking-widest">Apellidos</label>
+                                <input type="text" name="last_name" value="{{ user.last_name }}"
+                                    class="w-full bg-dark-900/50 border border-gold-500/10 rounded-xl px-4 py-3 text-white transition-all"
+                                    placeholder="Tus apellidos">
+                            </div>
+                            <div class="space-y-2 md:col-span-2">
+                                <label class="text-xs font-bold text-gold-500 uppercase tracking-widest">Email (No
+                                    editable)</label>
+                                <input type="email" value="{{ user.email }}" disabled
+                                    class="w-full bg-dark-900/30 border border-gold-500/5 rounded-xl px-4 py-3 text-gray-500 cursor-not-allowed">
+                            </div>
+
+                            <div class="space-y-2">
+                                <label class="text-xs font-bold text-gold-500 uppercase tracking-widest">RUT / ID
+                                    Nacional</label>
+                                <input type="text" name="rut" value="{{ profile.rut|default_if_none:'' }}"
+                                    class="w-full bg-dark-900/50 border border-gold-500/10 rounded-xl px-4 py-3 text-white transition-all"
+                                    placeholder="12.345.678-K">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-xs font-bold text-gold-500 uppercase tracking-widest">Teléfono de
+                                    Contacto</label>
+                                <input type="text" name="telefono" value="{{ profile.telefono|default_if_none:'' }}"
+                                    class="w-full bg-dark-900/50 border border-gold-500/10 rounded-xl px-4 py-3 text-white transition-all"
+                                    placeholder="+56 9 ...">
+                            </div>
+                            <div class="space-y-2 md:col-span-2">
+                                <label class="text-xs font-bold text-gold-500 uppercase tracking-widest">Dirección
+                                    Legal</label>
+                                <input type="text" name="direccion" value="{{ profile.direccion|default_if_none:'' }}"
+                                    class="w-full bg-dark-900/50 border border-gold-500/10 rounded-xl px-4 py-3 text-white transition-all"
+                                    placeholder="Calle, Número, Ciudad, Región">
+                            </div>
+                        </div>
+                    </div>
+
+                    <h2 class="text-2xl font-bold text-white mt-12 mb-6 flex items-center gap-2">
+                        <span class="material-icons text-gold-500">verified</span>
+                        Método de Certificación
+                    </h2>
+
+                    <div class="glass-panel rounded-3xl p-8 space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Opción FirmaVirtual (Activa) -->
+                            <label
+                                class="relative flex flex-col p-6 rounded-2xl border-2 border-gold-500 bg-gold-500/5 cursor-pointer transition-all">
+                                <input type="radio" name="metodo_certificacion" value="FIRMA_VIRTUAL" {% if profile.metodo_certificacion == 'FIRMA_VIRTUAL' %}checked{% endif %}
+                                    class="absolute opacity-0">
+                                <div class="flex items-center justify-between mb-4">
+                                    <span class="material-icons text-gold-500 text-3xl">draw</span>
+                                    <span
+                                        class="bg-gold-500 text-dark-900 text-[10px] font-bold px-2 py-0.5 rounded">RECOMENDADO</span>
+                                </div>
+                                <h4 class="text-white font-bold mb-1">Contrato Legal Digital</h4>
+                                <p class="text-xs text-gray-400 leading-relaxed">Firma de contrato mediante FirmaVirtual
+                                    con validez legal notarial.</p>
+                            </label>
+
+                            <!-- Opción Smart Contract (Próximamente) -->
+                            <div
+                                class="relative flex flex-col p-6 rounded-2xl border-2 border-gray-700 bg-gray-800/20 opacity-60 cursor-not-allowed">
+                                <div class="flex items-center justify-between mb-4">
+                                    <span class="material-icons text-gray-500 text-3xl">token</span>
+                                    <span
+                                        class="bg-gray-700 text-gray-400 text-[10px] font-bold px-2 py-0.5 rounded uppercase">Próximamente</span>
+                                </div>
+                                <h4 class="text-gray-400 font-bold mb-1">Título Digital (NFT)</h4>
+                                <p class="text-xs text-gray-500 leading-relaxed">Certificación inmutable en la red
+                                    Polygon. No disponible temporalmente.</p>
+                            </div>
+
+                            <div class="space-y-2 md:col-span-2">
+                                <label class="text-xs font-bold text-gold-500 uppercase tracking-widest">Billetera
+                                    Polygon (Opcional)</label>
+                                <input type="text" name="wallet_address"
+                                    value="{{ profile.wallet_address|default_if_none:'' }}"
+                                    class="w-full bg-dark-900/50 border border-gold-500/10 rounded-xl px-4 py-3 text-white transition-all"
+                                    placeholder="0x..." {% if profile.metodo_certificacion != 'SMART_CONTRACT' %}disabled{% endif %}>
+                                <p class="text-[10px] text-gray-500">Solo necesaria para el método de Título Digital.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end pt-4">
+                        <button type="submit"
+                            class="px-10 py-4 bg-gold-500 hover:bg-gold-400 text-dark-900 font-bold rounded-2xl transition-all shadow-lg gold-glow flex items-center gap-2">
+                            <span class="material-icons">save</span>
+                            Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </main>
+
+</body>
+
+</html>

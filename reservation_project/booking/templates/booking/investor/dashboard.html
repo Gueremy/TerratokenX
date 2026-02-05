@@ -1,0 +1,327 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TerraTokenX | Panel Inversionista</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gold: {
+                            50: '#fff9e6',
+                            100: '#fef0c3',
+                            200: '#fde68a',
+                            300: '#fcd34d',
+                            400: '#f4c430',
+                            500: '#d4af37',
+                            600: '#b8960f',
+                            700: '#92750c',
+                            800: '#6b5610',
+                            900: '#4a3c12',
+                        },
+                        dark: {
+                            900: '#0a0a0a',
+                            800: '#111111',
+                            700: '#1a1a1a',
+                            600: '#242424',
+                            500: '#2d2d2d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #111827 100%);
+        }
+
+        .glass-panel {
+            background: rgba(26, 26, 26, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(212, 175, 55, 0.15);
+        }
+
+        .gold-glow {
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+        }
+
+        /* Gold gradient text */
+        .text-gold-gradient {
+            background: linear-gradient(135deg, #d4af37 0%, #f4d03f 50%, #d4af37 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-item.active {
+            background: linear-gradient(90deg, rgba(212, 175, 55, 0.15) 0%, transparent 100%);
+            border-left: 3px solid #d4af37;
+            color: #d4af37;
+        }
+
+        .nav-item:hover {
+            background: rgba(212, 175, 55, 0.1);
+        }
+    </style>
+</head>
+
+<body class="bg-dark-900 text-gray-100 h-screen overflow-hidden flex">
+
+    <!-- Sidebar -->
+    <aside
+        class="w-64 bg-dark-800 border-r border-gold-500/20 flex flex-col transition-all duration-300 z-20 hidden md:flex">
+        <div class="p-6 border-b border-gold-500/20 flex items-center gap-3">
+            <div
+                class="w-10 h-10 bg-gradient-to-br from-gold-500 to-gold-600 rounded-lg flex items-center justify-center font-bold text-dark-900 shadow-lg gold-glow">
+                <span class="text-xl">T</span>
+            </div>
+            <span class="text-xl font-bold tracking-tight">
+                <span class="text-gold-gradient">TerraToken</span><span class="text-gold-500">X</span>
+            </span>
+        </div>
+
+        <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
+            <p class="px-3 text-xs font-semibold text-gold-500/60 uppercase tracking-wider mb-2">Mi Portafolio</p>
+
+            <a href="{% url 'investor_dashboard' %}"
+                class="nav-item flex items-center gap-3 px-3 py-3 rounded-lg text-gray-400 transition-all active">
+                <span class="material-icons text-xl">dashboard</span>
+                <span class="text-sm font-medium">Dashboard</span>
+            </a>
+
+            <a href="{% url 'investor_catalog' %}"
+                class="nav-item flex items-center gap-3 px-3 py-3 rounded-lg text-gray-400 transition-all">
+                <span class="material-icons text-xl">storefront</span>
+                <span class="text-sm font-medium">Catálogo Proyectos</span>
+            </a>
+
+            <p class="px-3 text-xs font-semibold text-gold-500/60 uppercase tracking-wider mb-2 mt-6">Cuenta</p>
+
+            <a href="{% url 'investor_profile' %}"
+                class="nav-item flex items-center gap-3 px-3 py-3 rounded-lg text-gray-400 transition-all">
+                <span class="material-icons text-xl">person</span>
+                <span class="text-sm font-medium">Mi Perfil</span>
+            </a>
+
+            <a href="{% url 'investor_kyc' %}"
+                class="nav-item flex items-center gap-3 px-3 py-3 rounded-lg text-gray-400 transition-all">
+                <span class="material-icons text-xl">verified_user</span>
+                <span class="text-sm font-medium">Verificación KYC</span>
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-gold-500/20">
+            <form action="{% url 'logout' %}" method="post">
+                {% csrf_token %}
+                <button type="submit"
+                    class="flex items-center gap-2 text-red-400 hover:text-red-300 text-sm font-medium px-2 py-2 rounded hover:bg-red-500/10 transition-colors w-full">
+                    <span class="material-icons text-lg">logout</span>
+                    Salir
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+        <!-- Header -->
+        <header
+            class="h-16 border-b border-gold-500/20 flex items-center justify-between px-6 bg-dark-800/80 backdrop-blur-md sticky top-0 z-10">
+            <div class="flex items-center gap-4">
+                <button class="md:hidden text-gold-500 hover:text-gold-400">
+                    <span class="material-icons">menu</span>
+                </button>
+                <h1 class="text-lg font-semibold text-gold-gradient">Resumen de Inversiones</h1>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <div class="hidden sm:block text-right">
+                    <p class="text-sm font-medium text-gold-500">{{ user.first_name }} {{ user.last_name }}</p>
+                    <p class="text-[10px] text-gold-500/60 uppercase">Inversionista</p>
+                </div>
+                <div
+                    class="w-10 h-10 bg-gradient-to-br from-gold-500 to-gold-600 rounded-full flex items-center justify-center text-dark-900 gold-glow">
+                    <span class="material-icons text-sm">person</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Scrollable Content -->
+        <div class="flex-1 overflow-y-auto p-6">
+
+            {% if messages %}
+            <div class="mb-6 space-y-2">
+                {% for message in messages %}
+                <div
+                    class="p-4 rounded-lg border {% if message.tags == 'error' %}bg-red-500/10 border-red-500/30 text-red-200{% else %}bg-gold-500/10 border-gold-500/30 text-gold-200{% endif %} flex justify-between items-center">
+                    <span>{{ message }}</span>
+                    <button class="text-sm opacity-70 hover:opacity-100"
+                        onclick="this.parentElement.remove()">✕</button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Total Invertido -->
+                <div
+                    class="glass-panel rounded-2xl p-6 relative overflow-hidden group hover:scale-[1.02] transition-transform">
+                    <div class="absolute inset-0 bg-gradient-to-br from-green-500/10 to-emerald-600/10"></div>
+                    <div class="relative">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
+                                <span class="material-icons text-green-400 text-2xl">account_balance_wallet</span>
+                            </div>
+                            <span class="text-xs text-green-400 bg-green-500/20 px-2 py-1 rounded-full">+100%
+                                Wallet</span>
+                        </div>
+                        <p class="text-gray-400 text-sm mb-1">Capital Invertido</p>
+                        <p class="text-3xl font-bold text-white">${{ total_invertido }} <span
+                                class="text-sm font-normal text-gray-500">USD</span></p>
+                    </div>
+                </div>
+
+                <!-- Tokens Totales -->
+                <div
+                    class="glass-panel rounded-2xl p-6 relative overflow-hidden group hover:scale-[1.02] transition-transform">
+                    <div class="absolute inset-0 bg-gradient-to-br from-gold-500/10 to-yellow-600/10"></div>
+                    <div class="relative">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 rounded-xl bg-gold-500/20 flex items-center justify-center">
+                                <span class="material-icons text-gold-400 text-2xl">token</span>
+                            </div>
+                        </div>
+                        <p class="text-gray-400 text-sm mb-1">Tokens Totales</p>
+                        <p class="text-3xl font-bold text-white">{{ tokens_totales }}</p>
+                    </div>
+                </div>
+
+                <!-- Proyectos Activos -->
+                <div
+                    class="glass-panel rounded-2xl p-6 relative overflow-hidden group hover:scale-[1.02] transition-transform">
+                    <div class="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-cyan-600/10"></div>
+                    <div class="relative">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
+                                <span class="material-icons text-blue-400 text-2xl">apartment</span>
+                            </div>
+                        </div>
+                        <p class="text-gray-400 text-sm mb-1">Proyectos</p>
+                        <p class="text-3xl font-bold text-white">{{ cantidad_proyectos }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Investment Table -->
+            <div class="glass-panel rounded-2xl p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                        <span class="material-icons text-gold-400">history_edu</span>
+                        Mis Inversiones
+                    </h2>
+                    <a href="{% url 'investor_catalog' %}"
+                        class="bg-gold-500 hover:bg-gold-400 text-dark-900 px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-lg hover:shadow-gold-500/20 flex items-center gap-2">
+                        <span class="material-icons text-sm">add</span> Nueva Inversión
+                    </a>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="text-left text-xs text-gray-500 uppercase border-b border-gray-700">
+                                <th class="pb-3 font-medium text-gold-500/80">Proyecto</th>
+                                <th class="pb-3 font-medium text-gold-500/80">Fecha</th>
+                                <th class="pb-3 font-medium text-gold-500/80">Tokens</th>
+                                <th class="pb-3 font-medium text-gold-500/80">Total (USD)</th>
+                                <th class="pb-3 font-medium text-gold-500/80">Estado</th>
+                                <th class="pb-3 font-medium text-gold-500/80">Contrato</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-800">
+                            {% for r in reservas %}
+                            <tr class="hover:bg-gray-800/50 transition-colors group">
+                                <td class="py-4">
+                                    <div class="flex items-center gap-3">
+                                        <div
+                                            class="w-8 h-8 rounded bg-gray-800 flex items-center justify-center text-gold-500 font-bold border border-gold-500/20 group-hover:border-gold-500/50">
+                                            {{ r.proyecto.nombre|slice:":1"|default:"P" }}
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-white">{{ r.proyecto.nombre|default:r.nombre }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 text-gray-400 text-sm">
+                                    {{ r.created_at|date:"d M Y" }}
+                                </td>
+                                <td class="py-4 text-white font-mono">
+                                    {{ r.cantidad_tokens }}
+                                </td>
+                                <td class="py-4 text-green-400 font-bold font-mono">
+                                    ${{ r.total }}
+                                </td>
+                                <td class="py-4">
+                                    {% if r.estado_pago == 'CONFIRMADO' %}
+                                    <span
+                                        class="px-2 py-1 bg-green-500/10 text-green-400 rounded-md text-xs font-bold border border-green-500/20 flex w-fit items-center gap-1">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Confirmado
+                                    </span>
+                                    {% elif r.estado_pago == 'EN_REVISION' %}
+                                    <span
+                                        class="px-2 py-1 bg-yellow-500/10 text-yellow-400 rounded-md text-xs font-bold border border-yellow-500/20 flex w-fit items-center gap-1">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></span>
+                                        Revisión
+                                    </span>
+                                    {% else %}
+                                    <span
+                                        class="px-2 py-1 bg-red-500/10 text-red-400 rounded-md text-xs font-bold border border-red-500/20 flex w-fit items-center gap-1">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Pendiente
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-4">
+                                    {% if r.contrato_firmado %}
+                                    <a href="{{ r.contrato_firmado.url }}" target="_blank"
+                                        class="text-blue-400 hover:text-blue-300 flex items-center gap-1 text-sm bg-blue-500/10 px-3 py-1 rounded-md border border-blue-500/20 hover:bg-blue-500/20 transition-all w-fit">
+                                        <span class="material-icons text-sm">download</span> Descargar
+                                    </a>
+                                    {% else %}
+                                    <span class="text-gray-600 text-xs italic">No disponible</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="py-12 text-center">
+                                    <div class="flex flex-col items-center justify-center opacity-50">
+                                        <span class="material-icons text-4xl mb-2">savings</span>
+                                        <p class="text-gray-400 mb-2">No tienes inversiones activas aún.</p>
+                                        <a href="{% url 'investor_catalog' %}"
+                                            class="text-gold-500 hover:underline">Explorar Catálogo</a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+</body>
+
+</html>

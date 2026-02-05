@@ -77,8 +77,8 @@
                     <td class="px-4 py-4">
                         {% if reserva.coupon %}
                         <div class="flex flex-col">
-                            <span class="px-2 py-1 rounded bg-purple-500/20 text-purple-400 text-xs font-medium">{{ reserva.coupon.code }}</span>
-                            <span class="text-[10px] text-gray-500 mt-1">-{{ reserva.coupon.discount_percentage }}%</span>
+                            <span class="px-2 py-1 rounded bg-purple-500/20 text-purple-400 text-xs font-medium">{{         reserva.coupon.code }}</span>
+                            <span class="text-[10px] text-gray-500 mt-1">-{{ reserva.coupon.discount_percentage         }}%</span>
                         </div>
                         {% else %}
                         <span class="text-gray-600 text-xs">-</span>
@@ -91,7 +91,15 @@
                         <div class="flex flex-col">
                             <span class="px-2 py-1 rounded-full bg-orange-500/20 text-orange-400 text-xs">Crypto</span>
                             {% if reserva.crypto_currency %}
-                            <span class="text-[10px] text-yellow-400 mt-1 font-medium">{{ reserva.crypto_currency }}</span>
+                            <span class="text-[10px] text-yellow-400 mt-1 font-medium">{{ reserva.crypto_currency         }}</span>
+                            {% endif %}
+                        </div>
+                        {% elif reserva.metodo_pago == 'CRYPTO_MANUAL' %}
+                        <div class="flex flex-col">
+                            <span class="px-2 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs">Manual
+                                Cripto</span>
+                            {% if reserva.crypto_currency %}
+                            <span class="text-[10px] text-yellow-400 mt-1 font-medium">{{ reserva.crypto_currency         }}</span>
                             {% endif %}
                         </div>
                         {% else %}

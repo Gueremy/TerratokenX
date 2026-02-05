@@ -1,0 +1,388 @@
+{% extends 'booking/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Invertir en TerraTokenX{% endblock %}
+
+{% block content %}
+<!-- Security Banner (Anti-Phishing) -->
+<div class="alert alert-warning d-flex align-items-center mb-4 border-warning text-warning bg-opacity-10 bg-black" role="alert">
+    <i class="fas fa-shield-alt fa-2x me-3"></i>
+    <div>
+        <strong>Seguridad Oficial:</strong> Asegúrate de estar en <span class="text-white bg-black px-1 rounded">https://terratokenx.com</span>. 
+        Nunca pediremos tu llave privada (Seed Phrase).
+    </div>
+</div>
+
+<div class="row justify-content-center" x-data="wizard()" x-init="initData()">
+    <div class="col-lg-10">
+        
+        <!-- Wizard Steps Indicator -->
+        <div class="d-flex justify-content-between mb-5 position-relative">
+            <div class="position-absolute top-50 start-0 w-100 translate-middle-y bg-secondary" style="height: 2px; z-index: 0;"></div>
+            
+            <!-- Step 1 -->
+            <div class="position-relative z-1 text-center" :class="{'text-gold': step >= 1, 'text-muted': step < 1}">
+                <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2" 
+                     :class="step >= 1 ? 'bg-black border border-gold text-gold' : 'bg-dark border border-secondary text-secondary'"
+                     style="width: 40px; height: 40px;">1</div>
+                <small class="fw-bold">Proyecto</small>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="position-relative z-1 text-center" :class="{'text-gold': step >= 2, 'text-muted': step < 2}">
+                <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2" 
+                     :class="step >= 2 ? 'bg-black border border-gold text-gold' : 'bg-dark border border-secondary text-secondary'"
+                     style="width: 40px; height: 40px;">2</div>
+                <small class="fw-bold">Identidad</small>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="position-relative z-1 text-center" :class="{'text-gold': step >= 3, 'text-muted': step < 3}">
+                <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2" 
+                     :class="step >= 3 ? 'bg-black border border-gold text-gold' : 'bg-dark border border-secondary text-secondary'"
+                     style="width: 40px; height: 40px;">3</div>
+                <small class="fw-bold">Revisión</small>
+            </div>
+
+            <!-- Step 4 -->
+            <div class="position-relative z-1 text-center" :class="{'text-gold': step >= 4, 'text-muted': step < 4}">
+                <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2" 
+                     :class="step >= 4 ? 'bg-black border border-gold text-gold' : 'bg-dark border border-secondary text-secondary'"
+                     style="width: 40px; height: 40px;">4</div>
+                <small class="fw-bold">Pago</small>
+            </div>
+        </div>
+
+        <form method="post" id="reservationForm" @submit.prevent="submitForm">
+            {% csrf_token %}
+            
+            <!-- STEP 1: PROYECTO & DOCUMENTACIÓN -->
+            <div x-show="step === 1" x-transition.opacity>
+                <div class="card shadow-lg border-0 rounded-4 overflow-hidden mb-4">
+                    <div class="card-header bg-black border-bottom border-secondary p-4">
+                        <h4 class="text-white mb-0"><i class="fas fa-building me-2 text-gold"></i>Selecciona tu Inversión</h4>
+                    </div>
+                    <div class="card-body p-4 bg-dark">
+                        <!-- Project Selector -->
+                        <div class="row g-4">
+                            {% for proyecto in proyectos_activos %}
+                            <div class="col-md-6">
+                                <label class="card h-100 cursor-pointer border-secondary project-card" 
+                                       :class="{'border-gold bg-black': selectedProject == '{{ proyecto.id }}'}"
+                                       @click="selectProject('{{ proyecto.id }}', {{ proyecto.precio_token }}, '{{ proyecto.nombre }}')">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                            <h5 class="fw-bold text-white">{{ proyecto.nombre }}</h5>
+                                            <span class="badge bg-gold text-black">Activo</span>
+                                        </div>
+                                        <div class="mb-3">
+                                            <p class="text-muted small mb-1">Precio Token</p>
+                                            <p class="h4 text-white">${{ proyecto.precio_token|intcomma }} USD</p>
+                                        </div>
+                                        <div class="mb-3">
+                                            <p class="text-muted small mb-1">Rentabilidad Estimada</p>
+                                            <p class="text-success fw-bold">{{ proyecto.rentabilidad_estimada }}</p>
+                                        </div>
+                                        <hr class="border-secondary">
+                                        <div class="d-grid gap-2">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" @click.stop="">
+                                                <i class="fas fa-file-pdf me-1"></i>Ver Whitepaper
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <input type="radio" name="proyecto" value="{{ proyecto.id }}" class="d-none" x-model="selectedProject">
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Warnings Block -->
+                        <div class="alert alert-info bg-dark border-info text-info mt-4">
+                            <h6 class="fw-bold"><i class="fas fa-info-circle me-2"></i>Token RWA vs TTX</h6>
+                            <p class="small mb-0">Estás adquiriendo un token de seguridad (Security Token) vinculado a un activo inmobiliario específico. Esto NO es una criptomoneda especulativa como TTX, sino una participación digital en deuda o equity.</p>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-black border-top border-secondary p-4 d-flex justify-content-end">
+                        <button type="button" class="btn btn-success btn-lg px-5" 
+                                :disabled="!selectedProject" @click="step = 2">
+                            Siguiente <i class="fas fa-arrow-right ms-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 2: CANTIDAD & IDENTIDAD (KYC Check) -->
+            <div x-show="step === 2" x-transition.opacity>
+                <div class="card shadow-lg border-0 rounded-4 overflow-hidden mb-4">
+                    <div class="card-header bg-black border-bottom border-secondary p-4">
+                        <h4 class="text-white mb-0"><i class="fas fa-user-shield me-2 text-gold"></i>Inversión e Identidad</h4>
+                    </div>
+                    <div class="card-body p-4 bg-dark">
+                        
+                        <div class="row">
+                            <!-- Investment Calculator -->
+                            <div class="col-md-6 mb-4">
+                                <h5 class="text-white mb-3">Tu Inversión</h5>
+                                <div class="bg-black p-4 rounded-3 border border-secondary">
+                                    <label class="text-muted small text-uppercase fw-bold mb-2">Cantidad de Tokens</label>
+                                    <div class="input-group input-group-lg mb-3">
+                                        <button type="button" class="btn btn-outline-secondary border-secondary" @click="updateQty(-1)">-</button>
+                                        <input type="number" name="cantidad_tokens" class="form-control bg-dark text-white text-center border-secondary fw-bold" 
+                                               x-model="qty" @input="calculateTotal()">
+                                        <button type="button" class="btn btn-outline-secondary border-secondary" @click="updateQty(1)">+</button>
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-muted">Total Estimado:</span>
+                                        <span class="h3 text-gold mb-0" x-text="formatCurrency(totalPrice)"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- User Info Form -->
+                            <div class="col-md-6">
+                                <h5 class="text-white mb-3">Tus Datos</h5>
+                                <div class="mb-3">
+                                    <input type="text" name="nombre" class="form-control bg-black text-white border-secondary" placeholder="Nombre Completo" required {% if user.is_authenticated %}value="{{ user.first_name }} {{ user.last_name }}"{% endif %}>
+                                </div>
+                                <div class="mb-3">
+                                    <input type="email" name="correo" class="form-control bg-black text-white border-secondary" placeholder="Correo Electrónico" required {% if user.is_authenticated %}value="{{ user.email }}"{% endif %}>
+                                </div>
+                                <div class="mb-3">
+                                    <input type="text" name="telefono" class="form-control bg-black text-white border-secondary" placeholder="Teléfono" required>
+                                </div>
+                                <div class="mb-3">
+                                    <input type="text" name="rut" class="form-control bg-black text-white border-secondary" placeholder="RUT / ID Nacional" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- KYC Warning if high amount -->
+                        <div x-show="totalPrice > 5000" class="alert alert-warning mt-3">
+                            <small><i class="fas fa-exclamation-triangle me-1"></i> Para inversiones sobre $5,000 USD, se requerirá validación KYC avanzada después del pago.</small>
+                        </div>
+
+                    </div>
+                    <div class="card-footer bg-black border-top border-secondary p-4 d-flex justify-content-between">
+                        <button type="button" class="btn btn-outline-secondary px-4" @click="step = 1">Atrás</button>
+                        <button type="button" class="btn btn-success btn-lg px-5" @click="step = 3">Siguiente <i class="fas fa-arrow-right ms-2"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 3: REVISIÓN & T&C -->
+            <div x-show="step === 3" x-transition.opacity>
+                <div class="card shadow-lg border-0 rounded-4 overflow-hidden mb-4">
+                    <div class="card-header bg-black border-bottom border-secondary p-4">
+                        <h4 class="text-white mb-0"><i class="fas fa-file-contract me-2 text-gold"></i>Revisión Final</h4>
+                    </div>
+                    <div class="card-body p-4 bg-dark">
+                        
+                        <!-- Summary -->
+                        <div class="table-responsive mb-4">
+                            <table class="table table-dark table-borderless">
+                                <tbody>
+                                    <tr>
+                                        <td class="text-muted">Proyecto:</td>
+                                        <td class="text-end fw-bold" x-text="projectName"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Cantidad:</td>
+                                        <td class="text-end fw-bold"><span x-text="qty"></span> Tokens</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Precio Unitario:</td>
+                                        <td class="text-end fw-bold" x-text="formatCurrency(projectPrice)"></td>
+                                    </tr>
+                                    <tr class="border-top border-secondary">
+                                        <td class="h5 text-white pt-3">Total a Pagar:</td>
+                                        <td class="h4 text-gold text-end pt-3" x-text="formatCurrency(totalPrice)"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Coupon -->
+                        <div class="bg-black p-3 rounded-3 mb-4 border border-secondary">
+                            <div class="input-group">
+                                <input type="text" id="coupon_code" class="form-control bg-dark text-white border-secondary text-uppercase" placeholder="Código Promocional">
+                                <button type="button" class="btn btn-outline-gold" @click="applyCoupon()">Aplicar</button>
+                            </div>
+                            <div id="coupon_msg" class="mt-2 small"></div>
+                            <input type="hidden" name="coupon" id="id_coupon">
+                        </div>
+
+                        <!-- T&C Checkboxes -->
+                        <div class="bg-black p-3 rounded-3 border border-secondary">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input bg-dark border-secondary" type="checkbox" id="terms" required x-model="acceptedTerms">
+                                <label class="form-check-label text-white small" for="terms">
+                                    He leído y acepto los <a href="#" class="text-gold">Términos y Condiciones</a> y la <a href="#" class="text-gold">Política de Riesgos</a>.
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input bg-dark border-secondary" type="checkbox" id="elegibility" required x-model="acceptedEligibility">
+                                <label class="form-check-label text-white small" for="elegibility">
+                                    Declaro que los fondos son de origen lícito y cumplo con los requisitos de elegibilidad.
+                                </label>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="card-footer bg-black border-top border-secondary p-4 d-flex justify-content-between">
+                        <button type="button" class="btn btn-outline-secondary px-4" @click="step = 2">Atrás</button>
+                        <button type="button" class="btn btn-success btn-lg px-5" 
+                                :disabled="!acceptedTerms || !acceptedEligibility"
+                                @click="step = 4">
+                            Confirmar <i class="fas fa-check ms-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 4: PAGO -->
+            <div x-show="step === 4" x-transition.opacity>
+                <div class="card shadow-lg border-0 rounded-4 overflow-hidden mb-4">
+                    <div class="card-header bg-black border-bottom border-secondary p-4">
+                        <h4 class="text-white mb-0"><i class="fas fa-credit-card me-2 text-gold"></i>Método de Pago</h4>
+                    </div>
+                    <div class="card-body p-5 bg-dark text-center">
+                        
+                        <p class="text-muted mb-4">Selecciona como deseas procesar tu inversión de <strong class="text-white" x-text="formatCurrency(totalPrice)"></strong></p>
+
+                        <div class="row g-4 justify-content-center">
+                            <!-- Mercado Pago -->
+                            <div class="col-md-5">
+                                <label class="payment-option w-100 h-100">
+                                    <input type="radio" name="metodo_pago" value="MP" class="d-none" checked>
+                                    <div class="card h-100 border-secondary bg-black pt-4 pb-4 payment-card-inner">
+                                        <div class="card-body">
+                                            <i class="fas fa-credit-card text-primary fa-3x mb-3"></i>
+                                            <h5 class="text-white">Mercado Pago</h5>
+                                            <p class="small text-muted mb-0">Tarjetas, Transferencia, WebPay</p>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- Crypto -->
+                            <div class="col-md-5">
+                                <label class="payment-option w-100 h-100">
+                                    <input type="radio" name="metodo_pago" value="CRYPTO" class="d-none">
+                                    <div class="card h-100 border-secondary bg-black pt-4 pb-4 payment-card-inner">
+                                        <div class="card-body">
+                                            <i class="fab fa-bitcoin text-warning fa-3x mb-3"></i>
+                                            <h5 class="text-white">Cripto (Manual)</h5>
+                                            <p class="small text-muted mb-0">USDT (TRC20, ERC20), ETH, BTC</p>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="card-footer bg-black border-top border-secondary p-4 d-flex justify-content-between">
+                        <button type="button" class="btn btn-outline-secondary px-4" @click="step = 3">Atrás</button>
+                        <button type="submit" class="btn btn-success btn-lg px-5 w-50">
+                            FINALIZAR Y PAGAR
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<style>
+    .cursor-pointer { cursor: pointer; }
+    .project-card:hover { border-color: var(--gold-primary) !important; transform: translateY(-2px); transition: all 0.2s; }
+    .payment-option input:checked + .payment-card-inner {
+        border-color: var(--gold-primary) !important;
+        background-color: rgba(212, 175, 55, 0.1) !important;
+    }
+    .payment-card-inner { border: 2px solid #333; transition: all 0.2s; }
+    .payment-card-inner:hover { border-color: #666; }
+</style>
+
+<!-- Using Alpine.js for Wizard Logic (Lightweight) -->
+<script src="//unpkg.com/alpinejs" defer></script>
+
+<script>
+    function wizard() {
+        return {
+            step: 1,
+            selectedProject: '',
+            qty: 1,
+            projectPrice: 0,
+            projectName: '',
+            totalPrice: 0,
+            acceptedTerms: false,
+            acceptedEligibility: false,
+            discountPct: 0,
+
+            initData() {
+                // Initialize stuff if needed
+            },
+
+            selectProject(id, price, name) {
+                this.selectedProject = id;
+                this.projectPrice = price;
+                this.projectName = name;
+                this.calculateTotal();
+            },
+
+            updateQty(delta) {
+                let newVal = parseInt(this.qty) + delta;
+                if (newVal < 1) newVal = 1;
+                this.qty = newVal;
+                this.calculateTotal();
+            },
+
+            calculateTotal() {
+                let subtotal = this.projectPrice * this.qty;
+                if (this.discountPct > 0) {
+                    subtotal = subtotal - (subtotal * (this.discountPct / 100));
+                }
+                this.totalPrice = subtotal;
+            },
+
+            formatCurrency(value) {
+                return '$' + value.toLocaleString() + ' USD';
+            },
+
+            async applyCoupon() {
+                const code = document.getElementById('coupon_code').value;
+                const msg = document.getElementById('coupon_msg');
+                
+                if (!code) return;
+
+                try {
+                    const response = await fetch(`/validate-coupon/?code=${code}`);
+                    const data = await response.json();
+                    
+                    if (data.valid) {
+                        this.discountPct = data.discount;
+                        document.getElementById('id_coupon').value = data.id;
+                        msg.innerHTML = `<span class="text-success fw-bold">Cupón aplicado: ${data.discount}% de descuento</span>`;
+                        this.calculateTotal();
+                    } else {
+                        this.discountPct = 0;
+                        document.getElementById('id_coupon').value = '';
+                        msg.innerHTML = `<span class="text-danger">${data.message || 'Cupón inválido'}</span>`;
+                        this.calculateTotal();
+                    }
+                } catch (e) {
+                    console.error('Error applying coupon', e);
+                }
+            },
+
+            submitForm(e) {
+                // Basic HTML5 validation will run
+                document.getElementById('reservationForm').submit();
+            }
+        }
+    }
+</script>
+{% endblock %}

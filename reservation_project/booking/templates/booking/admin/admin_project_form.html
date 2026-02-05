@@ -1,0 +1,82 @@
+{% extends 'booking/admin/base_admin.html' %}
+{% load humanize %}
+
+{% block title %}Editar Proyecto{% endblock %}
+{% block page_title %}{% if proyecto %}Editar {{ proyecto.nombre }}{% else %}Nuevo Proyecto{% endif %}{% endblock %}
+
+{% block content %}
+<div class="glass-panel rounded-2xl p-8 max-w-4xl mx-auto border border-gold-500/20 shadow-2xl">
+    <form method="POST" enctype="multipart/form-data" class="space-y-8">
+        {% csrf_token %}
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Global Info -->
+            <div class="space-y-6">
+                <h3 class="text-lg font-bold text-gold-500 border-b border-gold-500/20 pb-2">Información Básica</h3>
+                
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Nombre del Proyecto</label>
+                    <input type="text" name="nombre" value="{{ proyecto.nombre|default:'' }}" required class="w-full bg-dark-900 border border-gray-700 rounded-xl p-3 text-white focus:border-gold-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Ubicación</label>
+                    <input type="text" name="ubicacion" value="{{ proyecto.ubicacion|default:'' }}" required class="w-full bg-dark-900 border border-gray-700 rounded-xl p-3 text-white focus:border-gold-500 outline-none">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Precio Token (USD)</label>
+                        <input type="number" name="precio_token" value="{{ proyecto.precio_token|default:'100' }}" required class="w-full bg-dark-900 border border-gray-700 rounded-xl p-3 text-white focus:border-gold-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Tokens Totales</label>
+                        <input type="number" name="tokens_totales" value="{{ proyecto.tokens_totales|default:'1000' }}" required class="w-full bg-dark-900 border border-gray-700 rounded-xl p-3 text-white focus:border-gold-500 outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Rentabilidad Estimada</label>
+                    <input type="text" name="rentabilidad_estimada" value="{{ proyecto.rentabilidad_estimada|default:'12-18% Anual' }}" class="w-full bg-dark-900 border border-gray-700 rounded-xl p-3 text-white focus:border-gold-500 outline-none">
+                </div>
+            </div>
+
+            <!-- Multimedia & Status -->
+            <div class="space-y-6">
+                <h3 class="text-lg font-bold text-gold-500 border-b border-gold-500/20 pb-2">Multimedia y Estado</h3>
+                
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">URL Imagen Portada (G-Drive/URL)</label>
+                    <input type="url" name="imagen_portada_url" value="{{ proyecto.imagen_portada_url|default:'' }}" class="w-full bg-dark-900 border border-gray-700 rounded-xl p-3 text-white focus:border-gold-500 outline-none" placeholder="https://...">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">O Subir Imagen</label>
+                    <input type="file" name="imagen_portada" class="w-full bg-dark-900 border border-gray-700 rounded-xl p-2 text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-gold-500 file:text-dark-900">
+                </div>
+
+                <div class="p-4 bg-dark-800 rounded-xl border border-gray-700">
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="checkbox" name="activo" {% if proyecto.activo|default:True %}checked{% endif %} class="w-5 h-5 accent-gold-500">
+                        <span class="text-sm text-white font-medium">Proyecto Activo (Visible en Landing)</span>
+                    </label>
+                </div>
+
+                <div class="p-4 bg-dark-800 rounded-xl border border-gray-700">
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="checkbox" name="financiamiento_activo" {% if proyecto.financiamiento_activo|default:True %}checked{% endif %} class="w-5 h-5 accent-gold-500">
+                        <span class="text-sm text-white font-medium">Habilitar Venta de Tokens</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="pt-8 border-t border-gray-800 flex justify-end gap-4">
+            <a href="{% url 'admin_projects' %}" class="px-6 py-3 text-gray-400 hover:text-white transition-colors">Cancelar</a>
+            <button type="submit" class="px-10 py-3 bg-gold-600 hover:bg-gold-500 text-black font-bold rounded-xl shadow-lg transition-all transform hover:scale-105 active:scale-95">
+                GUARDAR PROYECTO
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

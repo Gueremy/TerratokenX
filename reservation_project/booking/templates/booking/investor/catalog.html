@@ -1,0 +1,244 @@
+﻿{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TerraTokenX | Catálogo de Proyectos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gold: {
+                            50: '#fff9e6', 100: '#fef0c3', 200: '#fde68a', 300: '#fcd34d',
+                            400: '#f4c430', 500: '#d4af37', 600: '#b8960f', 700: '#92750c',
+                            800: '#6b5610', 900: '#4a3c12',
+                        },
+                        dark: {
+                            900: '#0a0a0a', 800: '#111111', 700: '#1a1a1a',
+                            600: '#242424', 500: '#2d2d2d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #111827 100%);
+        }
+
+        .glass-panel {
+            background: rgba(26, 26, 26, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(212, 175, 55, 0.15);
+        }
+
+        .gold-glow {
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+        }
+
+        .text-gold-gradient {
+            background: linear-gradient(135deg, #d4af37 0%, #f4d03f 50%, #d4af37 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-item.active {
+            background: linear-gradient(90deg, rgba(212, 175, 55, 0.15) 0%, transparent 100%);
+            border-left: 3px solid #d4af37;
+            color: #d4af37;
+        }
+
+        .nav-item:hover {
+            background: rgba(212, 175, 55, 0.1);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #d4af3744;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body class="bg-dark-900 text-gray-100 h-screen overflow-hidden flex">
+
+    <!-- Sidebar (Consistent) -->
+    <aside
+        class="w-64 bg-dark-800 border-r border-gold-500/20 flex flex-col transition-all duration-300 z-20 hidden md:flex">
+        <div class="p-6 border-b border-gold-500/20 flex items-center gap-3">
+            <div
+                class="w-10 h-10 bg-gradient-to-br from-gold-500 to-gold-600 rounded-lg flex items-center justify-center font-bold text-dark-900 shadow-lg gold-glow">
+                <span class="text-xl">T</span>
+            </div>
+            <span class="text-xl font-bold tracking-tight">
+                <span class="text-gold-gradient">TerraToken</span><span class="text-gold-500">X</span>
+            </span>
+        </div>
+
+        <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
+            <p class="px-3 text-xs font-semibold text-gold-500/60 uppercase tracking-wider mb-2">Mi Portafolio</p>
+            <a href="{% url 'investor_dashboard' %}"
+                class="nav-item flex items-center gap-3 px-3 py-3 rounded-lg text-gray-400 transition-all">
+                <span class="material-icons text-xl">dashboard</span>
+                <span class="text-sm font-medium">Dashboard</span>
+            </a>
+            <a href="{% url 'investor_catalog' %}"
+                class="nav-item flex items-center gap-3 px-3 py-3 rounded-lg text-gray-400 transition-all active">
+                <span class="material-icons text-xl">storefront</span>
+                <span class="text-sm font-medium">Catálogo Proyectos</span>
+            </a>
+            <p class="px-3 text-xs font-semibold text-gold-500/60 uppercase tracking-wider mb-2 mt-6">Cuenta</p>
+            <a href="{% url 'investor_profile' %}"
+                class="nav-item flex items-center gap-3 px-3 py-3 rounded-lg text-gray-400 transition-all">
+                <span class="material-icons text-xl">person</span>
+                <span class="text-sm font-medium">Mi Perfil</span>
+            </a>
+            <a href="{% url 'investor_kyc' %}"
+                class="nav-item flex items-center gap-3 px-3 py-3 rounded-lg text-gray-400 transition-all">
+                <span class="material-icons text-xl">verified_user</span>
+                <span class="text-sm font-medium">Verificación KYC</span>
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-gold-500/20">
+            <form action="{% url 'logout' %}" method="post">
+                {% csrf_token %}
+                <button type="submit"
+                    class="flex items-center gap-2 text-red-400 hover:text-red-300 text-sm font-medium px-2 py-2 rounded hover:bg-red-500/10 transition-colors w-full">
+                    <span class="material-icons text-lg">logout</span> Salir
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+        <!-- Header -->
+        <header
+            class="h-16 border-b border-gold-500/20 flex items-center justify-between px-6 bg-dark-800/80 backdrop-blur-md sticky top-0 z-10">
+            <div class="flex items-center gap-4">
+                <h1 class="text-lg font-semibold text-gold-gradient">Oportunidades de Inversión</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="hidden sm:block text-right">
+                    <p class="text-sm font-medium text-gold-500">{{ user.first_name }}</p>
+                    <p class="text-[10px] text-gold-500/60 uppercase">Inversionista</p>
+                </div>
+                <div
+                    class="w-10 h-10 bg-gradient-to-br from-gold-500 to-gold-600 rounded-full flex items-center justify-center text-dark-900 gold-glow">
+                    <span class="material-icons text-sm">person</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Scrollable content -->
+        <div class="flex-1 overflow-y-auto custom-scrollbar p-6">
+
+            <div class="mb-10">
+                <h2 class="text-3xl font-bold text-white mb-2">Catálogo Premium</h2>
+                <p class="text-gray-400 text-sm">Explora proyectos seleccionados con respaldo real y tecnología
+                    blockchain.</p>
+            </div>
+
+            <!-- Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {% for p in proyectos %}
+                <div
+                    class="glass-panel group rounded-3xl overflow-hidden hover:scale-[1.02] transition-all duration-300 relative flex flex-col">
+                    <!-- Image section -->
+                    <div class="h-52 overflow-hidden relative">
+                        <img src="{% if p.imagen_portada %}{{ p.imagen_portada.url }}{% else %}{{ p.imagen_portada_url }}{% endif %}"
+                            class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                            alt="{{ p.nombre }}">
+                        <div class="absolute inset-0 bg-gradient-to-t from-dark-900 via-transparent to-transparent">
+                        </div>
+
+                        <!-- Badges -->
+                        <div class="absolute top-4 left-4 flex gap-2">
+                            <span
+                                class="px-3 py-1 bg-dark-900/60 backdrop-blur-md border border-gold-500/20 rounded-full text-[10px] font-bold text-gold-500 uppercase flex items-center gap-1">
+                                <span class="material-icons text-xs">location_on</span> {{ p.ubicacion }}
+                            </span>
+                        </div>
+
+                        {% if p.estado != 'Activo' %}
+                        <div class="absolute top-4 right-4 focus:outline-none">
+                            <span
+                                class="px-3 py-1 {% if p.estado == 'Vendido' %}bg-red-500/80{% else %}bg-blue-600/80{% endif %} backdrop-blur-md text-white text-[10px] font-bold rounded-full uppercase">
+                                {{ p.estado }}
+                            </span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Content Section -->
+                    <div class="p-6 flex-grow flex flex-col space-y-4">
+                        <div>
+                            <h3 class="text-xl font-bold text-white group-hover:text-gold-500 transition-colors mb-2">{{ p.nombre }}</h3>
+                            <p class="text-gray-400 text-xs line-clamp-2 leading-relaxed">
+                                {{ p.descripcion }}
+                            </p>
+                        </div>
+
+                        <!-- Stats Row -->
+                        <div class="grid grid-cols-2 gap-4 py-4 border-y border-gold-500/10">
+                            <div>
+                                <p class="text-[9px] text-gold-500/60 uppercase tracking-widest mb-1">Precio Token</p>
+                                <p class="text-sm font-bold text-white">${{ p.precio_token }} <span
+                                        class="text-[10px] text-gray-500">USD</span></p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[9px] text-gold-500/60 uppercase tracking-widest mb-1">Rentabilidad</p>
+                                <p class="text-sm font-bold text-green-400">{{ p.rentabilidad_estimada }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Progress -->
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-[10px]">
+                                <span class="text-gray-500">Disponibles: <span class="text-white font-medium">{{ p.tokens_disponibles }}</span></span>
+                                <span class="text-gold-500 font-bold">{{ p.porcentaje_vendido }}% Vendido</span>
+                            </div>
+                            <div class="h-1.5 bg-dark-900 rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-gold-600 to-gold-400 rounded-full"
+                                    style="width:{{ p.porcentaje_vendido }}%"></div>
+                            </div>
+                        </div>
+
+                        <!-- CTA -->
+                        <a href="{% url 'investor_project_detail' p.slug %}"
+                            class="w-full py-3 bg-gold-500 hover:bg-gold-400 text-dark-900 font-bold rounded-xl text-center text-sm transition-all shadow-lg hover:shadow-gold-500/20 mt-4 flex items-center justify-center gap-2">
+                            Ver Detalles <span class="material-icons text-sm">arrow_forward</span>
+                        </a>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-span-full py-20 text-center opacity-50">
+                    <span class="material-icons text-6xl mb-4 text-gold-500/20">search_off</span>
+                    <p class="text-gray-400">No se encontraron proyectos activos.</p>
+                </div>
+                {% endfor %}
+            </div>
+
+        </div>
+    </main>
+
+</body>
+
+</html>

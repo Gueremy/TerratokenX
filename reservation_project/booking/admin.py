@@ -2,7 +2,13 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.contrib.humanize.templatetags.humanize import intcomma
 from import_export.admin import ImportExportModelAdmin
-from .models import Reserva, DiaFeriado, Coupon, Configuracion, Proyecto
+from .models import Reserva, DiaFeriado, Coupon, Configuracion, Proyecto, UserProfile
+
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ('user', 'rut', 'kyc_status', 'fecha_kyc')
+    list_filter = ('kyc_status',)
+    search_fields = ('user__username', 'user__email', 'rut')
 
 @admin.register(Proyecto)
 class ProyectoAdmin(ImportExportModelAdmin):

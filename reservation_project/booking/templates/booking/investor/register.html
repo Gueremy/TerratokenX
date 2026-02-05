@@ -1,0 +1,205 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TerraTokenX | Registro Inversionista</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gold: {
+                            50: '#fff9e6',
+                            100: '#fef0c3',
+                            200: '#fde68a',
+                            300: '#fcd34d',
+                            400: '#f4c430',
+                            500: '#d4af37',
+                            600: '#b8960f',
+                            700: '#92750c',
+                            800: '#6b5610',
+                            900: '#4a3c12',
+                        },
+                        dark: {
+                            900: '#0a0a0a',
+                            800: '#111111',
+                            700: '#1a1a1a',
+                            600: '#242424',
+                            500: '#2d2d2d',
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out',
+                        'slide-up': 'slideUp 0.5s ease-out',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #111827 100%);
+        }
+
+        .glass-panel {
+            background: rgba(26, 26, 26, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(212, 175, 55, 0.15);
+        }
+
+        .gold-glow {
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+        }
+
+        /* Gold gradient text */
+        .text-gold-gradient {
+            background: linear-gradient(135deg, #d4af37 0%, #f4d03f 50%, #d4af37 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+    </style>
+</head>
+
+<body class="bg-dark-900 text-gray-100 min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+
+    <!-- Background Elements -->
+    <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+        <div class="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-gold-500/10 rounded-full blur-[100px]">
+        </div>
+        <div class="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[100px]">
+        </div>
+    </div>
+
+    <!-- Register Card -->
+    <div
+        class="w-full max-w-md bg-dark-800/80 backdrop-blur-xl border border-gold-500/20 rounded-2xl shadow-2xl p-8 relative z-10 animate-slide-up my-8">
+
+        <!-- Logo Section -->
+        <div class="text-center mb-8">
+            <div
+                class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-gold-500 to-gold-600 shadow-lg gold-glow mb-4">
+                <span class="text-3xl font-bold text-dark-900">T</span>
+            </div>
+            <h2 class="text-2xl font-bold tracking-tight mb-2">
+                Crea tu <span class="text-gold-gradient">Cuenta</span>
+            </h2>
+            <p class="text-gray-400 text-sm">Únete a la nueva era de inversión inmobiliaria.</p>
+        </div>
+
+        {% if messages %}
+        <div class="mb-6 space-y-3 animate-fade-in">
+            {% for message in messages %}
+            <div
+                class="p-3 rounded-lg text-sm border flex items-start gap-2 {% if message.tags == 'error' %}bg-red-500/10 border-red-500/30 text-red-200{% else %}bg-green-500/10 border-green-500/30 text-gold-200{% endif %}">
+                <span class="material-icons text-sm mt-0.5">{% if message.tags == 'error' %}error_outline{% else           %}check_circle{% endif %}</span>
+                <span>{{ message }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="POST" class="space-y-5">
+            {% csrf_token %}
+
+            <div class="space-y-4">
+                <!-- Nombre -->
+                <div>
+                    <label for="nombre" class="block text-sm font-medium text-gray-400 mb-1">Nombre Completo</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span class="material-icons text-gray-500 text-lg">person</span>
+                        </div>
+                        <input id="nombre" name="nombre" type="text" required
+                            class="block w-full pl-10 pr-3 py-3 bg-dark-900/50 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gold-500/50 focus:border-gold-500 transition-all sm:text-sm"
+                            placeholder="Tu nombre y apellido">
+                    </div>
+                </div>
+
+                <!-- Email -->
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-400 mb-1">Correo Electrónico</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span class="material-icons text-gray-500 text-lg">email</span>
+                        </div>
+                        <input id="email" name="email" type="email" required
+                            class="block w-full pl-10 pr-3 py-3 bg-dark-900/50 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gold-500/50 focus:border-gold-500 transition-all sm:text-sm"
+                            placeholder="ejemplo@correo.com">
+                    </div>
+                </div>
+
+                <!-- Contraseña -->
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-400 mb-1">Contraseña</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span class="material-icons text-gray-500 text-lg">lock</span>
+                        </div>
+                        <input id="password" name="password" type="password" required
+                            class="block w-full pl-10 pr-3 py-3 bg-dark-900/50 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gold-500/50 focus:border-gold-500 transition-all sm:text-sm"
+                            placeholder="Mínimo 8 caracteres">
+                    </div>
+                </div>
+
+                <!-- Confirmar Contraseña -->
+                <div>
+                    <label for="password_confirm" class="block text-sm font-medium text-gray-400 mb-1">Confirmar
+                        Contraseña</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span class="material-icons text-gray-500 text-lg">lock_reset</span>
+                        </div>
+                        <input id="password_confirm" name="password_confirm" type="password" required
+                            class="block w-full pl-10 pr-3 py-3 bg-dark-900/50 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gold-500/50 focus:border-gold-500 transition-all sm:text-sm"
+                            placeholder="Repite tu contraseña">
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit"
+                class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-xl text-dark-900 bg-gold-500 hover:bg-gold-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold-500 transition-all shadow-lg hover:shadow-gold-500/20 transform hover:-translate-y-0.5 mt-2">
+                <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                    <span
+                        class="material-icons text-gold-800 group-hover:text-gold-900 transition-colors">how_to_reg</span>
+                </span>
+                Crear mi cuenta
+            </button>
+        </form>
+
+        <div class="mt-8 pt-6 border-t border-gray-700/50 text-center">
+            <p class="text-sm text-gray-400">
+                ¿Ya tienes una cuenta?
+                <a href="{% url 'investor_login' %}"
+                    class="font-bold text-gold-500 hover:text-gold-400 transition-colors ml-1">
+                    Inicia sesión aquí
+                </a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Footer credits -->
+    <div class="absolute bottom-6 text-center text-xs text-gray-600 hidden md:block">
+        &copy; 2026 TerraTokenX. Real Assets, Digital Trust.
+    </div>
+
+</body>
+
+</html>

@@ -110,9 +110,7 @@
                         <div>Telefono: {{ reserva.telefono }}</div>
                         <div>Direccion: {{ reserva.direccion }}</div>
                         <div>Tokens: {{ reserva.cantidad_tokens }}</div>
-                        <div>Pago: {% if reserva.metodo_pago == 'MP' %}Mercado Pago{% elif reserva.metodo_pago ==
-                            'CRYPTO' %}CryptoMarket{% if reserva.crypto_currency %} ({{ reserva.crypto_currency }}){%
-                            endif %}{% else %}Crypto (Manual){% endif %}</div>
+                        <div>Pago: {% if reserva.metodo_pago == 'MP' %}Mercado Pago{% elif reserva.metodo_pago ==               'CRYPTO' %}CryptoMarket{% if reserva.crypto_currency %} ({{ reserva.crypto_currency }}){%               endif %}{% else %}Crypto (Manual){% endif %}</div>
                         <div>Total: USD {{ reserva.total|floatformat:0 }}</div>
                         <div class="md:col-span-2">
                             <span class="text-blue-400">Proyecto:</span>
@@ -120,8 +118,7 @@
                         </div>
                     </div>
                     {% if reserva.coupon %}<div class="mt-2"><span
-                            class="bg-green-900 text-green-400 px-2.5 py-0.5 rounded-full text-xs">Cupón: {{
-                            reserva.coupon.code }} (-{{ reserva.coupon.discount_percentage }}%)</span></div>{% endif %}
+                            class="bg-green-900 text-green-400 px-2.5 py-0.5 rounded-full text-xs">Cupón: {{               reserva.coupon.code }} (-{{ reserva.coupon.discount_percentage }}%)</span></div>{% endif %}
                     <div class="mt-6 flex gap-3 border-t border-gray-700 pt-4">
                         <a href="{% url 'editar_reserva' reserva.id %}"
                             class="bg-blue-600 text-white px-4 py-2 rounded text-sm">Editar</a>

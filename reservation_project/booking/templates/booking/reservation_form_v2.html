@@ -1,735 +1,638 @@
-{% load static humanize %}
-<!DOCTYPE html>
-<html lang="es">
+{% extends 'booking/base.html' %}
+{% load static %}
+{% load humanize %}
 
-<head>
-    <meta charset="UTF-8">
-    <title>TerraTokenx-Compra token lanzamiento</title>
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        gold: {
-                            400: '#E5C453',
-                            500: '#D4AF37',
-                            600: '#B5952F',
-                        },
-                        dark: {
-                            800: '#121212',
-                            900: '#050505',
-                            card: '#1e1e1e'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        /* Custom Scrollbar for Dark Theme */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
+{% block title %}Gateway RWA — TerraTokenX{% endblock %}
 
-        ::-webkit-scrollbar-track {
-            background: #050505;
-        }
+{% block extra_css %}
+<style>
+    :root {
+        --gold-glow: rgba(212, 175, 55, 0.4);
+        --bg-black: #050505;
+        --panel-bg: #0d0d0d;
+        --border-color: #222;
+    }
 
-        ::-webkit-scrollbar-thumb {
-            background: #333;
-            border-radius: 4px;
-        }
+    body { background-color: var(--bg-black); color: #fff; font-family: 'Inter', sans-serif; }
 
-        ::-webkit-scrollbar-thumb:hover {
-            background: #D4AF37;
-        }
+    /* Wizard Steps */
+    .step-circle {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-bottom: 8px;
+        transition: all 0.3s ease;
+        border: 2px solid #333;
+        background: #111;
+        color: #666;
+    }
+    .step-active .step-circle {
+        background: #d4af37;
+        border-color: #d4af37;
+        color: #000;
+        box-shadow: 0 0 15px var(--gold-glow);
+    }
+    .step-label { font-size: 0.65rem; font-weight: bold; text-transform: uppercase; color: #666; letter-spacing: 1px; }
+    .step-active .step-label { color: #d4af37; }
 
-        /* General Input Styling for Dark Mode */
-        input[type="text"],
-        input[type="email"],
-        input[type="tel"],
-        input[type="number"],
-        input[type="date"],
-        select,
-        textarea {
-            background-color: #121212 !important;
-            border: 1px solid #333 !important;
-            color: #f3f4f6 !important;
-            border-radius: 0.375rem;
-            padding: 0.5rem 0.75rem;
-            width: 100%;
-            transition: all 0.2s;
-        }
+    /* Asset Selection Card */
+    .asset-card {
+        background: var(--panel-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 30px;
+    }
+    .asset-card-header {
+        border-bottom: 1px solid var(--border-color);
+        padding: 20px 25px;
+    }
+    .asset-visual {
+        background: linear-gradient(180deg, #111 0%, #000 100%);
+        height: 250px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        border-radius: 8px;
+        margin: 20px;
+        border: 1px solid #222;
+        overflow: hidden;
+    }
+    .asset-visual img { width: 100%; height: 100%; object-fit: cover; opacity: 0.6; }
+    
+    .asset-info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        padding: 0 20px;
+    }
+    .info-box {
+        background: #111;
+        border: 1px solid #222;
+        padding: 15px;
+        border-radius: 8px;
+    }
+    .info-label { font-size: 0.65rem; color: #888; text-transform: uppercase; font-weight: bold; margin-bottom: 4px; }
+    .info-value { font-size: 1.4rem; font-weight: bold; }
 
-        input:focus,
-        select:focus,
-        textarea:focus {
-            border-color: #D4AF37 !important;
-            outline: none;
-            box-shadow: 0 0 0 1px #D4AF37;
-        }
+    /* Quantity Selector */
+    .qty-selector {
+        background: #111;
+        border: 1px solid #333;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        padding: 10px;
+        margin: 20px;
+    }
+    .qty-btn {
+        background: #222;
+        border: none;
+        color: #fff;
+        width: 40px;
+        height: 40px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        transition: all 0.2s;
+    }
+    .qty-btn:hover { background: #d4af37; color: #000; }
+    .qty-input {
+        background: transparent;
+        border: none;
+        color: #fff;
+        text-align: center;
+        flex-grow: 1;
+        font-weight: bold;
+        font-size: 1.5rem;
+        width: 50px;
+    }
 
-        /* Specific override if needed for coupon, though general rule covers it */
-        input[name="coupon_code"] {
-            border-color: #D4AF37 !important;
-        }
-    </style>
-    <script>
-        function formatearCLP(valor) {
-            return '$' + valor.toLocaleString('es-CL');
-        }
-    </script>
-</head>
+    /* Coupon Section */
+    .coupon-box {
+        background: #111;
+        border: 1px dashed #333;
+        padding: 15px;
+        margin: 0 20px 20px 20px;
+        border-radius: 8px;
+    }
 
-<body class="text-gray-100 font-sans antialiased selection:bg-gold-500 selection:text-black"
-    style="background: linear-gradient(to top right, #000000, #374151); min-height: 100vh;">
+    /* Total Bar */
+    .total-bar {
+        background: rgba(212, 175, 55, 0.05);
+        border-top: 1px solid rgba(212, 175, 55, 0.1);
+        padding: 20px 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 20px;
+    }
 
-    <!-- Icono de acceso para administradores -->
+    /* Primary Gold Button */
+    .btn-gold {
+        background: #d4af37;
+        color: #000;
+        border: none;
+        border-radius: 8px;
+        padding: 18px;
+        font-weight: bold;
+        width: calc(100% - 40px);
+        margin: 0 20px 20px 20px;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 0.95rem;
+    }
+    .btn-gold:hover { background: #e5c453; transform: translateY(-2px); box-shadow: 0 5px 20px var(--gold-glow); }
+    .btn-gold:disabled { background: #222; color: #555 !important; transform: none; box-shadow: none; cursor: not-allowed; opacity: 0.7; }
 
+    /* Warning Block */
+    .separation-block {
+        background: rgba(212, 175, 55, 0.03);
+        border: 1px solid rgba(212, 175, 55, 0.1);
+        padding: 20px;
+        margin: 25px 0;
+        border-radius: 12px;
+    }
 
-    <div class="container mx-auto px-2 py-6 sm:px-4 sm:py-8 max-w-3xl">
-        <!-- Mensaje Importante -->
+    [x-cloak] { display: none !important; }
 
-        <div class="flex flex-col items-center justify-center mb-6">
-            <img src="{% static 'booking/img/Terratoken_logo-removebg-preview2.png' %}" alt="TerraTokenX Logo"
-                class="w-72 sm:w-80 h-auto object-contain mb-2">
-            <p class="text-gray-500 text-xs sm:text-sm uppercase tracking-widest font-medium">Real Assets. Digital
-                Trust</p>
-        </div>
-        <!-- Mensaje para el usuario -->
-        <div id="mensaje-usuario" style="display:none;"
-            class="mb-4 text-center px-4 py-2 bg-red-900 text-red-100 border border-red-700 rounded"></div>
-        {% if messages %}
-        <ul>
-            {% for message in messages %}
-            <li class="text-red-400 mb-2">{{ message }}</li>
-            {% endfor %}
-        </ul>
-        {% endif %}
+    /* Custom Input Styles */
+    .form-control-custom {
+        background: #000;
+        border: 1px solid #333;
+        color: #fff;
+        padding: 15px;
+        border-radius: 8px;
+        font-size: 1rem;
+    }
+    .form-control-custom:focus {
+        border-color: #d4af37;
+        outline: none;
+        box-shadow: 0 0 10px rgba(212, 175, 55, 0.1);
+    }
+    .form-select-custom {
+        background-color: #000;
+        color: #fff;
+        border: 1px solid #333;
+        padding: 10px;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
 
-        <!-- Formulario centrado -->
-        <div class="bg-dark-800 p-4 sm:p-6 rounded-lg shadow-2xl border border-gray-800 max-w-lg mx-auto w-full">
-            <form id="reserva-form" method="post" novalidate>
-                <!-- Formulario de Reserva v2.1 - Patched -->
-                {% csrf_token %}
-                {{ form.proyecto }}
+{% block content %}
+<div x-data="rwaWizard()" x-init="init()" x-cloak>
 
-                <!-- SELECTOR DE PROYECTO (DROPDOWN) -->
-                <div class="mb-8">
-                    <label class="block text-sm font-medium text-gray-300 mb-3">Selecciona el Proyecto</label>
-                    <div class="relative">
-                        <select id="project_select_dropdown"
-                            class="w-full bg-dark-800 border border-gray-600 text-white rounded-lg p-3 appearance-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500 transition-colors cursor-pointer">
-                            <option value="" disabled {% if not proyecto %}selected{% endif %}>-- Elige un proyecto --
-                            </option>
-                                                        {% for p in proyectos_activos %}
-                            <option value="{{ p.id }}" 
-                                    data-price="{{ p.precio_token }}"
-                                    data-stock="{{ p.tokens_disponibles|stringformat:'d' }}" 
-                                    data-name="{{ p.nombre }}"
-                                    data-img="{% if p.imagen_portada_url %}{{ p.imagen_portada_url }}{% elif p.imagen_portada %}{{ p.imagen_portada.url }}{% endif %}"
-                                    {% if proyecto and proyecto.id == p.id %}selected{% endif %}>
-                                {{ p.nombre }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                        <div
-                            class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-400">
-                            <span class="material-icons">expand_more</span>
-                        </div>
-                    </div>
+    <div class="row justify-content-center pt-5">
+        <div class="col-lg-7 col-xl-6">
 
-                    <!-- Info del proyecto seleccionado (Visible al seleccionar) -->
-                    <div id="project-info-card"
-                        class="mt-4 hidden p-4 rounded-xl border border-gray-700 bg-dark-800 flex items-center gap-4 transition-all">
-                        <div
-                            class="w-16 h-16 rounded-lg bg-gray-800 border border-gray-600 overflow-hidden flex-shrink-0">
-                            <img id="selected-project-img" src="" alt="" class="w-full h-full object-cover hidden">
-                            <div id="selected-project-placeholder"
-                                class="flex items-center justify-center h-full text-gray-500 text-xs text-center p-1">
-                                Vista Previa
-                            </div>
-                        </div>
-                        <div class="flex-1">
-                            <h4 id="selected-project-name" class="text-white font-bold leading-tight">Proyecto</h4>
-                            <p class="text-xs text-gray-400 mt-1">Precio Token: <span id="selected-project-price"
-                                    class="text-gold-400 font-bold">$0 USD</span></p>
-                        </div>
-                    </div>
+            <!-- Step Indicators -->
+            <div class="d-flex justify-content-between mb-5">
+                <div class="text-center flex-grow-1" :class="step >= 1 ? 'step-active' : ''">
+                    <div class="step-circle mx-auto">1</div>
+                    <div class="step-label">Proyecto</div>
                 </div>
+                <div class="text-center flex-grow-1" :class="step >= 2 ? 'step-active' : ''">
+                    <div class="step-circle mx-auto">2</div>
+                    <div class="step-label">Identidad</div>
+                </div>
+                <div class="text-center flex-grow-1" :class="step >= 3 ? 'step-active' : ''">
+                    <div class="step-circle mx-auto">3</div>
+                    <div class="step-label">Legal</div>
+                </div>
+                <div class="text-center flex-grow-1" :class="step >= 4 ? 'step-active' : ''">
+                    <div class="step-circle mx-auto">4</div>
+                    <div class="step-label">Pago</div>
+                </div>
+            </div>
 
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-1">Nombre completo*</label>
-                        {{ form.nombre }}
-                        {{ form.nombre.errors }}
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-1">Correo electrónico*</label>
-                        {{ form.correo }}
-                        {{ form.correo.errors }}
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-1">Teléfono* <span
-                                class="text-xs text-gray-500">(para recibir el contrato)</span></label>
-                        {{ form.telefono }}
-                        {{ form.telefono.errors }}
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-1">RUT* <span
-                                class="text-xs text-gray-500">(obligatorio para contrato)</span></label>
-                        {{ form.rut }}
-                        {{ form.rut.errors }}
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-1">Dirección*</label>
-                        {{ form.direccion }}
-                        {{ form.direccion.errors }}
-                    </div>
+            <form method="post" id="rwaForm" @submit.prevent="handleSubmit">
+                {% csrf_token %}
 
-                    <!-- Sección Persona Jurídica -->
-                    <div class="pt-4 border-t border-gray-700">
-                        <div class="flex items-center mb-4">
-                            {{ form.es_empresa }}
-                            <label for="check_es_empresa" class="ml-2 text-sm font-medium text-gray-300 cursor-pointer">
-                                Comprar como Empresa (Persona Jurídica)
-                            </label>
-                        </div>
-
-                        <div id="company-fields" class="space-y-4 pl-4 border-l-2 border-slate-600 hidden">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-1">Razón Social</label>
-                                {{ form.razon_social }}
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-1">RUT Empresa</label>
-                                {{ form.rut_empresa }}
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-1">Cargo Que Firma</label>
-                                {{ form.cargo_representante }}
-                                <span class="text-xs text-gray-500 block">Ej: Representante Legal, Gerente
-                                    General</span>
+                <!-- STEP 1: ASSET SELECTION -->
+                <div x-show="step === 1" x-transition>
+                    <div class="asset-card shadow-2xl">
+                        <div class="asset-card-header d-flex justify-content-between align-items-center">
+                            <h5 class="m-0 d-flex align-items-center gap-2 font-bold uppercase tracking-wider">
+                                <i class="fas fa-building text-gold"></i> Selección del Activo
+                            </h5>
+                            <!-- Project Selector if multiple -->
+                            <div x-show="availableProjects.length > 1">
+                                <select class="form-select-custom py-1 px-2 small" x-model="selectedProjectId" @change="updateProject()">
+                                    <template x-for="p in availableProjects" :key="p.id">
+                                        <option :value="p.id" x-text="p.nombre"></option>
+                                    </template>
+                                </select>
                             </div>
                         </div>
-                    </div>
 
-                    <script>
-                        document.addEventListener('DOMContentLoaded', function () {
-                            const checkEmpresa = document.getElementById('check_es_empresa');
-                            const companyFields = document.getElementById('company-fields');
-
-                            function toggleCompanyFields() {
-                                if (checkEmpresa.checked) {
-                                    companyFields.classList.remove('hidden');
-                                } else {
-                                    companyFields.classList.add('hidden');
-                                }
-                            }
-
-                            checkEmpresa.addEventListener('change', toggleCompanyFields);
-                            // Initial check
-                            toggleCompanyFields();
-                        });
-                    </script>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-1">Código de Cupón</label>
-                        <div class="flex items-center gap-2">
-                            <span class="material-icons text-gold-500">local_offer</span>
-                            <div class="flex-1">
-                                {{ form.coupon_code }}
-                                {{ form.coupon_code.errors }}
+                        <!-- Asset Details Section -->
+                        <div class="p-0">
+                            <div class="asset-visual">
+                                <template x-if="activeProject.imagen">
+                                    <img :src="activeProject.imagen">
+                                </template>
+                                <template x-if="!activeProject.imagen">
+                                    <div class="bg-dark w-100 h-100 d-flex align-items-center justify-content-center">
+                                        <i class="far fa-image fa-3x text-secondary"></i>
+                                    </div>
+                                </template>
+                                <div class="position-absolute bottom-0 start-0 p-4 w-100" style="background: linear-gradient(0deg, #0d0d0d 0%, transparent 100%);">
+                                    <h3 class="text-white fw-bold mb-0" x-text="activeProject.nombre"></h3>
+                                    <span class="text-gold small fw-bold uppercase">Reserva de Cupo</span>
+                                </div>
+                                <input type="hidden" name="proyecto" :value="selectedProjectId">
                             </div>
-                            <button type="button" id="btn-validar-cupon"
-                                class="px-3 py-2 bg-dark-800 border border-gold-500 text-gold-500 rounded hover:bg-gold-500 hover:text-black transition-colors text-sm font-bold">
-                                Validar
+
+                            <div class="asset-info-grid">
+                                <div class="info-box">
+                                    <div class="info-label">PRECIO TOKEN</div>
+                                    <div class="info-value text-white">$<span x-text="formatNumber(activeProject.precio)"></span> USD</div>
+                                </div>
+                                <div class="info-box">
+                                    <div class="info-label">RENTABILIDAD</div>
+                                    <div class="info-value text-success" x-text="activeProject.rentabilidad"></div>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 px-4 text-center">
+                                <p class="text-muted small mb-2 text-uppercase fw-bold tracking-widest" style="font-size: 0.6rem;">¿Cuántos tokens deseas adquirir?</p>
+                            </div>
+                            <div class="qty-selector">
+                                <button type="button" class="qty-btn" @click="changeQty(-1)"><i class="fas fa-minus"></i></button>
+                                <input type="number" name="cantidad_tokens" x-model="qty" @input="calculateTotal()" class="qty-input">
+                                <button type="button" class="qty-btn" @click="changeQty(1)"><i class="fas fa-plus"></i></button>
+                            </div>
+
+                            <!-- Coupon Input Section -->
+                            <div class="coupon-box">
+                                <div class="info-label mb-2">¿Tienes un código de descuento?</div>
+                                <div class="d-flex gap-2">
+                                    <input type="text" name="coupon_code" x-model="couponCode" placeholder="Ingresa tu cupón" 
+                                           class="form-control form-control-sm bg-black text-white border-secondary border-opacity-30 flex-grow-1">
+                                    <button type="button" @click="validateCoupon()" 
+                                            class="btn btn-outline-gold btn-sm px-3 font-bold"
+                                            :disabled="!couponCode || isCheckingCoupon">
+                                        <span x-show="!isCheckingCoupon">VALIDAR</span>
+                                        <span x-show="isCheckingCoupon" class="spinner-border spinner-border-sm"></span>
+                                    </button>
+                                </div>
+                                <div x-show="couponMessage" class="mt-2 small" :class="couponValid ? 'text-success' : 'text-danger'" x-text="couponMessage"></div>
+                            </div>
+
+                            <div class="total-bar">
+                                <div class="d-flex flex-column">
+                                    <span class="text-muted fw-bold small text-uppercase" style="letter-spacing: 1px;">Total a Pagar:</span>
+                                    <span x-show="discount > 0" class="text-success x-small fw-bold">DESCUENTO APLICADO</span>
+                                </div>
+                                <span class="h3 text-gold m-0 font-bold" x-text="'$' + formatNumber(total) + ' USD'"></span>
+                            </div>
+
+                            <button type="button" class="btn-gold shadow-lg" @click="step = 2" :disabled="!isStep1Valid">
+                                Continuar a Identidad <i class="fas fa-arrow-right ms-2"></i>
                             </button>
                         </div>
-                        <small id="coupon-message" class="text-gray-500 block mt-1 h-5"></small>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-1">Cantidad de Tokens</label>
-                        {{ form.cantidad_tokens }}
-                        <small id="stock-info" class="text-gray-500 block mt-1"></small>
-                        {{ form.cantidad_tokens.errors }}
+
+                    <div class="separation-block">
+                        <div class="d-flex gap-3">
+                            <i class="fas fa-exclamation-circle text-gold fa-lg mt-1"></i>
+                            <div>
+                                <strong class="text-white d-block mb-1">Ecosistema RWA</strong>
+                                <p class="small text-muted mb-0" style="line-height: 1.5;">
+                                    Este activo digital es un <strong>Token de Activo (Security Token)</strong>. Su valor está vinculado exclusivamente al rendimiento inmobiliario del proyecto.
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Sección de Precios Mejorada -->
-                <div id="precio-info" class="mt-6 bg-dark-800 border border-gray-700 p-4 rounded-lg">
-                    <div class="flex justify-between items-center text-sm mb-1 text-gray-400">
-                        <span id="precio-dia-label">Valor del Token</span>
-                        <span class="font-semibold text-gray-300">${{ precio_base_token }} USD</span>
-                    </div>
-                    <div class="flex justify-between items-center text-sm mb-1 text-gray-400">
-                        <span>Cantidad</span>
-                        <span id="cantidad-display" class="font-semibold text-gray-300">1</span>
-                    </div>
+                <!-- STEP 2: IDENTITY / KYC -->
+                <div x-show="step === 2" x-transition x-cloak>
+                    <div class="asset-card">
+                        <div class="asset-card-header">
+                            <h5 class="m-0 uppercase tracking-widest"><i class="fas fa-user-shield text-gold me-2"></i>Tus Datos</h5>
+                        </div>
+                        <div class="p-4 p-md-5">
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <label class="info-label mb-2">NOMBRE COMPLETO</label>
+                                    <input type="text" name="nombre" x-model="formData.nombre" class="form-control-custom w-100" placeholder="Ej: Juan Pérez" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="info-label mb-2">EMAIL</label>
+                                    <input type="email" name="correo" x-model="formData.correo" class="form-control-custom w-100" placeholder="correo@ejemplo.com" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="info-label mb-2">RUT / ID NACIONAL</label>
+                                    <input type="text" name="rut" x-model="formData.rut" class="form-control-custom w-100" placeholder="12.345.678-K" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="info-label mb-2">TELÉFONO</label>
+                                    <input type="text" name="telefono" x-model="formData.telefono" class="form-control-custom w-100" placeholder="+56 9 1234 5678" required>
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="info-label mb-2">DIRECCIÓN (Requerido para el contrato)</label>
+                                    <input type="text" name="direccion" x-model="formData.direccion" class="form-control-custom w-100" placeholder="Calle, Número, Ciudad" required>
+                                </div>
 
-                    <!-- Fila de Descuento (Oculta por defecto) -->
-                    <div id="row-descuento"
-                        class="flex justify-between items-center text-sm mb-1 text-green-400 hidden">
-                        <span>Descuento (<span id="discount-percent">0</span>%)</span>
-                        <span id="discount-amount" class="font-semibold">-$0</span>
-                    </div>
+                                <!-- Persona Jurídica Toggle -->
+                                <div class="col-md-12 mt-3">
+                                    <div class="form-check custom-check">
+                                        <input class="form-check-input bg-black border-secondary" type="checkbox" id="es_empresa" name="es_empresa" x-model="isCompany">
+                                        <label class="form-check-label small text-muted ms-2" for="es_empresa">
+                                            Deseo invertir como Persona Jurídica (Empresa)
+                                        </label>
+                                    </div>
+                                </div>
 
-                    <!-- Fila de Comisión (Oculta por defecto) -->
-                    <div id="row-comision" class="flex justify-between items-center text-sm mb-1 text-gray-400 hidden">
-                        <span>Comisión Mercado Pago (3,19% + IVA)</span>
-                        <span id="comision-amount" class="font-semibold text-gray-300">+$0</span>
-                    </div>
-
-                    <div
-                        class="flex justify-between items-center text-lg font-bold text-gold-400 mt-2 border-t border-gray-600 pt-2">
-                        <span>Total a Pagar</span>
-                        <span id="precio-total">${{ precio_base_token }} USD</span>
+                                <!-- Campos Empresa (Collapsible) -->
+                                <div class="col-md-12" x-show="isCompany" x-transition>
+                                    <div class="row g-4 mt-1 p-3 rounded-lg border border-secondary border-opacity-30 bg-black">
+                                        <div class="col-md-6">
+                                            <label class="info-label mb-2">RAZÓN SOCIAL</label>
+                                            <input type="text" name="razon_social" x-model="formData.razon_social" class="form-control-custom w-100" placeholder="Mi Empresa S.A.">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="info-label mb-2">RUT EMPRESA</label>
+                                            <input type="text" name="rut_empresa" x-model="formData.rut_empresa" class="form-control-custom w-100" placeholder="76.123.456-7">
+                                        </div>
+                                        <div class="col-md-12">
+                                            <label class="info-label mb-2">CARGO REPRESENTANTE</label>
+                                            <input type="text" name="cargo_representante" x-model="formData.cargo_representante" class="form-control-custom w-100" placeholder="Ej: Gerente General">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-4 d-flex gap-3">
+                            <button type="button" class="btn btn-outline-secondary flex-grow-1 p-3 rounded-lg font-bold" @click="step = 1">ATRÁS</button>
+                            <button type="button" class="btn-gold flex-grow-1 m-0" @click="validateStep2AndProceed()" :disabled="!isStep2Valid">
+                                SIGUIENTE
+                            </button>
+                        </div>
                     </div>
                 </div>
 
+                <!-- STEP 3: LEGAL -->
+                <div x-show="step === 3" x-transition x-cloak>
+                    <div class="asset-card">
+                        <div class="asset-card-header">
+                            <h5 class="m-0 uppercase tracking-widest"><i class="fas fa-file-contract text-gold me-2"></i>Legal & T&C</h5>
+                        </div>
+                        <div class="p-4 p-md-5 text-center">
+                            <div class="bg-black p-4 rounded-lg border border-secondary mb-5">
+                                <div class="text-muted small uppercase mb-1">Total Reserva</div>
+                                <div class="h2 text-gold font-bold" x-text="'$' + formatNumber(total) + ' USD'"></div>
+                            </div>
 
-
-                <!-- Selector de Medio de Pago -->
-                <div class="mt-8 mb-6">
-                    <h3 class="text-lg font-semibold text-gold-400 mb-4 border-b border-gray-700 pb-2">Selecciona
-                        Método
-                        de Pago</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <!-- Opción Mercado Pago -->
-                        <label class="cursor-pointer relative group">
-                            <input type="radio" name="metodo_pago" value="MP" class="peer sr-only">
-                            <div
-                                class="p-4 rounded-lg border-2 border-gray-700 bg-dark-800 hover:border-gold-500/50 peer-checked:border-gold-500 peer-checked:bg-gold-500/10 transition-all duration-200 flex flex-col items-center">
-                                <span
-                                    class="material-icons text-blue-400 text-3xl mb-2 group-hover:scale-110 transition-transform">credit_card</span>
-                                <span class="text-white font-bold">Tarjetas</span>
-                                <span class="text-xs text-gray-400 mt-1">Vía Mercado Pago</span>
-                                <span
-                                    class="mt-2 px-2 py-0.5 bg-yellow-500/20 text-yellow-400 text-[10px] font-bold uppercase tracking-wider rounded border border-yellow-500/50">
-                                    Comisión 3,19% + IVA
-                                </span>
+                            <div class="text-start space-y-4">
+                                <div class="form-check mb-4 custom-check">
+                                    <input class="form-check-input bg-black border-secondary" type="checkbox" id="terms" required x-model="tcAccepted">
+                                    <label class="form-check-label small text-muted ms-2" for="terms">
+                                        He leído y acepto los <a href="#" class="text-gold text-decoration-none">Términos de Inversión</a> y la <a href="#" class="text-gold text-decoration-none">Política de Privacidad</a>.
+                                    </label>
+                                </div>
+                                <div class="form-check mb-4 custom-check">
+                                    <input class="form-check-input bg-black border-secondary" type="checkbox" id="eligibility" required x-model="eligibleAccepted">
+                                    <label class="form-check-label small text-muted ms-2" for="eligibility">
+                                        Declaro bajo juramento la licitud de los fondos y cumplimiento de elegibilidad.
+                                    </label>
+                                </div>
                             </div>
-                            <div class="absolute top-2 right-2 opacity-0 peer-checked:opacity-100 transition-opacity">
-                                <span class="material-icons text-gold-500 text-sm">check_circle</span>
-                            </div>
-                        </label>
-
-                        <!-- Opción CryptoMarket -->
-                        <label class="cursor-pointer relative group">
-                            <input type="radio" name="metodo_pago" value="CRYPTO" class="peer sr-only" checked>
-                            <div
-                                class="p-4 rounded-lg border-2 border-gray-700 bg-dark-800 hover:border-gold-500/50 peer-checked:border-gold-500 peer-checked:bg-gold-500/10 transition-all duration-200 flex flex-col items-center">
-                                <span
-                                    class="material-icons text-orange-400 text-3xl mb-2 group-hover:scale-110 transition-transform">currency_bitcoin</span>
-                                <span class="text-white font-bold">Criptomonedas</span>
-                                <span class="text-xs text-gray-400 mt-1">Vía CryptoMarket</span>
-                            </div>
-                            <div class="absolute top-2 right-2 opacity-0 peer-checked:opacity-100 transition-opacity">
-                                <span class="material-icons text-gold-500 text-sm">check_circle</span>
-                            </div>
-                        </label>
+                        </div>
+                        <div class="p-4 d-flex gap-3">
+                            <button type="button" class="btn btn-outline-secondary flex-grow-1 p-3 rounded-lg font-bold" @click="step = 2">ATRÁS</button>
+                            <button type="button" class="btn-gold flex-grow-1 m-0" @click="step = 4" :disabled="!isStep3Valid">CONTINUAR AL PAGO</button>
+                        </div>
                     </div>
                 </div>
 
-                <div class="flex justify-center mt-6">
-                    <button type="submit"
-                        class="px-6 py-3 bg-gradient-to-r from-gold-400 to-gold-600 text-black font-bold text-lg rounded-md hover:from-gold-500 hover:to-gold-700 shadow-lg hover:shadow-gold-500/20 transition-all w-full sm:w-auto transform hover:scale-[1.02]">
-                        Continuar a Pago
-                    </button>
+                <!-- STEP 4: PAYMENT -->
+                <div x-show="step === 4" x-transition x-cloak>
+                    <div class="asset-card">
+                        <div class="asset-card-header text-center">
+                            <h5 class="m-0 uppercase tracking-widest">Gateway de Pago</h5>
+                        </div>
+                        <div class="p-4 p-md-5">
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <label class="w-100 cursor-pointer">
+                                        <input type="radio" name="metodo_pago" value="MP" class="d-none" x-model="paymentMethod">
+                                        <div class="p-4 text-center rounded-lg border-2 transition-all h-100 d-flex flex-column align-items-center justify-content-center"
+                                             :class="paymentMethod === 'MP' ? 'border-gold bg-dark' : 'border-secondary bg-black'">
+                                            <i class="fas fa-credit-card fa-2x mb-3 text-primary"></i>
+                                            <div class="fw-bold text-white uppercase" style="font-size: 0.8rem;">Mercado Pago</div>
+                                            <div class="x-small text-muted mt-1" style="font-size: 0.6rem;">FIAT (TARJETAS)</div>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="w-100 cursor-pointer">
+                                        <input type="radio" name="metodo_pago" value="CRYPTO" class="d-none" x-model="paymentMethod">
+                                        <div class="p-4 text-center rounded-lg border-2 transition-all h-100 d-flex flex-column align-items-center justify-content-center"
+                                             :class="paymentMethod === 'CRYPTO' ? 'border-gold bg-dark' : 'border-secondary bg-black'">
+                                            <i class="fab fa-bitcoin fa-2x mb-3 text-warning"></i>
+                                            <div class="fw-bold text-white uppercase" style="font-size: 0.8rem;">Criptomonedas</div>
+                                            <div class="x-small text-muted mt-1" style="font-size: 0.6rem;">USDT / BTC / ETH</div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-4 d-flex gap-3">
+                            <button type="button" class="btn btn-outline-secondary flex-grow-1 p-3 rounded-lg font-bold" @click="step = 3">ATRÁS</button>
+                            <button type="submit" class="btn-gold flex-grow-1 m-0">FINALIZAR COMPRA</button>
+                        </div>
+                    </div>
                 </div>
+
             </form>
+
         </div>
+    </div>
+</div>
 
-        <!-- Botón flotante "Saber más" -->
-        <button onclick="openPromoPanel()"
-            class="fixed top-1/2 -translate-y-1/2 right-0 bg-gold-500 text-black font-bold py-3 px-2 rounded-l-lg shadow-lg hover:bg-gold-600 transition-all z-40 flex items-center gap-1 writing-mode-vertical"
-            style="writing-mode: vertical-rl; text-orientation: mixed;">
-            <span class="material-icons text-sm">info</span>
-            Saber más y ver proyectos
-        </button>
+<style>
+    .btn-outline-gold {
+        color: #d4af37;
+        border-color: #d4af37;
+    }
+    .btn-outline-gold:hover {
+        background-color: #d4af37;
+        color: #000;
+    }
+    .hover-gold:hover { color: #d4af37 !important; }
+    .x-small { font-size: 0.75rem; }
+    .custom-check .form-check-input:checked { background-color: #d4af37; border-color: #d4af37; }
+    .qty-input::-webkit-outer-spin-button,
+    .qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+</style>
 
-        <!-- Panel deslizante desde la derecha -->
-        <div id="promoPanel"
-            class="fixed top-0 right-0 h-full w-full sm:w-96 bg-dark-800 border-l-2 border-gold-500 shadow-2xl z-50 transform translate-x-full transition-transform duration-300 ease-in-out overflow-y-auto">
+<!-- Data for Projects -->
+<script id="projects-json" type="application/json">
+[
+    {% for p in proyectos_activos %}
+    {
+        "id": "{{ p.id }}",
+        "nombre": "{{ p.nombre|escapejs }}",
+        "precio": {{ p.precio_token|default:100 }},
+        "rentabilidad": "{{ p.rentabilidad_estimada|escapejs }}",
+        "imagen": "{{ p.imagen_portada_url|default:'' }}"
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+]
+</script>
 
-            <!-- Botón cerrar -->
-            <button onclick="closePromoPanel()"
-                class="absolute top-4 left-4 text-gray-400 hover:text-white transition-colors">
-                <span class="material-icons text-2xl">close</span>
-            </button>
+<script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
-            <div class="p-6 pt-16">
-                <!-- Headline -->
-                <div class="mb-6">
-                    <span class="text-3xl mb-3 block">🎯</span>
-                    <h2 class="text-xl font-bold text-gold-400 leading-tight mb-4 text-justify">
-                        Acceso exclusivo por tiempo limitado al precio de pre-venta para miembros fundadores de la
-                        Comunidad V.I.P. de TerraTokenX.
-                    </h2>
-                </div>
+<script>
+    function rwaWizard() {
+        return {
+            step: 1,
+            qty: 1,
+            total: 0,
+            tcAccepted: false,
+            eligibleAccepted: false,
+            paymentMethod: 'MP',
+            isCompany: false,
+            
+            // Project selection
+            availableProjects: [],
+            selectedProjectId: null,
+            activeProject: {},
 
-                <!-- Subheadline -->
-                <div class="border-t border-gray-700 pt-4 mb-6">
-                    <p class="text-gray-300 text-sm leading-relaxed">
-                        <span class="inline-block mr-2">✨</span> Cupos limitados · Acceso preferente · Participación
-                        temprana en el ecosistema TerraTokenX.
-                    </p>
-                </div>
-
-                <!-- CTA -->
-                <div
-                    class="bg-gradient-to-r from-gold-500/10 to-gold-600/10 border border-gold-500/40 rounded-lg p-4 mb-6">
-                    <p class="text-white font-semibold text-center text-sm">
-                        🚀 <span class="text-gold-400">Compra tu TOKEN de Pre-Venta</span> y obtendrás acceso automático
-                        a <span class="font-bold text-gold-400">#VIPTTX</span>
-                    </p>
-                </div>
-
-                <!-- Badges -->
-                <div class="flex flex-wrap justify-center gap-3">
-                    <span
-                        class="px-3 py-1 bg-green-900/30 text-green-400 text-xs font-bold rounded-full border border-green-700">
-                        ✓ Cupos Limitados
-                    </span>
-                    <span
-                        class="px-3 py-1 bg-blue-900/30 text-blue-400 text-xs font-bold rounded-full border border-blue-700">
-                        ✓ Acceso VIP
-                    </span>
-                    <span
-                        class="px-3 py-1 bg-purple-900/30 text-purple-400 text-xs font-bold rounded-full border border-purple-700">
-                        ✓ Miembro Fundador
-                    </span>
-                </div>
-
-                <!-- Botón Proyectos Fraccionados -->
-                <div class="mt-8 text-center">
-                    <a href="https://darkorchid-albatross-663962.hostingersite.com/" target="_blank"
-                        class="inline-block px-6 py-3 bg-gray-800 border border-gold-500 text-gold-500 font-bold rounded-lg hover:bg-gold-500 hover:text-black transition-all shadow-lg hover:shadow-gold-500/20 transform hover:scale-105">
-                        <span class="flex items-center gap-2">
-                            <span class="material-icons">apartment</span>
-                            Ver Proyectos Tokenizados
-                        </span>
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Overlay oscuro -->
-        <div id="promoOverlay" onclick="closePromoPanel()" class="fixed inset-0 bg-black/50 z-40 hidden"></div>
-
-        <!-- Botón flotante de WhatsApp y mensaje -->
-        <a href="https://wa.me/56928839093?text=Hola%2C%20tengo%20una%20duda%20sobre%20TerraTokenX" target="_blank"
-            class="fixed w-14 h-14 bottom-6 right-6 sm:right-10 bg-[#25d366] text-white rounded-full flex items-center justify-center text-3xl shadow z-50"
-            title="Contáctanos por WhatsApp">
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="white" viewBox="0 0 24 24">
-                <path
-                    d="M20.52 3.48A11.93 11.93 0 0 0 12 0C5.37 0 0 5.37 0 12c0 2.11.55 4.16 1.6 5.97L0 24l6.18-1.62A11.93 11.93 0 0 0 12 24c6.63 0 12-5.37 12-12 0-3.19-1.24-6.19-3.48-8.52zM12 22c-1.85 0-3.67-.5-5.23-1.44l-.37-.22-3.67.97.98-3.58-.24-.37A9.94 9.94 0 0 1 2 12c0-5.52 4.48-10 10-10s10 4.48 10 10-4.48 10-10 10zm5.2-7.8c-.28-.14-1.65-.81-1.9-.9-.25-.09-.43-.14-.61.14-.18.28-.7.9-.86 1.08-.16.18-.32.2-.6.07-.28-.14-1.18-.44-2.25-1.4-.83-.74-1.39-1.65-1.55-1.93-.16-.28-.02-.43.12-.57.13-.13.28-.34.42-.51.14-.17.18-.29.28-.48.09-.19.05-.36-.02-.5-.07-.14-.61-1.47-.84-2.01-.22-.53-.45-.46-.61-.47-.16-.01-.36-.01-.56-.01-.19 0-.5.07-.76.36-.26.29-1 1-.97 2.43.03 1.43 1.03 2.81 1.18 3 .15.19 2.02 3.09 4.9 4.21.68.29 1.21.46 1.62.59.68.22 1.3.19 1.79.12.55-.08 1.65-.67 1.88-1.32.23-.65.23-1.21.16-1.32-.07-.11-.25-.18-.53-.32z" />
-            </svg>
-        </a>
-        <!-- Modal Info Popup -->
-        <!-- Modal Info Popup (Corner Toast) -->
-        <div id="infoModal"
-            class="fixed bottom-6 left-6 z-50 invisible opacity-0 transition-all duration-500 transform translate-y-10">
-
-            <!-- Modal Content -->
-            <div class="bg-dark-800 border-2 border-gold-500 rounded-xl p-6 max-w-sm shadow-2xl relative"
-                id="modalContent">
-                <button onclick="closeModal()"
-                    class="absolute top-2 right-2 text-gray-500 hover:text-white transition-colors">
-                    <span class="material-icons text-xl">close</span>
-                </button>
-
-                <div class="flex flex-col items-center text-center">
-                    <div class="bg-gold-500/10 p-3 rounded-full mb-3">
-                        <span class="material-icons text-gold-500 text-3xl">info</span>
-                    </div>
-
-                    <h3 class="text-lg font-bold text-white mb-2">Información Importante</h3>
-
-                    <p class="text-gray-300 text-sm leading-relaxed mb-4">
-                        SI QUIERES SABER MÁS SOBRE NUESTRA PLATAFORMA, ÚNETE A LA PRIMERA COMUNIDAD DE INVERSIONISTAS
-                        TOKENIZACIÓN DE TERRENOS DE LATAM Y NO TE PIERDAS NUESTRO LANZAMIENTO!!🚀
-                    </p>
-
-                    <a href="https://chat.whatsapp.com/G7aHCdj9v6RAY8xRrbrjkn" target="_blank"
-                        class="bg-[#d1a841] text-black font-bold py-2 px-6 rounded-lg hover:bg-[#b69237] transition-colors text-sm shadow-lg flex items-center gap-2">
-                        <span class="material-icons text-lg">groups</span>
-                        Unirme a Comunidad
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Modal Popup Logic & Main Form Logic (Combined at the end) -->
-        <script>
-            // Modal Logic
-            const modal = document.getElementById('infoModal');
-            const modalContent = document.getElementById('modalContent');
-
-            function openModal() {
-                modal.classList.remove('invisible', 'opacity-0', 'translate-y-10');
-            }
-
-            function closeModal() {
-                modal.classList.add('opacity-0', 'translate-y-10');
-                setTimeout(() => {
-                    modal.classList.add('invisible');
-                }, 500);
-            }
-
-            // Auto Open on Load
-            window.addEventListener('load', () => {
-                setTimeout(openModal, 500); // Small delay for effect
-            });
-
-            // Promo Panel Logic
-            const promoPanel = document.getElementById('promoPanel');
-            const promoOverlay = document.getElementById('promoOverlay');
-
-            function openPromoPanel() {
-                promoPanel.classList.remove('translate-x-full');
-                promoOverlay.classList.remove('hidden');
-                document.body.style.overflow = 'hidden';
-            }
-
-            function closePromoPanel() {
-                promoPanel.classList.add('translate-x-full');
-                promoOverlay.classList.add('hidden');
-                document.body.style.overflow = '';
-            }
-
-            // Price Calculation & Coupon Logic
-            document.addEventListener('DOMContentLoaded', function () {
-                console.log("DOM loaded - Initializing Price Script");
-
-                // Selectors
-                const cantidadInput = document.querySelector('input[name="cantidad_tokens"]');
-                const couponInput = document.querySelector('input[name="coupon_code"]');
-                const btnValidar = document.getElementById('btn-validar-cupon');
-                const couponMessage = document.getElementById('coupon-message');
-
-                const cantidadDisplay = document.getElementById('cantidad-display');
-                const precioTotalDisplay = document.getElementById('precio-total');
-                const precioDiaLabel = document.getElementById('precio-dia-label'); // Label para actualizar el precio del token
-                const rowDescuento = document.getElementById('row-descuento');
-                const discountPercentDisplay = document.getElementById('discount-percent');
-                const discountAmountDisplay = document.getElementById('discount-amount');
-                const rowComision = document.getElementById('row-comision');
-                const comisionAmountDisplay = document.getElementById('comision-amount');
-                const radioButtons = document.querySelectorAll('input[name="metodo_pago"]');
-
-                // Values
-                let precioBase = parseFloat("{{ precio_base_token|default:'0' }}") || 0;
-                let currentDiscountPercent = 0;
-
-                console.log("Initial Base Price:", precioBase);
-
-                // Dropdown and UI Elements
-                const projectDropdown = document.getElementById('project_select_dropdown');
-                const projectInfoCard = document.getElementById('project-info-card');
-                const selectedProjectImg = document.getElementById('selected-project-img');
-                const selectedProjectPlaceholder = document.getElementById('selected-project-placeholder');
-                const selectedProjectName = document.getElementById('selected-project-name');
-                const selectedProjectPrice = document.getElementById('selected-project-price');
-
-                function handleProjectSelection() {
-                    const selectedOption = projectDropdown.options[projectDropdown.selectedIndex];
-                    const id = selectedOption.value;
-
-                    if (!id) {
-                        projectInfoCard.classList.add('hidden');
-                        precioBase = parseInt("{{ precio_base_token|default:0 }}".replace(/\D/g, '')) || 0;
-                        actualizarTotal();
-                        return;
-                    }
-
-                    const price = selectedOption.getAttribute('data-price');
-                    const name = selectedOption.getAttribute('data-name');
-                    const imgUrl = selectedOption.getAttribute('data-img');
-                    const stock = selectedOption.getAttribute('data-stock');
-
-                    // Update Hidden Input
-                    const hiddenInput = document.getElementById('id_proyecto');
-                    if (hiddenInput) hiddenInput.value = id;
-
-                    // Update UI Card
-                    projectInfoCard.classList.remove('hidden');
-                    if (selectedProjectName) selectedProjectName.textContent = name;
-                    if (selectedProjectPrice) {
-                        const p = parseFloat(price) || 0;
-                        selectedProjectPrice.textContent = '$' + p.toFixed(2) + ' USD';
-                    }
-
-                    if (imgUrl && imgUrl.trim() !== "") {
-                        selectedProjectImg.src = imgUrl;
-                        selectedProjectImg.classList.remove('hidden');
-                        selectedProjectPlaceholder.classList.add('hidden');
-                    } else {
-                        selectedProjectImg.classList.add('hidden');
-                        selectedProjectPlaceholder.classList.remove('hidden');
-                    }
-
-                    // Stock Logic
-                    const stockInfo = document.getElementById('stock-info');
-                    if (stock) {
-                        const available = parseInt(stock);
-                        if (cantidadInput) {
-                            cantidadInput.max = available;
-                            // Reset if current value exceeds new availability
-                            if (parseInt(cantidadInput.value) > available) {
-                                cantidadInput.value = available;
-                            }
-                        }
-                        if (stockInfo) {
-                            stockInfo.textContent = `Disponibles: ${available} tokens`;
-                            stockInfo.className = available < 10 ? "text-red-400 block mt-1 font-bold" : "text-gray-500 block mt-1";
-                        }
-                    }
-
-                    // Update Price Logic
-                    precioBase = parseFloat(price) || 0;
-                    console.log("Project Selected via Dropdown:", name, "Price:", precioBase, "Stock:", stock);
-
-                    // Update UI Unit Price Text
-                    if (precioDiaLabel) {
-                        const priceSpan = precioDiaLabel.nextElementSibling;
-                        if (priceSpan) priceSpan.textContent = '$' + precioBase + ' USD';
-                    }
-
-                    actualizarTotal();
+            // Form data for validation
+            formData: {
+                nombre: '{% if user.is_authenticated %}{{ user.first_name }} {{ user.last_name }}{% endif %}',
+                correo: '{% if user.is_authenticated %}{{ user.email }}{% endif %}',
+                rut: '',
+                telefono: '',
+                direccion: '',
+                razon_social: '',
+                rut_empresa: '',
+                cargo_representante: ''
+            },
+            
+            // Coupon state
+            couponCode: '',
+            isCheckingCoupon: false,
+            couponValid: false,
+            couponMessage: '',
+            discount: 0,
+            
+            init() {
+                // Initialize projects
+                const dataRaw = document.getElementById('projects-json').textContent;
+                this.availableProjects = JSON.parse(dataRaw);
+                
+                // Determine initial project
+                const urlParams = new URLSearchParams(window.location.search);
+                const projectSlug = urlParams.get('project_slug');
+                
+                {% if proyecto %}
+                this.selectedProjectId = "{{ proyecto.id }}";
+                {% else %}
+                if (this.availableProjects.length > 0) {
+                    this.selectedProjectId = this.availableProjects[0].id;
                 }
+                {% endif %}
+                
+                this.updateProject();
+            },
 
-                if (projectDropdown) {
-                    projectDropdown.addEventListener('change', handleProjectSelection);
-                    // Initialize if there is a pre-selected value
-                    if (projectDropdown.value) {
-                        handleProjectSelection();
-                    }
-                }
+            updateProject() {
+                this.activeProject = this.availableProjects.find(p => p.id == this.selectedProjectId) || this.availableProjects[0] || {};
+                this.calculateTotal();
+            },
 
-                function formatCurrency(amount) {
-                    return '$' + Math.round(amount) + ' USD';
-                }
+            changeQty(delta) {
+                this.qty = Math.max(1, parseInt(this.qty) + delta);
+                this.calculateTotal();
+            },
 
-                function actualizarTotal() {
-                    let cantidad = parseInt(cantidadInput.value) || 1;
-                    if (cantidad < 1) {
-                        cantidad = 1;
-                        cantidadInput.value = 1;
-                    }
-
-                    // Ensure a project is selected if strictly required, or handle default
-                    // For now, if precioBase is 0 (no project selected and no default), total is 0
-
-                    console.log("Updating Total. Quantity:", cantidad, "Price:", precioBase);
-
-                    if (cantidadDisplay) cantidadDisplay.textContent = cantidad;
-
-                    const subtotal = precioBase * cantidad;
-                    let discountAmount = 0;
-
-                    if (currentDiscountPercent > 0) {
-                        discountAmount = (subtotal * currentDiscountPercent) / 100;
-
-                        if (rowDescuento) {
-                            rowDescuento.classList.remove('hidden');
-                            if (discountPercentDisplay) discountPercentDisplay.textContent = currentDiscountPercent;
-                            if (discountAmountDisplay) discountAmountDisplay.textContent = '-' + formatCurrency(discountAmount);
-                        }
-                    } else {
-                        if (rowDescuento) rowDescuento.classList.add('hidden');
-                    }
-
-                    let total = subtotal - discountAmount;
-
-                    // Lógica para calcular comisión MP
-                    const metodoPago = document.querySelector('input[name="metodo_pago"]:checked').value;
-                    let commissionAmount = 0;
-
-                    if (metodoPago === 'MP') {
-                        commissionAmount = total * 0.0319;
-                        if (rowComision) {
-                            rowComision.classList.remove('hidden');
-                            if (comisionAmountDisplay) comisionAmountDisplay.textContent = '+' + formatCurrency(commissionAmount);
-                        }
-                    } else {
-                        if (rowComision) rowComision.classList.add('hidden');
-                    }
-
-                    total += commissionAmount;
-
-                    if (precioTotalDisplay) precioTotalDisplay.textContent = formatCurrency(total);
-                }
-
-                // Event Listeners for Payment Method Logic
-                if (radioButtons) {
-                    radioButtons.forEach(radio => {
-                        radio.addEventListener('change', actualizarTotal);
-                    });
-                }
-
-                // Event Listeners for Quantity
-                if (cantidadInput) {
-                    cantidadInput.addEventListener('input', actualizarTotal);
-                    cantidadInput.addEventListener('change', actualizarTotal);
-                    actualizarTotal();
+            calculateTotal() {
+                const subtotal = (this.activeProject.precio || 0) * this.qty;
+                if (this.discount > 0) {
+                    this.total = subtotal - (subtotal * this.discount / 100);
                 } else {
-                    console.error("Critical: Quantity input not found!");
+                    this.total = subtotal;
                 }
+            },
 
-                // Coupon Validation Logic
-                if (btnValidar) {
-                    btnValidar.addEventListener('click', function () {
-                        console.log("Validating coupon...");
-                        const code = couponInput.value.trim();
-                        if (!code) {
-                            couponMessage.textContent = "Ingresa un codigo primero.";
-                            couponMessage.className = "text-red-500 block mt-1 h-5";
-                            return;
-                        }
-
-                        btnValidar.disabled = true;
-                        btnValidar.textContent = "...";
-
-                        fetch('{% url "validate_coupon" %}', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                            },
-                            body: JSON.stringify({ code: code })
-                        })
-                            .then(response => response.json())
-                            .then(data => {
-                                console.log("Coupon Response:", data);
-                                btnValidar.disabled = false;
-                                btnValidar.textContent = "Validar";
-
-                                if (data.valid) {
-                                    currentDiscountPercent = data.discount_percentage;
-                                    couponMessage.textContent = "Cupon valido! " + data.discount_percentage + "% descuento";
-                                    couponMessage.className = "text-green-400 block mt-1 h-5 font-medium";
-                                    actualizarTotal();
-                                } else {
-                                    currentDiscountPercent = 0;
-                                    couponMessage.textContent = data.message || "Cupon invalido";
-                                    couponMessage.className = "text-red-500 block mt-1 h-5";
-                                    actualizarTotal();
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Error fetching coupon:', error);
-                                btnValidar.disabled = false;
-                                btnValidar.textContent = "Validar";
-                                couponMessage.textContent = "Error al validar el cupon.";
-                                couponMessage.className = "text-red-500 block mt-1 h-5";
-                            });
+            async validateCoupon() {
+                if (!this.couponCode) return;
+                this.isCheckingCoupon = true;
+                this.couponMessage = '';
+                try {
+                    const response = await fetch('/validate-coupon/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                        },
+                        body: JSON.stringify({ code: this.couponCode })
                     });
+                    const data = await response.json();
+                    if (data.valid) {
+                        this.couponValid = true;
+                        this.discount = data.discount_percentage;
+                        this.couponMessage = data.message;
+                        this.calculateTotal();
+                    } else {
+                        this.couponValid = false;
+                        this.discount = 0;
+                        this.couponMessage = data.message;
+                        this.calculateTotal();
+                    }
+                } catch (error) {
+                    this.couponMessage = 'Error al validar cupón.';
+                } finally {
+                    this.isCheckingCoupon = false;
                 }
-            });
-        </script>
-</body>
+            },
 
-</html>
+            // Validation Getters
+            get isStep1Valid() {
+                return this.selectedProjectId && this.qty >= 1;
+            },
+
+            get isStep2Valid() {
+                const basic = this.formData.nombre && this.formData.correo.includes('@') && this.formData.rut && this.formData.telefono && this.formData.direccion;
+                if (!this.isCompany) return basic;
+                return basic && this.formData.razon_social && this.formData.rut_empresa && this.formData.cargo_representante;
+            },
+
+            get isStep3Valid() {
+                return this.tcAccepted && this.eligibleAccepted;
+            },
+
+            validateStep2AndProceed() {
+                if (this.isStep2Valid) {
+                    this.step = 3;
+                } else {
+                    alert("Por favor completa todos los campos requeridos.");
+                }
+            },
+
+            formatNumber(num) {
+                if (!num) return "0";
+                return Math.round(num).toLocaleString('en-US');
+            },
+
+            handleSubmit() {
+                document.getElementById('rwaForm').submit();
+            }
+        }
+    }
+</script>
+{% endblock %}

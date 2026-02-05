@@ -31,6 +31,11 @@
                 class="px-5 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2">
                 <span class="material-icons text-lg">view_list</span> Secciones
             </button>
+            <button type="button" @click="activeTab = 'dataroom'"
+                :class="activeTab === 'dataroom' ? 'bg-gold-500 text-dark-900 shadow-lg' : 'text-gray-400 hover:text-white hover:bg-white/5'"
+                class="px-5 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2">
+                <span class="material-icons text-lg">folder</span> Data Room
+            </button>
             {% endif %}
         </div>
         <div class="flex items-center gap-3">
@@ -70,44 +75,37 @@
                         <p class="text-red-400 text-xs mt-1">{{ form.nombre.errors.0 }}</p>
                         {% endif %}
                     </div>
-
                     <div class="col-span-1">
                         <label
                             class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Tipo</label>
                         {{ form.tipo }}
                     </div>
-
                     <div class="col-span-1">
                         <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Slug
                             (URL)</label>
                         {{ form.slug }}
                     </div>
-
                     <div class="col-span-1">
                         <label
                             class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Estado</label>
                         {{ form.estado }}
                     </div>
-
                     <div class="col-span-full">
                         <label
                             class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Ubicación</label>
                         {{ form.ubicacion }}
                     </div>
-
                     <div class="col-span-full">
                         <label
                             class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Descripción
                             Corta</label>
                         {{ form.descripcion }}
                     </div>
-
                     <div class="col-span-1">
                         <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Web
                             Oficial</label>
                         {{ form.pagina_oficial_url }}
                     </div>
-
                     <div class="col-span-1 flex items-end pb-3">
                         <div
                             class="bg-dark-700/50 border border-gray-600 rounded-lg p-3 w-full flex items-center gap-3">
@@ -134,14 +132,12 @@
                             <span>$</span> {{ form.precio_token }}
                         </div>
                     </div>
-
                     <div class="bg-dark-800 p-4 rounded-xl border border-gray-700 text-center">
                         <label class="block text-xs font-semibold text-gray-400 uppercase mb-2">Tokens Totales</label>
                         <div class="text-2xl font-bold text-white">
                             {{ form.tokens_totales }}
                         </div>
                     </div>
-
                     <div class="bg-dark-800 p-4 rounded-xl border border-gray-700 text-center">
                         <label class="block text-xs font-semibold text-gray-400 uppercase mb-2">Rentabilidad
                             Est.</label>
@@ -171,7 +167,6 @@
                             {% endif %}
                         </div>
                     </div>
-
                     <div>
                         <label class="block text-xs font-semibold text-gray-400 uppercase mb-2">Video
                             Promocional</label>
@@ -201,8 +196,6 @@
                             <button type="button"
                                 class="undo-delete-btn px-3 py-1 bg-white text-red-600 rounded-full text-xs font-bold shadow-lg">Deshacer</button>
                         </div>
-
-                        <!-- PREVIEW IMAGE -->
                         {% if img_form.instance.pk %}
                         <div
                             class="mb-3 h-32 w-full bg-dark-900 rounded-lg overflow-hidden flex items-center justify-center border border-gray-600">
@@ -215,40 +208,30 @@
                             {% endif %}
                         </div>
                         {% endif %}
-
                         <div class="space-y-3">
                             <div class="flex justify-between items-start">
-                                <span class="bg-gray-700 text-xs px-2 py-1 rounded text-gray-300">
-                                    Img #{{ forloop.counter }}
-                                </span>
-                                <div class="hidden delete-checkbox-wrapper">
-                                    {{ img_form.DELETE }}
-                                </div>
+                                <span class="bg-gray-700 text-xs px-2 py-1 rounded text-gray-300">Img #{{                   forloop.counter }}</span>
+                                <div class="hidden delete-checkbox-wrapper">{{ img_form.DELETE }}</div>
                                 <button type="button" class="text-red-400 hover:text-red-300 custom-delete-btn"
                                     title="Eliminar">
                                     <span class="material-icons">delete</span>
                                 </button>
                             </div>
-
-                            <!-- FIELDS -->
                             <div>
                                 <label
                                     class="block text-[10px] font-semibold text-gray-400 uppercase mb-1">Archivo</label>
                                 {{ img_form.imagen }}
                             </div>
-
                             <div>
                                 <label class="block text-[10px] font-semibold text-gray-400 uppercase mb-1">URL
                                     (Opcional)</label>
                                 {{ img_form.imagen_url }}
                             </div>
-
                             <div>
                                 <label class="block text-[10px] font-semibold text-gray-400 uppercase mb-1">Descripción
                                     / Caption</label>
                                 {{ img_form.caption }}
                             </div>
-
                             {{ img_form.id }}
                         </div>
                     </div>
@@ -257,8 +240,8 @@
             </div>
         </div>
 
-        <!-- TAB 4: SECTIONS -->
         {% if proyecto %}
+        <!-- TAB 4: SECTIONS -->
         <div x-show="activeTab === 'sections'" x-cloak class="space-y-6">
             <div class="glass-panel rounded-2xl p-6">
                 <div class="flex items-center justify-between mb-8">
@@ -272,9 +255,7 @@
 
                 <div class="space-y-3">
                     {% for sec in secciones %}
-                    <template id="content-{{ sec.id }}">
-                        {{ sec.contenido }}
-                    </template>
+                    <template id="content-{{ sec.id }}">{{ sec.contenido }}</template>
                     <div
                         class="bg-dark-700/50 p-4 rounded-xl border border-gray-600 hover:border-gold-500/30 transition-all group">
                         <div class="flex items-center justify-between">
@@ -286,21 +267,18 @@
                                 <div>
                                     <h4 class="font-bold text-white text-lg">{{ sec.nombre }}</h4>
                                     <div class="flex items-center gap-3 text-xs text-gray-500 mt-1">
-                                        <span class="bg-gray-800 px-2 py-0.5 rounded border border-gray-700">
-                                            Orden: {{ sec.orden }}
-                                        </span>
+                                        <span class="bg-gray-800 px-2 py-0.5 rounded border border-gray-700">Orden: {{                       sec.orden }}</span>
                                         {% if sec.activo %}
-                                        <span class="text-green-400 flex items-center gap-1">Activo</span>
+                                        <span class="text-green-400">Activo</span>
                                         {% else %}
-                                        <span class="text-red-400 flex items-center gap-1">Oculto</span>
+                                        <span class="text-red-400">Oculto</span>
                                         {% endif %}
                                     </div>
                                 </div>
                             </div>
-
                             <div class="flex items-center gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
                                 <button type="button"
-                                    onclick='openEditModal("{{ sec.id }}", "{{ sec.nombre }}", "{{ sec.icono|default_if_none:"" }}", "{{ sec.orden }}", {{ sec.activo|yesno:"true,false" }})'
+                                    onclick='openEditModal("{{ sec.id }}", "{{ sec.nombre|escapejs }}", "{{ sec.icono|default_if_none:""|escapejs }}", "{{ sec.orden }}", {{ sec.activo|yesno:"true,false" }})'
                                     class="p-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/40">
                                     <span class="material-icons">edit</span>
                                 </button>
@@ -320,99 +298,70 @@
                 </div>
             </div>
         </div>
-        {% else %}
-        <div x-show="activeTab === 'sections'" class="text-center py-12 glass-panel rounded-2xl">
-            <h3 class="text-xl font-bold text-white">Guarde el proyecto primero</h3>
+
+        <!-- TAB 5: DATAROOM -->
+        <div x-show="activeTab === 'dataroom'" x-cloak class="space-y-6">
+            <div class="glass-panel rounded-2xl p-6">
+                <div class="flex items-center justify-between mb-8">
+                    <h3 class="text-xl font-bold text-gold-400 flex items-center gap-2">
+                        <span class="material-icons">folder</span> Documentos del Proyecto
+                    </h3>
+                    <button type="button" onclick="document.getElementById('newDocModal').classList.remove('hidden')"
+                        class="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg text-sm font-bold shadow-lg flex items-center gap-2">
+                        <span class="material-icons">add_circle</span> Subir Documento
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% for doc in documentos %}
+                    <div
+                        class="bg-dark-700/50 p-4 rounded-xl border border-gray-600 hover:border-gold-500/30 transition-all group">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3 overflow-hidden">
+                                <span
+                                    class="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center text-red-500 border border-red-500/20">
+                                    <span class="material-icons">description</span>
+                                </span>
+                                <div class="overflow-hidden">
+                                    <h4 class="font-bold text-white truncate" title="{{ doc.titulo }}">{{ doc.titulo }}
+                                    </h4>
+                                    <div class="flex items-center gap-2 text-[10px] text-gray-500 mt-1">
+                                        {% if doc.es_publico %}<span class="text-green-400">Público</span>{% else                     %}<span class="text-gray-400">Privado</span>{% endif %}
+                                        {% if doc.requiere_nda %}<span class="text-yellow-500 font-bold">• Req.
+                                            NDA</span>{% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                                <a href="{{ doc.archivo.url }}" target="_blank"
+                                    class="p-2 text-gray-400 hover:text-white rounded-lg">
+                                    <span class="material-icons text-xl">visibility</span>
+                                </a>
+                                <a href="{% url 'documento_delete' doc.id %}"
+                                    onclick="return confirm('¿Eliminar este documento?')"
+                                    class="p-2 text-red-400 hover:text-red-300 rounded-lg">
+                                    <span class="material-icons text-xl">delete</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div
+                        class="col-span-full text-center py-12 border-2 border-dashed border-gray-700 rounded-xl bg-dark-800/50">
+                        <span class="material-icons text-4xl text-gray-600 mb-2">folder_off</span>
+                        <p class="text-gray-400">No hay documentos subidos aún.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
         </div>
         {% endif %}
     </form>
 </div>
 
-<!-- DATA TEMPLATE FOR JS -->
-<div id="empty-form-template" class="hidden">
-    <div class="bg-dark-800 p-4 rounded-xl border border-gray-700 relative group form-item">
-        <div class="space-y-3">
-            <div class="flex justify-between items-start">
-                <span
-                    class="bg-green-900/50 text-green-400 text-xs px-2 py-1 rounded border border-green-800">Nueva</span>
-                <div class="hidden delete-checkbox-wrapper">{{ formset.empty_form.DELETE }}</div>
-                <button type="button" class="text-red-400 hover:text-red-300 custom-delete-btn" title="Eliminar"><span
-                        class="material-icons">delete</span></button>
-            </div>
-
-            <div>
-                <label class="block text-[10px] font-semibold text-gray-400 uppercase mb-1">Archivo</label>
-                {{ formset.empty_form.imagen }}
-            </div>
-            <div>
-                <label class="block text-[10px] font-semibold text-gray-400 uppercase mb-1">URL (Opcional)</label>
-                {{ formset.empty_form.imagen_url }}
-            </div>
-            <div>
-                <label class="block text-[10px] font-semibold text-gray-400 uppercase mb-1">Descripción /
-                    Caption</label>
-                <input type="text" name="imagenes-__prefix__-caption" placeholder="Descripción"
-                    class="w-full bg-dark-900 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:border-gold-500 focus:outline-none transition-colors">
-            </div>
-
-            {{ formset.empty_form.id }}
-        </div>
-    </div>
-</div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const addBtn = document.getElementById('add-image-btn');
-        const formsetContainer = document.getElementById('gallery-formset');
-        const totalFormsInput = document.getElementById('id_imagenes-TOTAL_FORMS');
-        const emptyFormTemplate = document.getElementById('empty-form-template').innerHTML;
-        const maxForms = 10;
-        function styleFileInputs() {
-            document.querySelectorAll('input[type="file"], input[type="text"], input[type="number"], textarea, select').forEach(input => {
-                if (!input.classList.contains('bg-dark-900') && !input.classList.contains('styled')) {
-                    input.classList.add('w-full', 'bg-dark-900', 'border', 'border-gray-600', 'rounded-lg', 'px-3', 'py-2', 'text-white', 'focus:ring-1', 'focus:ring-gold-500', 'outline-none');
-                }
-            });
-        }
-        styleFileInputs();
-        addBtn.addEventListener('click', function () {
-            let formCount = parseInt(totalFormsInput.value);
-            if (formCount >= maxForms) return alert("Máximo 10 imágenes permitidas.");
-            const newFormHtml = emptyFormTemplate.replace(/__prefix__/g, formCount);
-            const newDiv = document.createElement('div');
-            newDiv.innerHTML = newFormHtml;
-            formsetContainer.appendChild(newDiv.firstElementChild);
-            setupDeleteAction(newDiv.firstElementChild);
-            styleFileInputs();
-            totalFormsInput.value = formCount + 1;
-        });
-        function setupDeleteAction(wrapper) {
-            const btn = wrapper.querySelector('.custom-delete-btn');
-            const checkbox = wrapper.querySelector('.delete-checkbox-wrapper input[type="checkbox"]');
-            const pk = wrapper.getAttribute('data-pk');
-            btn.addEventListener('click', function () {
-                if (pk) {
-                    checkbox.checked = true;
-                    wrapper.querySelector('.delete-overlay').classList.remove('hidden');
-                    wrapper.querySelector('.delete-overlay').classList.add('flex');
-                } else {
-                    wrapper.remove();
-                }
-            });
-            const undoBtn = wrapper.querySelector('.undo-delete-btn');
-            if (undoBtn) {
-                undoBtn.addEventListener('click', function () {
-                    checkbox.checked = false;
-                    wrapper.querySelector('.delete-overlay').classList.add('hidden');
-                    wrapper.querySelector('.delete-overlay').classList.remove('flex');
-                });
-            }
-        }
-        document.querySelectorAll('#gallery-formset > div').forEach(setupDeleteAction);
-    });
-</script>
-
+<!-- MODALS -->
 {% if proyecto %}
+<!-- Modal Nueva Sección -->
 <div id="newSectionModal"
     class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center hidden backdrop-blur-sm">
     <div class="glass-panel w-full max-w-lg rounded-2xl mx-4 shadow-2xl border border-gray-700 p-0 overflow-hidden">
@@ -423,22 +372,26 @@
         </div>
         <form action="{% url 'section_create' proyecto.id %}" method="post" class="p-6 space-y-4">
             {% csrf_token %}
-            <div><label class="block text-xs font-semibold text-gray-400 mb-1">NOMBRE DEL TAB</label><input type="text"
-                    name="nombre" required
+            <div><label class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">NOMBRE DEL
+                    TAB</label>
+                <input type="text" name="nombre" required
                     class="w-full bg-dark-900 border border-gray-600 rounded-lg px-4 py-2 text-white outline-none">
             </div>
             <div class="grid grid-cols-2 gap-4">
-                <div><label class="block text-xs font-semibold text-gray-400 mb-1">ICONO</label><input type="text"
-                        name="icono"
+                <div><label
+                        class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">ICONO</label>
+                    <input type="text" name="icono"
                         class="w-full bg-dark-900 border border-gray-600 rounded-lg px-4 py-2 text-white outline-none">
                 </div>
-                <div><label class="block text-xs font-semibold text-gray-400 mb-1">ORDEN</label><input type="number"
-                        name="orden" value="0"
+                <div><label
+                        class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">ORDEN</label>
+                    <input type="number" name="orden" value="0"
                         class="w-full bg-dark-900 border border-gray-600 rounded-lg px-4 py-2 text-white outline-none">
                 </div>
             </div>
-            <div><label class="block text-xs font-semibold text-gray-400 mb-1">CONTENIDO</label><textarea
-                    name="contenido" required rows="5"
+            <div><label
+                    class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">CONTENIDO</label>
+                <textarea name="contenido" required rows="5"
                     class="w-full bg-dark-900 border border-gray-600 rounded-lg px-4 py-2 text-white outline-none"></textarea>
             </div>
             <div class="flex justify-end gap-3 pt-4"><button type="submit"
@@ -448,6 +401,47 @@
     </div>
 </div>
 
+<!-- Modal Nuevo Documento -->
+<div id="newDocModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center hidden backdrop-blur-sm">
+    <div class="glass-panel w-full max-w-lg rounded-2xl mx-4 shadow-2xl border border-gray-700 p-0 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-700 flex justify-between items-center bg-dark-800">
+            <h3 class="text-lg font-bold text-white">Subir Nuevo Documento</h3>
+            <button onclick="document.getElementById('newDocModal').classList.add('hidden')"
+                class="text-gray-400 hover:text-white"><span class="material-icons">close</span></button>
+        </div>
+        <form action="{% url 'documento_create' proyecto.id %}" method="post" enctype="multipart/form-data"
+            class="p-6 space-y-4">
+            {% csrf_token %}
+            <div><label class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">TÍTULO DEL
+                    DOCUMENTO</label>
+                <input type="text" name="titulo" required placeholder="Ej: Estudio de Títulos"
+                    class="w-full bg-dark-900 border border-gray-600 rounded-lg px-4 py-2 text-white outline-none focus:border-gold-500">
+            </div>
+            <div><label class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">ARCHIVO
+                    PDF</label>
+                <input type="file" name="archivo" required accept=".pdf"
+                    class="w-full bg-dark-900 border border-gray-600 rounded-lg px-4 py-2 text-white outline-none focus:border-gold-500">
+            </div>
+            <div class="flex items-center gap-6 pt-2">
+                <label class="flex items-center gap-2 cursor-pointer group">
+                    <input type="checkbox" name="es_publico" checked
+                        class="w-4 h-4 rounded border-gray-600 bg-dark-900 text-gold-500 focus:ring-gold-500">
+                    <span class="text-sm text-gray-300 group-hover:text-white transition-colors">Público</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer group">
+                    <input type="checkbox" name="requiere_nda"
+                        class="w-4 h-4 rounded border-gray-600 bg-dark-900 text-gold-500 focus:ring-gold-500">
+                    <span class="text-sm text-gray-300 group-hover:text-white transition-colors">Req. NDA</span>
+                </label>
+            </div>
+            <div class="flex justify-end gap-3 pt-4"><button type="submit"
+                    class="w-full py-3 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold shadow-lg">Subir
+                    Documento</button></div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Editar Sección -->
 <div id="editSectionModal"
     class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center hidden backdrop-blur-sm">
     <div class="glass-panel w-full max-w-lg rounded-2xl mx-4 shadow-2xl border border-gray-700 p-0 overflow-hidden">
@@ -458,22 +452,25 @@
         </div>
         <form id="editSectionForm" method="post" class="p-6 space-y-4">
             {% csrf_token %}
-            <div><label class="block text-xs font-semibold text-gray-400 mb-1">NOMBRE</label><input type="text"
-                    name="nombre" id="edit_nombre" required
+            <div><label class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">NOMBRE</label>
+                <input type="text" name="nombre" id="edit_nombre" required
                     class="w-full bg-dark-900 border border-gray-600 rounded-lg px-4 py-2 text-white outline-none">
             </div>
             <div class="grid grid-cols-2 gap-4">
-                <div><label class="block text-xs font-semibold text-gray-400 mb-1">ICONO</label><input type="text"
-                        name="icono" id="edit_icono"
+                <div><label
+                        class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">ICONO</label>
+                    <input type="text" name="icono" id="edit_icono"
                         class="w-full bg-dark-900 border border-gray-600 rounded-lg px-4 py-2 text-white outline-none">
                 </div>
-                <div><label class="block text-xs font-semibold text-gray-400 mb-1">ORDEN</label><input type="number"
-                        name="orden" id="edit_orden"
+                <div><label
+                        class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">ORDEN</label>
+                    <input type="number" name="orden" id="edit_orden"
                         class="w-full bg-dark-900 border border-gray-600 rounded-lg px-4 py-2 text-white outline-none">
                 </div>
             </div>
-            <div><label class="block text-xs font-semibold text-gray-400 mb-1">CONTENIDO</label><textarea
-                    name="contenido" id="edit_contenido" required rows="5"
+            <div><label
+                    class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">CONTENIDO</label>
+                <textarea name="contenido" id="edit_contenido" required rows="5"
                     class="w-full bg-dark-900 border border-gray-600 rounded-lg px-4 py-2 text-white outline-none"></textarea>
             </div>
             <div class="flex items-center gap-2"><input type="checkbox" name="activo" id="edit_activo"><label
@@ -486,7 +483,82 @@
 </div>
 {% endif %}
 
+<!-- DATA TEMPLATE FOR JS GALLERY -->
+<div id="empty-form-template" class="hidden">
+    <div class="bg-dark-800 p-4 rounded-xl border border-gray-700 relative group form-item">
+        <div class="space-y-3">
+            <div class="flex justify-between items-start">
+                <span
+                    class="bg-green-900/50 text-green-400 text-xs px-2 py-1 rounded border border-green-800">Nueva</span>
+                <div class="hidden delete-checkbox-wrapper">{{ formset.empty_form.DELETE }}</div>
+                <button type="button" class="text-red-400 hover:text-red-300 custom-delete-btn" title="Eliminar"><span
+                        class="material-icons">delete</span></button>
+            </div>
+            <div><label class="block text-[10px] font-semibold text-gray-400 uppercase mb-1">Archivo</label>{{         formset.empty_form.imagen }}</div>
+            <div><label class="block text-[10px] font-semibold text-gray-400 uppercase mb-1">URL (Opcional)</label>{{         formset.empty_form.imagen_url }}</div>
+            <div><label class="block text-[10px] font-semibold text-gray-400 uppercase mb-1">Descripción /
+                    Caption</label><input type="text" name="imagenes-__prefix__-caption" placeholder="Descripción"
+                    class="w-full bg-dark-900 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:border-gold-500 focus:outline-none transition-colors">
+            </div>
+            {{ formset.empty_form.id }}
+        </div>
+    </div>
+</div>
+
 <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const addBtn = document.getElementById('add-image-btn');
+        const formsetContainer = document.getElementById('gallery-formset');
+        if (addBtn && formsetContainer) {
+            const totalFormsInput = document.getElementById('id_imagenes-TOTAL_FORMS');
+            const emptyFormTemplate = document.getElementById('empty-form-template').innerHTML;
+            const maxForms = 10;
+            function styleFileInputs() {
+                document.querySelectorAll('input[type="file"], input[type="text"], input[type="number"], textarea, select').forEach(input => {
+                    if (!input.classList.contains('bg-dark-900') && !input.classList.contains('styled')) {
+                        input.classList.add('w-full', 'bg-dark-900', 'border', 'border-gray-600', 'rounded-lg', 'px-3', 'py-2', 'text-white', 'focus:ring-1', 'focus:ring-gold-500', 'outline-none');
+                    }
+                });
+            }
+            styleFileInputs();
+            addBtn.addEventListener('click', function () {
+                let formCount = parseInt(totalFormsInput.value);
+                if (formCount >= maxForms) return alert("Máximo 10 imágenes permitidas.");
+                const newFormHtml = emptyFormTemplate.replace(/__prefix__/g, formCount);
+                const newDiv = document.createElement('div');
+                newDiv.innerHTML = newFormHtml;
+                formsetContainer.appendChild(newDiv.firstElementChild);
+                setupDeleteAction(newDiv.firstElementChild);
+                styleFileInputs();
+                totalFormsInput.value = formCount + 1;
+            });
+            function setupDeleteAction(wrapper) {
+                const btn = wrapper.querySelector('.custom-delete-btn');
+                if (!btn) return;
+                const checkbox = wrapper.querySelector('.delete-checkbox-wrapper input[type="checkbox"]');
+                const pk = wrapper.getAttribute('data-pk');
+                btn.addEventListener('click', function () {
+                    if (pk) {
+                        checkbox.checked = true;
+                        wrapper.querySelector('.delete-overlay').classList.remove('hidden');
+                        wrapper.querySelector('.delete-overlay').classList.add('flex');
+                    } else {
+                        wrapper.remove();
+                    }
+                });
+                const undoBtn = wrapper.querySelector('.undo-delete-btn');
+                if (undoBtn) {
+                    undoBtn.addEventListener('click', function () {
+                        checkbox.checked = false;
+                        wrapper.querySelector('.delete-overlay').classList.add('hidden');
+                        wrapper.querySelector('.delete-overlay').classList.remove('flex');
+                    });
+                }
+            }
+            document.querySelectorAll('#gallery-formset > div').forEach(setupDeleteAction);
+        }
+    });
+
     function openEditModal(id, nombre, icono, orden, activo) {
         document.getElementById('editSectionForm').action = '/admin-panel/sections/edit/' + id + '/';
         document.getElementById('edit_nombre').value = nombre;
@@ -498,9 +570,7 @@
         if (contentTemplate) {
             document.getElementById('edit_contenido').value = contentTemplate.innerHTML.trim();
         }
-
         document.getElementById('editSectionModal').classList.remove('hidden');
     }
 </script>
-
 {% endblock %}

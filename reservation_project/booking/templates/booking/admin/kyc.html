@@ -1,0 +1,206 @@
+{% extends 'booking/admin/base_admin.html' %}
+{% load humanize %}
+
+{% block title %}KYC Management{% endblock %}
+{% block page_title %}Gestión de Identidad (KYC){% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-white tracking-tight text-gold-gradient">Validación KYC</h1>
+            <p class="text-gray-400 mt-1">Revisión de documentos de identidad de inversionistas</p>
+        </div>
+
+        <div class="flex gap-2">
+            <a href="?status=REVISION"
+                class="px-4 py-2 rounded-lg text-sm font-bold transition-all {% if status_filter == 'REVISION' %}bg-gold-500 text-dark-900 shadow-lg gold-glow{% else %}bg-dark-800 text-gray-400 border border-gold-500/20 hover:border-gold-500/50{% endif %}">
+                Pendientes
+            </a>
+            <a href="{% url 'admin_kyc_list' %}"
+                class="px-4 py-2 rounded-lg text-sm font-bold transition-all {% if not status_filter %}bg-gold-500 text-dark-900 shadow-lg gold-glow{% else %}bg-dark-800 text-gray-400 border border-gold-500/20 hover:border-gold-500/50{% endif %}">
+                Todos
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-6">
+        {% for p in perfiles %}
+        <div class="glass-panel rounded-2xl p-6 border border-gold-500/10 hover:border-gold-500/20 transition-all">
+            <div class="flex flex-col lg:flex-row gap-8">
+                <!-- Data -->
+                <div class="lg:w-1/3">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div
+                            class="w-14 h-14 rounded-full bg-gradient-to-br from-gold-500 to-gold-600 flex items-center justify-center text-dark-900 font-bold text-xl shadow-lg gold-glow">
+                            {{ p.user.first_name|first|upper }}{{               p.user.last_name|first|upper|default:p.user.username|first|upper }}
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-white">{{ p.user.first_name }} {{ p.user.last_name }}</h3>
+                            <p class="text-sm text-gray-500">{{ p.user.email }}</p>
+                            <div class="mt-1 flex items-center gap-2">
+                                {% if p.kyc_status == 'APROBADO' %}
+                                <span
+                                    class="text-[10px] bg-green-500/20 text-green-400 px-2 py-0.5 rounded border border-green-500/20 font-bold">APROBADO</span>
+                                {% elif p.kyc_status == 'REVISION' %}
+                                <span
+                                    class="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded border border-blue-500/20 font-bold animate-pulse">EN
+                                    REVISIÓN</span>
+                                {% elif p.kyc_status == 'RECHAZADO' %}
+                                <span
+                                    class="text-[10px] bg-red-500/20 text-red-400 px-2 py-0.5 rounded border border-red-500/20 font-bold">RECHAZADO</span>
+                                {% else %}
+                                <span
+                                    class="text-[10px] bg-gray-500/20 text-gray-400 px-2 py-0.5 rounded border border-gray-500/20 font-bold">PENDIENTE</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-[10px] text-gray-500 uppercase font-bold">RUT / ID</p>
+                                <p class="text-sm text-white">{{ p.rut|default:"-" }}</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-gray-500 uppercase font-bold">Teléfono</p>
+                                <p class="text-sm text-white">{{ p.telefono|default:"-" }}</p>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-gray-500 uppercase font-bold">Dirección</p>
+                            <p class="text-sm text-white">{{ p.direccion|default:"-" }}</p>
+                        </div>
+
+                        <p class="text-xs text-gray-500">Solicitado: {{ p.fecha_kyc|date:"d M Y H:i"|default:"N/A" }}
+                        </p>
+
+                        {% if p.kyc_status == 'REVISION' %}
+                        <div class="flex gap-2 pt-2">
+                            <form method="POST" action="{% url 'admin_kyc_process' p.id %}" class="flex-1">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="approve">
+                                <button type="submit"
+                                    class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded-lg text-sm transition-all flex items-center justify-center gap-1 shadow-lg shadow-green-900/20">
+                                    <span class="material-icons text-sm">verified</span> Aprobar
+                                </button>
+                            </form>
+                            <button onclick="openRejectModal('{{ p.id }}')"
+                                class="flex-1 bg-red-600/20 hover:bg-red-600/40 text-red-500 font-bold py-2 rounded-lg text-sm transition-all border border-red-500/30">
+                                Rechazar
+                            </button>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Photos -->
+                <div class="lg:w-2/3 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="space-y-2">
+                        <p class="text-[10px] text-gray-500 uppercase font-bold text-center">Frente Identidad</p>
+                        {% if p.documento_identidad_frontal %}
+                        <a href="{{ p.documento_identidad_frontal.url }}" target="_blank"
+                            class="block h-48 rounded-xl overflow-hidden border border-gray-700 hover:border-gold-500/50 transition-all group relative">
+                            <img src="{{ p.documento_identidad_frontal.url }}" class="w-full h-full object-cover">
+                            <div
+                                class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <span class="material-icons text-white">zoom_in</span>
+                            </div>
+                        </a>
+                        {% else %}
+                        <div
+                            class="h-48 rounded-xl bg-dark-900 border border-dashed border-gray-700 flex items-center justify-center text-gray-600">
+                            <span class="text-xs italic">No cargado</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="space-y-2">
+                        <p class="text-[10px] text-gray-500 uppercase font-bold text-center">Reverso Identidad</p>
+                        {% if p.documento_identidad_reverso %}
+                        <a href="{{ p.documento_identidad_reverso.url }}" target="_blank"
+                            class="block h-48 rounded-xl overflow-hidden border border-gray-700 hover:border-gold-500/50 transition-all group relative">
+                            <img src="{{ p.documento_identidad_reverso.url }}" class="w-full h-full object-cover">
+                            <div
+                                class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <span class="material-icons text-white">zoom_in</span>
+                            </div>
+                        </a>
+                        {% else %}
+                        <div
+                            class="h-48 rounded-xl bg-dark-900 border border-dashed border-gray-700 flex items-center justify-center text-gray-600">
+                            <span class="text-xs italic">No cargado</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="space-y-2">
+                        <p class="text-[10px] text-gray-500 uppercase font-bold text-center">Selfie Verificación</p>
+                        {% if p.selfie_verificacion %}
+                        <a href="{{ p.selfie_verificacion.url }}" target="_blank"
+                            class="block h-48 rounded-xl overflow-hidden border border-gray-700 hover:border-gold-500/50 transition-all group relative">
+                            <img src="{{ p.selfie_verificacion.url }}" class="w-full h-full object-cover">
+                            <div
+                                class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <span class="material-icons text-white">zoom_in</span>
+                            </div>
+                        </a>
+                        {% else %}
+                        <div
+                            class="h-48 rounded-xl bg-dark-900 border border-dashed border-gray-700 flex items-center justify-center text-gray-600">
+                            <span class="text-xs italic">No cargado</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="py-20 text-center glass-panel rounded-2xl border-2 border-dashed border-gray-700 col-span-full">
+            <span class="material-icons text-5xl text-gray-600 mb-4">fingerprint</span>
+            <p class="text-gray-400 font-medium">No se encontraron solicitudes de validación.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Modal Rechazo -->
+<div id="rejectModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeRejectModal()"></div>
+    <div
+        class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-dark-900 border border-red-500/30 rounded-xl p-6 shadow-2xl">
+        <h3 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+            <span class="material-icons text-red-500">cancel</span> Rechazar Solicitud
+        </h3>
+        <form id="rejectForm" method="POST" action="" class="space-y-4">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="reject">
+            <div>
+                <label class="block text-gray-400 text-xs font-bold uppercase mb-2 tracking-widest">Motivo del
+                    Rechazo</label>
+                <textarea name="reason" required
+                    class="w-full bg-black border border-gray-700 rounded-lg p-3 text-white focus:border-red-500 outline-none h-32"
+                    placeholder="Ej: La foto frontal no es legible. Por favor sube una imagen con mejor iluminación..."></textarea>
+            </div>
+            <div class="flex justify-end gap-3 mt-8">
+                <button type="button" onclick="closeRejectModal()"
+                    class="px-4 py-2 text-gray-400 hover:text-white transition-colors">Cancelar</button>
+                <button type="submit"
+                    class="px-6 py-2 bg-red-600 hover:bg-red-500 text-white font-bold rounded-lg shadow-lg transition-all">Confirmar
+                    Rechazo</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openRejectModal(id) {
+        const modal = document.getElementById('rejectModal');
+        const form = document.getElementById('rejectForm');
+        form.action = `/admin-panel/kyc/process/${id}/`;
+        modal.classList.remove('hidden');
+    }
+    function closeRejectModal() {
+        document.getElementById('rejectModal').classList.add('hidden');
+    }
+</script>
+{% endblock %}

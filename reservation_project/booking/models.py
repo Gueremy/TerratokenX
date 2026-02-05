@@ -35,8 +35,7 @@ class Reserva(models.Model):
     # --- Campos existentes ---
     nombre = models.CharField(max_length=100)
     correo = models.EmailField()
-    telefono = models.CharField(max_length=20)
-    direccion = models.CharField(max_length=200)
+    direccion = models.CharField(max_length=200, blank=True, null=True)
     
     # Nuevo campo de estado de pago (reemplaza pagado boolean)
     estado_pago = models.CharField(
@@ -81,6 +80,7 @@ class Reserva(models.Model):
     coupon = models.ForeignKey(Coupon, on_delete=models.SET_NULL, null=True, blank=True)
     # Nuevo: Vinculación con Proyecto
     proyecto = models.ForeignKey('Proyecto', on_delete=models.CASCADE, null=True, blank=True, related_name='reserva_set')
+    user = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='reserva_set')
 
     PAYMENT_METHOD_CHOICES = [
         ('MP', 'Mercado Pago'),
@@ -129,11 +129,8 @@ class Reserva(models.Model):
             descuento = (self.total * self.coupon.discount_percentage) / 100
             self.total -= descuento
 
-        # Aplicar comisión del 4% si es Mercado Pago
-        if self.metodo_pago == 'MP':
-            from decimal import Decimal
-            # Convertir a Decimal para evitar errores de tipo float
-            self.total = float(self.total) * 1.0319
+        # No aplicar comisión extra (a petición del usuario)
+        self.total = int(self.total)
 
         # Detectar si el estado cambió a CONFIRMADO para disparar FirmaVirtual
         trigger_firmavirtual = False
@@ -153,9 +150,43 @@ class Reserva(models.Model):
             # 1. Enviar email de bienvenida al cliente
             self._send_welcome_email()
             
-            # 2. Disparar FirmaVirtual si no tiene contrato ya
+            # 2. Crear cuenta de usuario si no existe
+            self._create_user_account()
+            
+            # 3. Disparar FirmaVirtual si no tiene contrato ya
             if not self.firmavirtual_id:
                 self._trigger_firmavirtual_contract()
+
+    def _create_user_account(self):
+        """
+        Crea una cuenta de usuario de Django para el inversor si no existe.
+        """
+        from django.contrib.auth.models import User
+        if not User.objects.filter(email=self.correo).exists():
+            # Generar username basado en correo o nombre
+            username = self.correo.split('@')[0]
+            # Asegurar unicidad de username
+            original_username = username
+            counter = 1
+            while User.objects.filter(username=username).exists():
+                username = f"{original_username}{counter}"
+                counter += 1
+            
+            # Crear usuario con password temporal (pueden recuperarla después)
+            user = User.objects.create_user(
+                username=username,
+                email=self.correo,
+                first_name=self.nombre.split(' ')[0] if ' ' in self.nombre else self.nombre,
+                last_name=' '.join(self.nombre.split(' ')[1:]) if ' ' in self.nombre else ''
+            )
+            self.user = user
+            self.save(update_fields=['user'])
+            print(f"👤 Usuario creado automáticamente: {user.username} ({self.correo})")
+            return user
+        user = User.objects.get(email=self.correo)
+        self.user = user
+        self.save(update_fields=['user'])
+        return user
 
     def _send_welcome_email(self):
         """
@@ -359,6 +390,20 @@ class ProyectoSeccion(models.Model):
     def __str__(self):
         return f"{self.proyecto.nombre} - {self.nombre}"
 
+class ProyectoDocumento(models.Model):
+    """
+    Documentos del proyecto (Data Room)
+    """
+    proyecto = models.ForeignKey('Proyecto', related_name='documentos', on_delete=models.CASCADE)
+    titulo = models.CharField(max_length=200)
+    archivo = models.FileField(upload_to='proyectos/documentos/')
+    es_publico = models.BooleanField(default=True, verbose_name="¿Es público?")
+    requiere_nda = models.BooleanField(default=False, verbose_name="¿Requiere NDA?")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.proyecto.nombre} - {self.titulo}"
+
 class Configuracion(models.Model):
     precio_base_token = models.PositiveIntegerField(default=100, verbose_name="Precio Base Token (USD)")
     # Deprecado: tokens_totales se mueve a Proyecto
@@ -377,3 +422,60 @@ class Configuracion(models.Model):
         obj, created = cls.objects.get_or_create(pk=1)
         return obj
 
+
+class UserProfile(models.Model):
+    user = models.OneToOneField('auth.User', on_delete=models.CASCADE, related_name='profile')
+    rut = models.CharField(max_length=20, blank=True, null=True)
+    telefono = models.CharField(max_length=20, blank=True, null=True)
+    direccion = models.CharField(max_length=200, blank=True, null=True)
+    
+    # KYC Status
+    KYC_PENDIENTE = 'PENDIENTE'
+    KYC_EN_REVISION = 'REVISION'
+    KYC_APROBADO = 'APROBADO'
+    KYC_RECHAZADO = 'RECHAZADO'
+    
+    KYC_STATUS_CHOICES = [
+        (KYC_PENDIENTE, 'Pendiente de Envío'),
+        (KYC_EN_REVISION, 'En Revisión'),
+        (KYC_APROBADO, 'Aprobado'),
+        (KYC_RECHAZADO, 'Rechazado'),
+    ]
+    
+    kyc_status = models.CharField(
+        max_length=20,
+        choices=KYC_STATUS_CHOICES,
+        default=KYC_PENDIENTE
+    )
+    
+    # KYC Documents
+    documento_identidad_frontal = models.ImageField(upload_to='kyc/documentos/', blank=True, null=True)
+    documento_identidad_reverso = models.ImageField(upload_to='kyc/documentos/', blank=True, null=True)
+    selfie_verificacion = models.ImageField(upload_to='kyc/selfies/', blank=True, null=True)
+    
+    fecha_kyc = models.DateTimeField(null=True, blank=True)
+    comentarios_admin = models.TextField(blank=True, null=True)
+    
+    # Métodos de Certificación / Firma
+    METODO_FIRMA_VIRTUAL = 'FIRMA_VIRTUAL'
+    METODO_SMART_CONTRACT = 'SMART_CONTRACT'
+    
+    METODO_CHOICES = [
+        (METODO_FIRMA_VIRTUAL, 'Contrato Legal (FirmaVirtual)'),
+        (METODO_SMART_CONTRACT, 'Título Digital (Smart Contract) - Próximamente'),
+    ]
+    
+    metodo_certificacion = models.CharField(
+        max_length=20,
+        choices=METODO_CHOICES,
+        default=METODO_FIRMA_VIRTUAL,
+        help_text="Elija cómo desea certificar su propiedad"
+    )
+    wallet_address = models.CharField(max_length=100, blank=True, null=True, help_text="Dirección de billetera (Opcional)")
+
+    def __str__(self):
+        return f"Perfil de {self.user.username}"
+
+    class Meta:
+        verbose_name = "Perfil de Usuario"
+        verbose_name_plural = "Perfiles de Usuario"

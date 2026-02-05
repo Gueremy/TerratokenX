@@ -182,9 +182,14 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MERCADO_PAGO_PUBLIC_KEY = env('MERCADO_PAGO_PUBLIC_KEY', default='TEST_PUBLIC_KEY')
 MERCADO_PAGO_ACCESS_TOKEN = env('MERCADO_PAGO_ACCESS_TOKEN', default='TEST_ACCESS_TOKEN')
 
-# Configuración de Correo (SendGrid Web API)
-# Usamos Web API en lugar de SMTP porque Render bloquea el puerto 587
-EMAIL_BACKEND = 'sendgrid_backend.SendgridBackend'
+# Configuración de Correo
+if DEBUG:
+    # En desarrollo local, los correos se verán en la terminal de VS Code
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+else:
+    # En producción enviaremos vía SendGrid (Web API)
+    EMAIL_BACKEND = 'sendgrid_backend.SendgridBackend'
+
 SENDGRID_API_KEY = env('SENDGRID_API_KEY', default='SG.dummy-key-for-local-dev')
 CRYPTOMKT_API_KEY = env('CRYPTOMKT_API_KEY', default='')
 CRYPTOMKT_API_SECRET = env('CRYPTOMKT_API_SECRET', default='')
