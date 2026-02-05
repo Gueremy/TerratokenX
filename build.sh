@@ -2,20 +2,26 @@
 # Exit on error
 set -o errexit
 
-# Change to the Django project directory
+echo "--- START BUILD SCRIPT ---"
+
+# Step 1: Install dependencies
+# We use the requirements.txt from the reservation_project folder
+pip install -r reservation_project/requirements.txt
+
+# Step 2: Prepare environment
 cd reservation_project
-
-# Install dependencies from parent directory
-pip install -r ../requirements.txt
-
-# Create static directory if it doesn't exist
 mkdir -p staticfiles
+mkdir -p data
 
-# Collect static files
+# Step 3: Database operations
+echo "Running migrations..."
+python manage.py migrate --no-input
+
+echo "Checking migration status..."
+python manage.py showmigrations booking
+
+# Step 4: Static files
+echo "Collecting static files..."
 python manage.py collectstatic --no-input
 
-# Apply migrations
-python manage.py migrate
-
-# Create initial superuser
-python manage.py create_initial_superuser
+echo "--- BUILD SCRIPT FINISHED ---"
