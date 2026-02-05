@@ -91,7 +91,7 @@
 
 
             <div class="flex items-center gap-4">
-                <a href="https://terratokenx-q7u4.onrender.com/portal/login/"
+                <a href="{% url 'investor_login' %}"
                     class="hidden sm:flex px-5 py-2 border border-brand-gold/50 text-brand-gold rounded-full hover:bg-brand-gold hover:text-black transition-all text-sm font-bold">
                     Acceso Inversionistas / Inicio de Sesión
                 </a>
@@ -169,8 +169,7 @@
                     <p class="text-gray-400 max-w-lg">Oportunidades de inversión activas en ubicaciones estratégicas</p>
                 </div>
                 <!-- Link to Full Catalog (Index2) -->
-                <a href="https://terratokenx-q7u4.onrender.com/projects/"
-                    class="text-brand-gold font-bold hover:underline">Ver todo el
+                <a href="{% url 'investor_catalog' %}" class="text-brand-gold font-bold hover:underline">Ver todo el
                     catálogo →</a>
             </div>
 
@@ -188,8 +187,8 @@
 
     <!-- API Loader Script -->
     <script>
-        // Using absolute paths for standalone compatibility
-        const API_URL = "https://terratokenx-q7u4.onrender.com/api/projects/";
+        // Using dynamic paths for production
+        const API_URL = "{% url 'api_project_list' %}";
 
         // Simple XSS protection
         const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) =>
@@ -248,7 +247,7 @@
 
                         const buttonHTML = isSoldOut
                             ? `<button disabled class="block w-full py-3 bg-white/10 text-gray-500 font-bold text-center rounded-lg cursor-not-allowed">Venta Finalizada</button>`
-                            : `<a href="https://terratokenx-q7u4.onrender.com/projects/${encodeURIComponent(p.slug)}/" class="block w-full py-3 bg-white text-black font-bold text-center rounded-lg hover:bg-brand-gold transition-colors">Ver Detalles</a>`;
+                            : `<a href="/projects/${encodeURIComponent(p.slug)}/" class="block w-full py-3 bg-white text-black font-bold text-center rounded-lg hover:bg-brand-gold transition-colors">Ver Detalles</a>`;
 
                         card.innerHTML = `
                             <div class="absolute top-4 left-4 z-10">
@@ -358,7 +357,7 @@
             <h2 class="text-4xl md:text-5xl font-bold mb-8">¿Listo para ser dueño de una fracción del paraíso?</h2>
             <p class="text-xl text-gray-400 mb-10"> Empieza desde $100 USD.
             </p>
-            <a href="https://terratokenx-q7u4.onrender.com/portal/login/"
+            <a href="{% url 'investor_login' %}"
                 class="px-10 py-5 bg-brand-gold text-black font-bold text-lg rounded-full hover:bg-white transition-all shadow-xl shadow-brand-gold/20 inline-flex items-center gap-3">
                 <span class="material-icons">rocket_launch</span>
                 Entrar a la Bóveda
@@ -390,7 +389,7 @@
                     <ul class="space-y-2 text-gray-500">
                         <li><a href="#proyectos" class="hover:text-brand-gold transition-colors">Proyectos</a></li>
                         <li><a href="#seguridad" class="hover:text-brand-gold transition-colors">Cómo funciona</a></li>
-                        <li><a href="https://terratokenx-q7u4.onrender.com/portal/login/"
+                        <li><a href="{% url 'investor_login' %}"
                                 class="hover:text-brand-gold transition-colors">Inversionistas</a></li>
                     </ul>
                 </div>
