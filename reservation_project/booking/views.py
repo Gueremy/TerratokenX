@@ -1594,6 +1594,9 @@ def admin_coupon_delete(request, coupon_id):
     if request.method == 'POST':
         coupon = get_object_or_404(Coupon, id=coupon_id)
         coupon.delete()
+        messages.success(request, f'Cupón "{coupon.code}" eliminado correctamente.') 
+    return redirect('admin_coupons') 
+        
     
 @staff_member_required
 def admin_edit_user(request, user_id):
