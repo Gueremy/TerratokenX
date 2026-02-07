@@ -289,96 +289,79 @@ def eliminar_reserva(request, reserva_id):
     return HttpResponse(Template(html_template).render(RequestContext(request, {'reserva': reserva})))
 
 def reservation_form(request):
-    print("DEBUG: CARGANDO VISTA reservation_form (Debería usar v2)")
+    print("DEBUG: CARGANDO VISTA reservation_form (v2)")
     
     # 1. Detectar Proyecto desde Slug (opcional)
-    project_slug = request.GET.get('project_slug')
+    project_slug = request.GET.get('project_slug') or request.GET.get('slug')
     proyecto_seleccionado = None
     if project_slug:
-        proyecto_seleccionado = get_object_or_404(Proyecto, slug=project_slug)
+        # Solo permitir proyectos que estén activos y disponibles
+        proyecto_seleccionado = Proyecto.objects.filter(slug=project_slug, activo=True, estado='Activo').first()
+        if not proyecto_seleccionado and project_slug:
+            # Si el slug es inválido o el proyecto no está activo, redirigir al catálogo o mostrar error
+            messages.warning(request, "El proyecto solicitado no está disponible actualmente.")
+            return redirect('reservation_form')
 
+    # Obtener lista de proyectos activos para el selector
+    proyectos_activos = Proyecto.objects.filter(activo=True, estado='Activo')
+    
     if request.method == 'POST':
         form = ReservaForm(request.POST)
         if form.is_valid():
-            # Assign the validated coupon object to the instance before saving
-            if 'coupon_code' in form.cleaned_data and form.cleaned_data['coupon_code']:
-                form.instance.coupon = form.cleaned_data['coupon_code']
-
-            # Capturar método de pago
-            metodo_pago = request.POST.get('metodo_pago', 'MP')
             reserva = form.save(commit=False)
             
-            # Si el proyecto vino en el POST (hidden field), ya está en reserva.proyecto
-            # Si no, intentamos asignarlo del contexto GET si por alguna razón falló el hidden
-            if proyecto_seleccionado and not reserva.proyecto:
+            # 1. Asignar Cupón si existe
+            if 'coupon_code' in form.cleaned_data and form.cleaned_data['coupon_code']:
+                reserva.coupon = form.cleaned_data['coupon_code']
+            
+            # 2. Proyecto Fallback
+            if not reserva.proyecto and proyecto_seleccionado:
                 reserva.proyecto = proyecto_seleccionado
             
-            # VALIDACIÓN DE STOCK (Evitar overselling)
-            if reserva.proyecto:
-                # Validar que el proyecto esté activo
-                if reserva.proyecto.estado != 'Activo':
-                    form.add_error('proyecto', f"Este proyecto no está disponible para inversión (Estado: {reserva.proyecto.estado}).")
-                    context = {
-                        'form': form,
-                        'proyecto': proyecto_seleccionado,
-                        'proyectos_activos': Proyecto.objects.filter(activo=True, estado='Activo'),
-                        'precio_base_token': proyecto_seleccionado.precio_token if proyecto_seleccionado else 100
-                    }
-                    return render(request, 'booking/reservation_form_v2.html', context)
-                
-                disponibles = reserva.proyecto.tokens_disponibles
-                if reserva.cantidad_tokens > disponibles:
-                    # Agregar error al formulario y re-renderizar
-                    form.add_error('cantidad_tokens', f"Lo sentimos, solo quedan {disponibles} tokens disponibles para este proyecto.")
-                    context = {
-                        'form': form,
-                        'proyecto': proyecto_seleccionado,
-                        'proyectos_activos': Proyecto.objects.filter(activo=True, estado='Activo'),
-                        'precio_base_token': proyecto_seleccionado.precio_token if proyecto_seleccionado else 100
-                    }
-                    return render(request, 'booking/reservation_form_v2.html', context)
-
-            reserva.metodo_pago = metodo_pago
-            reserva.save()
-            
-            # Enviar correo de "Reserva Pendiente" EN BACKGROUND (no bloquea la redirección)
-            import threading
-            
-            def send_pending_email():
-                if reserva.metodo_pago == 'CRYPTO':
-                    subject = '⏳ Instrucciones para finalizar tu inversión en TerraTokenX'
-                    template_name = 'booking/email/pending_reservation_crypto.html'
-                else:
-                    subject = 'Tu solicitud de reserva está pendiente de pago'
-                    template_name = 'booking/email/pending_reservation_mp.html'
-
-                context = {'reserva': reserva}
-                html_message = render_to_string(template_name, context)
-
-                try:
-                    send_mail(
-                        subject,
-                        '',
-                        from_email=settings.DEFAULT_FROM_EMAIL,
-                        recipient_list=[reserva.correo],
-                        fail_silently=False,
-                        html_message=html_message,
-                    )
-                    print(f"[EMAIL] Correo pendiente enviado a {reserva.correo}")
-                except Exception as e:
-                    logger.error(f"Error enviando correo con SendGrid: {e}")
-                    print(f"[EMAIL ERROR] {e}")
-            
-            # Enviar email en un hilo separado
-            email_thread = threading.Thread(target=send_pending_email)
-            email_thread.start()
-
-            # Redirección condicional según método de pago (NO ESPERA al email)
-            if reserva.metodo_pago == 'CRYPTO':
-                return crear_orden_cryptomarket(request, reserva)
+            # 3. Validación de Stock y Disponibilidad
+            if not reserva.proyecto or not reserva.proyecto.activo or reserva.proyecto.estado != 'Activo':
+                form.add_error('proyecto', "El proyecto seleccionado no es válido o no está activo.")
+            elif reserva.cantidad_tokens > reserva.proyecto.tokens_disponibles:
+                form.add_error('cantidad_tokens', f"Lo sentimos, solo quedan {reserva.proyecto.tokens_disponibles} tokens.")
             else:
+                # Todo OK - El total se recalcula en el save() del modelo basado en cantidad y cupón
+                metodo_pago = request.POST.get('metodo_pago', 'MP')
+                reserva.metodo_pago = metodo_pago
+                reserva.save()
+                
+                # Log con detalles del monto calculado
+                with open('debug_form.log', 'a', encoding='utf-8') as f:
+                    f.write(f"[{datetime.now()}] Reserva OK #{reserva.id}: {reserva.cantidad_tokens} tokens, Total: ${reserva.total}, Cupón: {reserva.coupon}\n")
+                
+                # Enviar email...
+                import threading
+                def send_email_async(res_id):
+                    try:
+                        r = Reserva.objects.get(id=res_id)
+                        subject = 'Tu solicitud de reserva - TerraTokenX'
+                        template = 'booking/email/pending_reservation_mp.html'
+                        if r.metodo_pago == 'CRYPTO':
+                            subject = '⏳ Instrucciones para finalizar tu inversión'
+                            template = 'booking/email/pending_reservation_crypto.html'
+                        html_msg = render_to_string(template, {'reserva': r})
+                        send_mail(subject, '', settings.DEFAULT_FROM_EMAIL, [r.correo], html_message=html_msg)
+                    except: pass
+                threading.Thread(target=send_email_async, args=(reserva.id,)).start()
+
+                if reserva.metodo_pago == 'CRYPTO':
+                    return crear_orden_cryptomarket(request, reserva)
                 return redirect('create_mp_preference', reserva_id=reserva.id)
-        # Si el formulario no es válido, se renderizará de nuevo con los errores.
+
+        # Si llegamos aquí con error
+        with open('debug_form.log', 'a', encoding='utf-8') as f:
+            f.write(f"[{datetime.now()}] ERROR FORM: {form.errors.as_json()}\n")
+            
+        return render(request, 'booking/reservation_form_v2.html', {
+            'form': form,
+            'proyectos_activos': proyectos_activos,
+            'proyecto': proyecto_seleccionado or proyectos_activos.first(),
+            'error_active': True
+        })
     else:
         initial_data = {}
         if proyecto_seleccionado:
@@ -728,7 +711,11 @@ def payment_crypto_view(request, reserva_id):
 def api_get_crypto_details(request):
     """
     AJAX: Calcula el monto en crypto y obtiene la dirección de depósito.
+    CORRECCIÓN: Conversión basada en USD real usando API pública (Binance).
     """
+    import logging
+    logger = logging.getLogger(__name__)
+    
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'Método no permitido'})
         
@@ -737,38 +724,46 @@ def api_get_crypto_details(request):
         reserva_id = data.get('reserva_id')
         currency = data.get('currency')
         
-        reserva = get_object_or_404(Reserva, id=reserva_id)
-        api = CryptoMarketAPI()
-        
-        # 1. Obtener precio actual (ej: ETHCLP)
-        symbol = f"{currency}CLP"
-        # Algunos pares pueden ser diferentes (ej: USDTCLP, BTCCLP)
-        # Si falla, intentar convertir vía USD? Por ahora directo.
-        
-        ticker = api.get_ticker(symbol)
-        
-        # Manejo robusto de respuesta de ticker
-        rate = 0
-        if ticker:
-            # Intentar keys comunes de V3
-            if 'last' in ticker: rate = float(ticker['last'])
-            elif 'last_price' in ticker: rate = float(ticker['last_price'])
-            elif 'price' in ticker: rate = float(ticker['price'])
-        
-        if rate == 0:
-            return JsonResponse({'success': False, 'error': f'No se pudo obtener la tasa para {currency}. Intenta otra moneda.'})
+        if not reserva_id or not currency:
+            return JsonResponse({'success': False, 'error': 'Faltan parámetros'})
             
-        # 2. Calcular monto (Neto)
-        total_clp = float(reserva.total)
-        crypto_amount = total_clp / rate
+        reserva = get_object_or_404(Reserva, id=reserva_id)
+        
+        # 1. Obtener precio actual en USD (Estrategia Binance -> Fallback)
+        from .cryptomkt_api import get_crypto_price_in_usd
+        price_usd = get_crypto_price_in_usd(currency)
+        
+        if not price_usd or price_usd <= 0:
+            return JsonResponse({
+                'success': False, 
+                'error': f'No se pudo obtener el precio de mercado para {currency}. Intenta más tarde.'
+            })
+            
+        # 2. Calcular monto (Reserva.total está en USD)
+        total_usd = float(reserva.total)
+        crypto_amount = total_usd / price_usd
         crypto_amount = round(crypto_amount, 8)
         
-        # 3. Obtener dirección
-        address = api.get_deposit_address(currency)
+        logger.info(f"Conversión: ${total_usd} USD / ${price_usd} ({currency}) = {crypto_amount}")
+        
+        # 3. Obtener dirección (Usamos la clase API de CryptoMarket para la wallet)
+        from .cryptomkt_api import get_wallet_address
+        address = get_wallet_address(currency)
+        
+        if not address:
+             # Fallback secundario: direcciones estáticas en settings si la API de wallet falla
+             static_addresses = {
+                 'ETH': getattr(settings, 'CRYPTOMKT_WALLET_ETH', ''),
+                 'BTC': getattr(settings, 'CRYPTOMKT_WALLET_BTC', ''),
+                 'USDT': getattr(settings, 'CRYPTOMKT_WALLET_USDT', ''),
+                 'USDC': getattr(settings, 'CRYPTOMKT_WALLET_USDC', ''),
+             }
+             address = static_addresses.get(currency)
+             
         if not address:
              return JsonResponse({'success': False, 'error': 'No se pudo generar dirección de depósito. Contacta soporte.'})
              
-        # 4. Guardar intentos
+        # 4. Guardar datos en la reserva
         reserva.crypto_amount = crypto_amount
         reserva.crypto_currency = currency
         reserva.crypto_address = address
@@ -779,10 +774,12 @@ def api_get_crypto_details(request):
             'success': True,
             'amount': f"{crypto_amount:.8f}",
             'currency': currency,
-            'address': address
+            'address': address,
+            'exchange_rate': price_usd
         })
         
     except Exception as e:
+        logger.error(f"Error en api_get_crypto_details: {e}")
         return JsonResponse({'success': False, 'error': str(e)})
 
 def api_check_payment_status(request):

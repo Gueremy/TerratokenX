@@ -30,7 +30,7 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 SECRET_KEY = env('SECRET_KEY', default='django-insecure-test-key-local-123')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env('DEBUG')
+DEBUG = env.bool('DEBUG', default=False)
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
@@ -203,6 +203,13 @@ SENDGRID_SANDBOX_MODE_IN_DEBUG = False  # Enviar emails reales incluso en DEBUG
 
 # Email remitente (DEBE coincidir con el Single Sender verificado en SendGrid)
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='contacto@terratokenx.com')
+
+# FIRMAVIRTUAL (Trámit Express) Configuración
+FIRMAVIRTUAL_BASE_URL = env('FIRMAVIRTUAL_BASE_URL', default='https://api.firmavirtual.legal')
+FIRMAVIRTUAL_USER = env('FIRMAVIRTUAL_USER', default='')
+FIRMAVIRTUAL_PASS = env('FIRMAVIRTUAL_PASS', default='')
+FIRMAVIRTUAL_TEST_MODE = env.bool('FIRMAVIRTUAL_TEST_MODE', default=True)
+TRAMIT_CALLBACK_URL = env('TRAMIT_CALLBACK_URL', default='https://rwa.terratokenx.com/webhooks/tramit-status/')
 
 # --- URLs de Autenticación ---
 LOGIN_URL = 'login'

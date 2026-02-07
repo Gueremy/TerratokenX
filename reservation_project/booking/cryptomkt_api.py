@@ -154,20 +154,74 @@ class CryptoMarketAPI:
             logger.error(f"Error verificando pago: {e}")
             return False
 
-# Funciones helper para las vistas
+# Funciones de utilidad externas (Public APIs)
+def get_binance_price_usd(currency_code):
+    """
+    Obtiene el precio de una crypto en dólares (USDT) usando la API pública de Binance.
+    NO REQUIERE API KEY.
+    """
+    if currency_code == 'USDT' or currency_code == 'USDC':
+        return 1.0
+        
+    symbol = f"{currency_code}USDT"
+    url = f"https://api.binance.com/api/v3/ticker/price?symbol={symbol}"
+    
+    try:
+        response = requests.get(url, timeout=5)
+        response.raise_for_status()
+        data = response.json()
+        price = float(data.get('price', 0))
+        if price > 0:
+            logger.info(f"Binance Price {currency_code}: ${price} USD")
+            return price
+    except Exception as e:
+        logger.warning(f"Error consultando Binance para {currency_code}: {e}")
+    return None
+
+def get_crypto_price_in_usd(currency_code):
+    """
+    Retorna el precio de 1 unidad de crypto en USD.
+    Estrategia: 1. Binance (Preciso), 2. CryptoMarket (Fallback), 3. Hardcoded (Emergencia)
+    """
+    # 1. Intentar Binance (USD/USDT)
+    price = get_binance_price_usd(currency_code)
+    if price:
+        return price
+        
+    # 2. Intentar CryptoMarket (Si falla Binance)
+    # CryptoMarket suele dar precios en CLP, así que convertimos CLP -> USD aprox
+    api = CryptoMarketAPI()
+    ticker = api.get_ticker(f"{currency_code}CLP")
+    if ticker:
+        clp_price = 0
+        if 'last' in ticker: clp_price = float(ticker['last'])
+        elif 'last_price' in ticker: clp_price = float(ticker['last_price'])
+        
+        if clp_price > 0:
+            # Asumimos una tasa de cambio conservadora de CLP/USD si no tenemos API de divisas
+            # Aproximadamente 1 USD = 950 CLP
+            price_usd = clp_price / 950.0
+            logger.info(f"CryptoMarket Fallback price (converted from CLP): ${price_usd} USD")
+            return price_usd
+
+    # 3. Precios estáticos de Emergencia (Febrero 2026 aprox)
+    fallbacks = {
+        'BTC': 105000.0,
+        'ETH': 3500.0,
+        'USDT': 1.0,
+        'USDC': 1.0,
+    }
+    logger.warning(f"Usando PRECIO ESTÁTICO DE EMERGENCIA para {currency_code}")
+    return fallbacks.get(currency_code, 0)
+
+# Funciones helper originales (mantenidas para compatibilidad)
 def get_crypto_price(currency_code):
-    """
-    Retorna el precio de 1 unidad de crypto en CLP.
-    Ej: ETH -> retorna 3.000.000 (aprox)
-    """
+    """Retorna el precio en CLP (Original)"""
     api = CryptoMarketAPI()
     symbol = f"{currency_code}CLP" 
     ticker = api.get_ticker(symbol)
-    
     if ticker and 'last' in ticker:
         return float(ticker['last'])
-    
-    # Fallback o manejo de error fundamental
     return None
 
 def get_wallet_address(currency_code):

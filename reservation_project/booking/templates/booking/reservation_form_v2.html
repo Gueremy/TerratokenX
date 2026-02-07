@@ -13,7 +13,11 @@
         --border-color: #222;
     }
 
-    body { background-color: var(--bg-black); color: #fff; font-family: 'Inter', sans-serif; }
+    body {
+        background-color: var(--bg-black);
+        color: #fff;
+        font-family: 'Inter', sans-serif;
+    }
 
     /* Wizard Steps */
     .step-circle {
@@ -30,14 +34,25 @@
         background: #111;
         color: #666;
     }
+
     .step-active .step-circle {
         background: #d4af37;
         border-color: #d4af37;
         color: #000;
         box-shadow: 0 0 15px var(--gold-glow);
     }
-    .step-label { font-size: 0.65rem; font-weight: bold; text-transform: uppercase; color: #666; letter-spacing: 1px; }
-    .step-active .step-label { color: #d4af37; }
+
+    .step-label {
+        font-size: 0.65rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        color: #666;
+        letter-spacing: 1px;
+    }
+
+    .step-active .step-label {
+        color: #d4af37;
+    }
 
     /* Asset Selection Card */
     .asset-card {
@@ -47,10 +62,12 @@
         overflow: hidden;
         margin-bottom: 30px;
     }
+
     .asset-card-header {
         border-bottom: 1px solid var(--border-color);
         padding: 20px 25px;
     }
+
     .asset-visual {
         background: linear-gradient(180deg, #111 0%, #000 100%);
         height: 250px;
@@ -63,22 +80,40 @@
         border: 1px solid #222;
         overflow: hidden;
     }
-    .asset-visual img { width: 100%; height: 100%; object-fit: cover; opacity: 0.6; }
-    
+
+    .asset-visual img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.6;
+    }
+
     .asset-info-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 15px;
         padding: 0 20px;
     }
+
     .info-box {
         background: #111;
         border: 1px solid #222;
         padding: 15px;
         border-radius: 8px;
     }
-    .info-label { font-size: 0.65rem; color: #888; text-transform: uppercase; font-weight: bold; margin-bottom: 4px; }
-    .info-value { font-size: 1.4rem; font-weight: bold; }
+
+    .info-label {
+        font-size: 0.65rem;
+        color: #888;
+        text-transform: uppercase;
+        font-weight: bold;
+        margin-bottom: 4px;
+    }
+
+    .info-value {
+        font-size: 1.4rem;
+        font-weight: bold;
+    }
 
     /* Quantity Selector */
     .qty-selector {
@@ -90,6 +125,7 @@
         padding: 10px;
         margin: 20px;
     }
+
     .qty-btn {
         background: #222;
         border: none;
@@ -103,7 +139,12 @@
         font-weight: bold;
         transition: all 0.2s;
     }
-    .qty-btn:hover { background: #d4af37; color: #000; }
+
+    .qty-btn:hover {
+        background: #d4af37;
+        color: #000;
+    }
+
     .qty-input {
         background: transparent;
         border: none;
@@ -150,8 +191,21 @@
         letter-spacing: 1px;
         font-size: 0.95rem;
     }
-    .btn-gold:hover { background: #e5c453; transform: translateY(-2px); box-shadow: 0 5px 20px var(--gold-glow); }
-    .btn-gold:disabled { background: #222; color: #555 !important; transform: none; box-shadow: none; cursor: not-allowed; opacity: 0.7; }
+
+    .btn-gold:hover {
+        background: #e5c453;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px var(--gold-glow);
+    }
+
+    .btn-gold:disabled {
+        background: #222;
+        color: #555 !important;
+        transform: none;
+        box-shadow: none;
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
 
     /* Warning Block */
     .separation-block {
@@ -162,7 +216,9 @@
         border-radius: 12px;
     }
 
-    [x-cloak] { display: none !important; }
+    [x-cloak] {
+        display: none !important;
+    }
 
     /* Custom Input Styles */
     .form-control-custom {
@@ -173,11 +229,13 @@
         border-radius: 8px;
         font-size: 1rem;
     }
+
     .form-control-custom:focus {
         border-color: #d4af37;
         outline: none;
         box-shadow: 0 0 10px rgba(212, 175, 55, 0.1);
     }
+
     .form-select-custom {
         background-color: #000;
         color: #fff;
@@ -227,7 +285,8 @@
                             </h5>
                             <!-- Project Selector if multiple -->
                             <div x-show="availableProjects.length > 1">
-                                <select class="form-select-custom py-1 px-2 small" x-model="selectedProjectId" @change="updateProject()">
+                                <select class="form-select-custom py-1 px-2 small" x-model="selectedProjectId"
+                                    @change="updateProject()">
                                     <template x-for="p in availableProjects" :key="p.id">
                                         <option :value="p.id" x-text="p.nombre"></option>
                                     </template>
@@ -246,7 +305,8 @@
                                         <i class="far fa-image fa-3x text-secondary"></i>
                                     </div>
                                 </template>
-                                <div class="position-absolute bottom-0 start-0 p-4 w-100" style="background: linear-gradient(0deg, #0d0d0d 0%, transparent 100%);">
+                                <div class="position-absolute bottom-0 start-0 p-4 w-100"
+                                    style="background: linear-gradient(0deg, #0d0d0d 0%, transparent 100%);">
                                     <h3 class="text-white fw-bold mb-0" x-text="activeProject.nombre"></h3>
                                     <span class="text-gold small fw-bold uppercase">Reserva de Cupo</span>
                                 </div>
@@ -256,7 +316,8 @@
                             <div class="asset-info-grid">
                                 <div class="info-box">
                                     <div class="info-label">PRECIO TOKEN</div>
-                                    <div class="info-value text-white">$<span x-text="formatNumber(activeProject.precio)"></span> USD</div>
+                                    <div class="info-value text-white">$<span
+                                            x-text="formatNumber(activeProject.precio)"></span> USD</div>
                                 </div>
                                 <div class="info-box">
                                     <div class="info-label">RENTABILIDAD</div>
@@ -265,39 +326,49 @@
                             </div>
 
                             <div class="mt-4 px-4 text-center">
-                                <p class="text-muted small mb-2 text-uppercase fw-bold tracking-widest" style="font-size: 0.6rem;">¿Cuántos tokens deseas adquirir?</p>
+                                <p class="text-muted small mb-2 text-uppercase fw-bold tracking-widest"
+                                    style="font-size: 0.6rem;">¿Cuántos tokens deseas adquirir?</p>
                             </div>
                             <div class="qty-selector">
-                                <button type="button" class="qty-btn" @click="changeQty(-1)"><i class="fas fa-minus"></i></button>
-                                <input type="number" name="cantidad_tokens" x-model="qty" @input="calculateTotal()" class="qty-input">
-                                <button type="button" class="qty-btn" @click="changeQty(1)"><i class="fas fa-plus"></i></button>
+                                <button type="button" class="qty-btn" @click="changeQty(-1)"><i
+                                        class="fas fa-minus"></i></button>
+                                <input type="number" name="cantidad_tokens" x-model="qty" @input="calculateTotal()"
+                                    class="qty-input">
+                                <button type="button" class="qty-btn" @click="changeQty(1)"><i
+                                        class="fas fa-plus"></i></button>
                             </div>
 
                             <!-- Coupon Input Section -->
                             <div class="coupon-box">
                                 <div class="info-label mb-2">¿Tienes un código de descuento?</div>
                                 <div class="d-flex gap-2">
-                                    <input type="text" name="coupon_code" x-model="couponCode" placeholder="Ingresa tu cupón" 
-                                           class="form-control form-control-sm bg-black text-white border-secondary border-opacity-30 flex-grow-1">
-                                    <button type="button" @click="validateCoupon()" 
-                                            class="btn btn-outline-gold btn-sm px-3 font-bold"
-                                            :disabled="!couponCode || isCheckingCoupon">
+                                    <input type="text" name="coupon_code" x-model="couponCode"
+                                        placeholder="Ingresa tu cupón"
+                                        class="form-control form-control-sm bg-black text-white border-secondary border-opacity-30 flex-grow-1">
+                                    <button type="button" @click="validateCoupon()"
+                                        class="btn btn-outline-gold btn-sm px-3 font-bold"
+                                        :disabled="!couponCode || isCheckingCoupon">
                                         <span x-show="!isCheckingCoupon">VALIDAR</span>
                                         <span x-show="isCheckingCoupon" class="spinner-border spinner-border-sm"></span>
                                     </button>
                                 </div>
-                                <div x-show="couponMessage" class="mt-2 small" :class="couponValid ? 'text-success' : 'text-danger'" x-text="couponMessage"></div>
+                                <div x-show="couponMessage" class="mt-2 small"
+                                    :class="couponValid ? 'text-success' : 'text-danger'" x-text="couponMessage"></div>
                             </div>
 
                             <div class="total-bar">
                                 <div class="d-flex flex-column">
-                                    <span class="text-muted fw-bold small text-uppercase" style="letter-spacing: 1px;">Total a Pagar:</span>
-                                    <span x-show="discount > 0" class="text-success x-small fw-bold">DESCUENTO APLICADO</span>
+                                    <span class="text-muted fw-bold small text-uppercase"
+                                        style="letter-spacing: 1px;">Total a Pagar:</span>
+                                    <span x-show="discount > 0" class="text-success x-small fw-bold">DESCUENTO
+                                        APLICADO</span>
                                 </div>
-                                <span class="h3 text-gold m-0 font-bold" x-text="'$' + formatNumber(total) + ' USD'"></span>
+                                <span class="h3 text-gold m-0 font-bold"
+                                    x-text="'$' + formatNumber(total) + ' USD'"></span>
                             </div>
 
-                            <button type="button" class="btn-gold shadow-lg" @click="step = 2" :disabled="!isStep1Valid">
+                            <button type="button" class="btn-gold shadow-lg" @click="step = 2"
+                                :disabled="!isStep1Valid">
                                 Continuar a Identidad <i class="fas fa-arrow-right ms-2"></i>
                             </button>
                         </div>
@@ -309,7 +380,8 @@
                             <div>
                                 <strong class="text-white d-block mb-1">Ecosistema RWA</strong>
                                 <p class="small text-muted mb-0" style="line-height: 1.5;">
-                                    Este activo digital es un <strong>Token de Activo (Security Token)</strong>. Su valor está vinculado exclusivamente al rendimiento inmobiliario del proyecto.
+                                    Este activo digital es un <strong>Token de Activo (Security Token)</strong>. Su
+                                    valor está vinculado exclusivamente al rendimiento inmobiliario del proyecto.
                                 </p>
                             </div>
                         </div>
@@ -320,35 +392,42 @@
                 <div x-show="step === 2" x-transition x-cloak>
                     <div class="asset-card">
                         <div class="asset-card-header">
-                            <h5 class="m-0 uppercase tracking-widest"><i class="fas fa-user-shield text-gold me-2"></i>Tus Datos</h5>
+                            <h5 class="m-0 uppercase tracking-widest"><i
+                                    class="fas fa-user-shield text-gold me-2"></i>Tus Datos</h5>
                         </div>
                         <div class="p-4 p-md-5">
                             <div class="row g-4">
                                 <div class="col-md-6">
                                     <label class="info-label mb-2">NOMBRE COMPLETO</label>
-                                    <input type="text" name="nombre" x-model="formData.nombre" class="form-control-custom w-100" placeholder="Ej: Juan Pérez" required>
+                                    <input type="text" name="nombre" x-model="formData.nombre"
+                                        class="form-control-custom w-100" placeholder="Ej: Juan Pérez" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="info-label mb-2">EMAIL</label>
-                                    <input type="email" name="correo" x-model="formData.correo" class="form-control-custom w-100" placeholder="correo@ejemplo.com" required>
+                                    <input type="email" name="correo" x-model="formData.correo"
+                                        class="form-control-custom w-100" placeholder="correo@ejemplo.com" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="info-label mb-2">RUT / ID NACIONAL</label>
-                                    <input type="text" name="rut" x-model="formData.rut" class="form-control-custom w-100" placeholder="12.345.678-K" required>
+                                    <input type="text" name="rut" x-model="formData.rut"
+                                        class="form-control-custom w-100" placeholder="12.345.678-K" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="info-label mb-2">TELÉFONO</label>
-                                    <input type="text" name="telefono" x-model="formData.telefono" class="form-control-custom w-100" placeholder="+56 9 1234 5678" required>
+                                    <input type="text" name="telefono" x-model="formData.telefono"
+                                        class="form-control-custom w-100" placeholder="+56 9 1234 5678" required>
                                 </div>
                                 <div class="col-md-12">
                                     <label class="info-label mb-2">DIRECCIÓN (Requerido para el contrato)</label>
-                                    <input type="text" name="direccion" x-model="formData.direccion" class="form-control-custom w-100" placeholder="Calle, Número, Ciudad" required>
+                                    <input type="text" name="direccion" x-model="formData.direccion"
+                                        class="form-control-custom w-100" placeholder="Calle, Número, Ciudad" required>
                                 </div>
 
                                 <!-- Persona Jurídica Toggle -->
                                 <div class="col-md-12 mt-3">
                                     <div class="form-check custom-check">
-                                        <input class="form-check-input bg-black border-secondary" type="checkbox" id="es_empresa" name="es_empresa" x-model="isCompany">
+                                        <input class="form-check-input bg-black border-secondary" type="checkbox"
+                                            id="es_empresa" name="es_empresa" x-model="isCompany">
                                         <label class="form-check-label small text-muted ms-2" for="es_empresa">
                                             Deseo invertir como Persona Jurídica (Empresa)
                                         </label>
@@ -357,26 +436,33 @@
 
                                 <!-- Campos Empresa (Collapsible) -->
                                 <div class="col-md-12" x-show="isCompany" x-transition>
-                                    <div class="row g-4 mt-1 p-3 rounded-lg border border-secondary border-opacity-30 bg-black">
+                                    <div
+                                        class="row g-4 mt-1 p-3 rounded-lg border border-secondary border-opacity-30 bg-black">
                                         <div class="col-md-6">
                                             <label class="info-label mb-2">RAZÓN SOCIAL</label>
-                                            <input type="text" name="razon_social" x-model="formData.razon_social" class="form-control-custom w-100" placeholder="Mi Empresa S.A.">
+                                            <input type="text" name="razon_social" x-model="formData.razon_social"
+                                                class="form-control-custom w-100" placeholder="Mi Empresa S.A.">
                                         </div>
                                         <div class="col-md-6">
                                             <label class="info-label mb-2">RUT EMPRESA</label>
-                                            <input type="text" name="rut_empresa" x-model="formData.rut_empresa" class="form-control-custom w-100" placeholder="76.123.456-7">
+                                            <input type="text" name="rut_empresa" x-model="formData.rut_empresa"
+                                                class="form-control-custom w-100" placeholder="76.123.456-7">
                                         </div>
                                         <div class="col-md-12">
                                             <label class="info-label mb-2">CARGO REPRESENTANTE</label>
-                                            <input type="text" name="cargo_representante" x-model="formData.cargo_representante" class="form-control-custom w-100" placeholder="Ej: Gerente General">
+                                            <input type="text" name="cargo_representante"
+                                                x-model="formData.cargo_representante" class="form-control-custom w-100"
+                                                placeholder="Ej: Gerente General">
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div class="p-4 d-flex gap-3">
-                            <button type="button" class="btn btn-outline-secondary flex-grow-1 p-3 rounded-lg font-bold" @click="step = 1">ATRÁS</button>
-                            <button type="button" class="btn-gold flex-grow-1 m-0" @click="validateStep2AndProceed()" :disabled="!isStep2Valid">
+                            <button type="button" class="btn btn-outline-secondary flex-grow-1 p-3 rounded-lg font-bold"
+                                @click="step = 1">ATRÁS</button>
+                            <button type="button" class="btn-gold flex-grow-1 m-0" @click="validateStep2AndProceed()"
+                                :disabled="!isStep2Valid">
                                 SIGUIENTE
                             </button>
                         </div>
@@ -387,7 +473,8 @@
                 <div x-show="step === 3" x-transition x-cloak>
                     <div class="asset-card">
                         <div class="asset-card-header">
-                            <h5 class="m-0 uppercase tracking-widest"><i class="fas fa-file-contract text-gold me-2"></i>Legal & T&C</h5>
+                            <h5 class="m-0 uppercase tracking-widest"><i
+                                    class="fas fa-file-contract text-gold me-2"></i>Legal & T&C</h5>
                         </div>
                         <div class="p-4 p-md-5 text-center">
                             <div class="bg-black p-4 rounded-lg border border-secondary mb-5">
@@ -397,13 +484,17 @@
 
                             <div class="text-start space-y-4">
                                 <div class="form-check mb-4 custom-check">
-                                    <input class="form-check-input bg-black border-secondary" type="checkbox" id="terms" required x-model="tcAccepted">
+                                    <input class="form-check-input bg-black border-secondary" type="checkbox" id="terms"
+                                        required x-model="tcAccepted">
                                     <label class="form-check-label small text-muted ms-2" for="terms">
-                                        He leído y acepto los <a href="#" class="text-gold text-decoration-none">Términos de Inversión</a> y la <a href="#" class="text-gold text-decoration-none">Política de Privacidad</a>.
+                                        He leído y acepto los <a href="#"
+                                            class="text-gold text-decoration-none">Términos de Inversión</a> y la <a
+                                            href="#" class="text-gold text-decoration-none">Política de Privacidad</a>.
                                     </label>
                                 </div>
                                 <div class="form-check mb-4 custom-check">
-                                    <input class="form-check-input bg-black border-secondary" type="checkbox" id="eligibility" required x-model="eligibleAccepted">
+                                    <input class="form-check-input bg-black border-secondary" type="checkbox"
+                                        id="eligibility" required x-model="eligibleAccepted">
                                     <label class="form-check-label small text-muted ms-2" for="eligibility">
                                         Declaro bajo juramento la licitud de los fondos y cumplimiento de elegibilidad.
                                     </label>
@@ -411,8 +502,10 @@
                             </div>
                         </div>
                         <div class="p-4 d-flex gap-3">
-                            <button type="button" class="btn btn-outline-secondary flex-grow-1 p-3 rounded-lg font-bold" @click="step = 2">ATRÁS</button>
-                            <button type="button" class="btn-gold flex-grow-1 m-0" @click="step = 4" :disabled="!isStep3Valid">CONTINUAR AL PAGO</button>
+                            <button type="button" class="btn btn-outline-secondary flex-grow-1 p-3 rounded-lg font-bold"
+                                @click="step = 2">ATRÁS</button>
+                            <button type="button" class="btn-gold flex-grow-1 m-0" @click="step = 4"
+                                :disabled="!isStep3Valid">CONTINUAR AL PAGO</button>
                         </div>
                     </div>
                 </div>
@@ -427,30 +520,41 @@
                             <div class="row g-4">
                                 <div class="col-md-6">
                                     <label class="w-100 cursor-pointer">
-                                        <input type="radio" name="metodo_pago" value="MP" class="d-none" x-model="paymentMethod">
+                                        <input type="radio" name="metodo_pago" value="MP" class="d-none"
+                                            x-model="paymentMethod">
                                         <div class="p-4 text-center rounded-lg border-2 transition-all h-100 d-flex flex-column align-items-center justify-content-center"
-                                             :class="paymentMethod === 'MP' ? 'border-gold bg-dark' : 'border-secondary bg-black'">
+                                            :class="paymentMethod === 'MP' ? 'border-gold bg-dark' : 'border-secondary bg-black'">
                                             <i class="fas fa-credit-card fa-2x mb-3 text-primary"></i>
-                                            <div class="fw-bold text-white uppercase" style="font-size: 0.8rem;">Mercado Pago</div>
-                                            <div class="x-small text-muted mt-1" style="font-size: 0.6rem;">FIAT (TARJETAS)</div>
+                                            <div class="fw-bold text-white uppercase" style="font-size: 0.8rem;">Mercado
+                                                Pago</div>
+                                            <div class="x-small text-muted mt-1" style="font-size: 0.6rem;">FIAT
+                                                (TARJETAS)</div>
                                         </div>
                                     </label>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="w-100 cursor-pointer">
-                                        <input type="radio" name="metodo_pago" value="CRYPTO" class="d-none" x-model="paymentMethod">
+                                        <input type="radio" name="metodo_pago" value="CRYPTO" class="d-none"
+                                            x-model="paymentMethod">
                                         <div class="p-4 text-center rounded-lg border-2 transition-all h-100 d-flex flex-column align-items-center justify-content-center"
-                                             :class="paymentMethod === 'CRYPTO' ? 'border-gold bg-dark' : 'border-secondary bg-black'">
+                                            :class="paymentMethod === 'CRYPTO' ? 'border-gold bg-dark' : 'border-secondary bg-black'">
                                             <i class="fab fa-bitcoin fa-2x mb-3 text-warning"></i>
-                                            <div class="fw-bold text-white uppercase" style="font-size: 0.8rem;">Criptomonedas</div>
-                                            <div class="x-small text-muted mt-1" style="font-size: 0.6rem;">USDT / BTC / ETH</div>
+                                            <div class="fw-bold text-white uppercase" style="font-size: 0.8rem;">
+                                                Criptomonedas</div>
+                                            <div class="x-small text-muted mt-1" style="font-size: 0.6rem;">USDT / BTC /
+                                                ETH</div>
                                         </div>
                                     </label>
                                 </div>
                             </div>
+                            <div class="mt-4 text-center">
+                                <p class="text-muted small italic">Estamos trabajando en incorporar más métodos de pago
+                                </p>
+                            </div>
                         </div>
                         <div class="p-4 d-flex gap-3">
-                            <button type="button" class="btn btn-outline-secondary flex-grow-1 p-3 rounded-lg font-bold" @click="step = 3">ATRÁS</button>
+                            <button type="button" class="btn btn-outline-secondary flex-grow-1 p-3 rounded-lg font-bold"
+                                @click="step = 3">ATRÁS</button>
                             <button type="submit" class="btn-gold flex-grow-1 m-0">FINALIZAR COMPRA</button>
                         </div>
                     </div>
@@ -467,15 +571,30 @@
         color: #d4af37;
         border-color: #d4af37;
     }
+
     .btn-outline-gold:hover {
         background-color: #d4af37;
         color: #000;
     }
-    .hover-gold:hover { color: #d4af37 !important; }
-    .x-small { font-size: 0.75rem; }
-    .custom-check .form-check-input:checked { background-color: #d4af37; border-color: #d4af37; }
+
+    .hover-gold:hover {
+        color: #d4af37 !important;
+    }
+
+    .x-small {
+        font-size: 0.75rem;
+    }
+
+    .custom-check .form-check-input:checked {
+        background-color: #d4af37;
+        border-color: #d4af37;
+    }
+
     .qty-input::-webkit-outer-spin-button,
-    .qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .qty-input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
 </style>
 
 <!-- Data for Projects -->
@@ -505,7 +624,7 @@
             eligibleAccepted: false,
             paymentMethod: 'MP',
             isCompany: false,
-            
+
             // Project selection
             availableProjects: [],
             selectedProjectId: null,
@@ -522,116 +641,122 @@
                 rut_empresa: '',
                 cargo_representante: ''
             },
-            
+
             // Coupon state
             couponCode: '',
             isCheckingCoupon: false,
             couponValid: false,
             couponMessage: '',
             discount: 0,
-            
+
             init() {
                 // Initialize projects
                 const dataRaw = document.getElementById('projects-json').textContent;
                 this.availableProjects = JSON.parse(dataRaw);
-                
+
                 // Determine initial project
                 const urlParams = new URLSearchParams(window.location.search);
                 const projectSlug = urlParams.get('project_slug');
-                
+
                 {% if proyecto %}
                 this.selectedProjectId = "{{ proyecto.id }}";
                 {% else %}
-                if (this.availableProjects.length > 0) {
-                    this.selectedProjectId = this.availableProjects[0].id;
-                }
-                {% endif %}
-                
-                this.updateProject();
-            },
+        if (this.availableProjects.length > 0) {
+            this.selectedProjectId = this.availableProjects[0].id;
+        }
+        {% endif %}
 
-            updateProject() {
-                this.activeProject = this.availableProjects.find(p => p.id == this.selectedProjectId) || this.availableProjects[0] || {};
-                this.calculateTotal();
-            },
+        this.updateProject();
+    },
 
-            changeQty(delta) {
-                this.qty = Math.max(1, parseInt(this.qty) + delta);
-                this.calculateTotal();
-            },
+    updateProject() {
+        let found = this.availableProjects.find(p => String(p.id) === String(this.selectedProjectId));
+        if (!found && this.availableProjects.length > 0) {
+            found = this.availableProjects[0];
+            this.selectedProjectId = found.id;
+        }
+        this.activeProject = found || {};
+        this.calculateTotal();
+        console.log("Proyecto Activo:", this.activeProject.nombre, "ID:", this.selectedProjectId);
+    },
 
-            calculateTotal() {
-                const subtotal = (this.activeProject.precio || 0) * this.qty;
-                if (this.discount > 0) {
-                    this.total = subtotal - (subtotal * this.discount / 100);
-                } else {
-                    this.total = subtotal;
-                }
-            },
+    changeQty(delta) {
+        this.qty = Math.max(1, parseInt(this.qty) + delta);
+        this.calculateTotal();
+    },
+
+    calculateTotal() {
+        const subtotal = (this.activeProject.precio || 0) * this.qty;
+        if (this.discount > 0) {
+            this.total = subtotal - (subtotal * this.discount / 100);
+        } else {
+            this.total = subtotal;
+        }
+    },
 
             async validateCoupon() {
-                if (!this.couponCode) return;
-                this.isCheckingCoupon = true;
-                this.couponMessage = '';
-                try {
-                    const response = await fetch('/validate-coupon/', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                        },
-                        body: JSON.stringify({ code: this.couponCode })
-                    });
-                    const data = await response.json();
-                    if (data.valid) {
-                        this.couponValid = true;
-                        this.discount = data.discount_percentage;
-                        this.couponMessage = data.message;
-                        this.calculateTotal();
-                    } else {
-                        this.couponValid = false;
-                        this.discount = 0;
-                        this.couponMessage = data.message;
-                        this.calculateTotal();
-                    }
-                } catch (error) {
-                    this.couponMessage = 'Error al validar cupón.';
-                } finally {
-                    this.isCheckingCoupon = false;
-                }
-            },
+        if (!this.couponCode) return;
+        this.isCheckingCoupon = true;
+        this.couponMessage = '';
+        try {
+            const response = await fetch('/validate-coupon/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({ code: this.couponCode })
+            });
+            const data = await response.json();
+            if (data.valid) {
+                this.couponValid = true;
+                this.discount = data.discount_percentage;
+                this.couponMessage = data.message;
+                this.calculateTotal();
+            } else {
+                this.couponValid = false;
+                this.discount = 0;
+                this.couponMessage = data.message;
+                this.calculateTotal();
+            }
+        } catch (error) {
+            this.couponMessage = 'Error al validar cupón.';
+        } finally {
+            this.isCheckingCoupon = false;
+        }
+    },
 
             // Validation Getters
             get isStep1Valid() {
-                return this.selectedProjectId && this.qty >= 1;
-            },
+        return this.selectedProjectId && this.qty >= 1;
+    },
 
             get isStep2Valid() {
-                const basic = this.formData.nombre && this.formData.correo.includes('@') && this.formData.rut && this.formData.telefono && this.formData.direccion;
-                if (!this.isCompany) return basic;
-                return basic && this.formData.razon_social && this.formData.rut_empresa && this.formData.cargo_representante;
-            },
+        const basic = this.formData.nombre && this.formData.correo.includes('@') && this.formData.rut && this.formData.telefono && this.formData.direccion;
+        if (!this.isCompany) return basic;
+        return basic && this.formData.razon_social && this.formData.rut_empresa && this.formData.cargo_representante;
+    },
 
             get isStep3Valid() {
-                return this.tcAccepted && this.eligibleAccepted;
-            },
+        return this.tcAccepted && this.eligibleAccepted;
+    },
 
-            validateStep2AndProceed() {
-                if (this.isStep2Valid) {
-                    this.step = 3;
-                } else {
-                    alert("Por favor completa todos los campos requeridos.");
-                }
-            },
+    validateStep2AndProceed() {
+        if (this.isStep2Valid) {
+            this.step = 3;
+        } else {
+            alert("Por favor completa todos los campos requeridos.");
+        }
+    },
 
-            formatNumber(num) {
-                if (!num) return "0";
-                return Math.round(num).toLocaleString('en-US');
-            },
+    formatNumber(num) {
+        if (!num) return "0";
+        return Math.round(num).toLocaleString('en-US');
+    },
 
-            handleSubmit() {
-                document.getElementById('rwaForm').submit();
-            }
+    handleSubmit() {
+        document.getElementById('rwaForm').submit();
+    }
         }
     }
 </script>
