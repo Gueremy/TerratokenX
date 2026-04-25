@@ -1,6 +1,7 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
+import booking.views_drops as views_drops # Importar vistas de drops separadas
 # Force reload
 
 urlpatterns = [
@@ -8,6 +9,7 @@ urlpatterns = [
     path('buy/', views.reservation_form, name='reservation_form'),
     path('success/<int:reserva_id>/', views.reservation_success, name='reservation_success'),
     path('create-preference/<int:reserva_id>/', views.create_mp_preference, name='create_mp_preference'),
+    path('verification/', views.verification, name='verification'),
     
     # Admin Panel & Auth
     path('admin-panel/', views.admin_panel, name='admin_panel'),
@@ -23,6 +25,7 @@ urlpatterns = [
     path('admin-panel/users/block/<int:user_id>/', views.admin_block_user, name='admin_block_user'),
     path('admin-panel/kyc/', views.admin_kyc_list, name='admin_kyc_list'),
     path('admin-panel/kyc/process/<int:profile_id>/', views.admin_kyc_process, name='admin_kyc_process'),
+    path('admin-panel/kyc/process-kyb/<int:profile_id>/', views.admin_kyb_process, name='admin_kyb_process'),
 
     # Admin Actions (Estas son las rutas que faltaban)
     path('editar-reserva/<int:reserva_id>/', views.editar_reserva, name='editar_reserva'),
@@ -52,6 +55,13 @@ urlpatterns = [
     # Project Documents CRUD (Data Room)
     path('admin-panel/projects/<int:project_id>/documentos/agregar/', views.admin_documento_create, name='documento_create'),
     path('admin-panel/documentos/eliminar/<int:doc_id>/', views.admin_documento_delete, name='documento_delete'),
+    
+    # Drops Management (Ventanas de Venta)
+    path('admin-panel/drops/', views_drops.admin_drops_overview, name='admin_drops_overview'),
+    path('admin-panel/drops/project/<int:project_id>/', views_drops.admin_project_drops, name='admin_project_drops'),
+    path('admin-panel/drops/create/<int:project_id>/', views_drops.admin_drop_create, name='admin_drop_create'),
+    path('admin-panel/drops/edit/<int:drop_id>/', views_drops.admin_drop_edit, name='admin_drop_edit'),
+    path('admin-panel/drops/delete/<int:drop_id>/', views_drops.admin_drop_delete, name='admin_drop_delete'),
     
     # Coupon Management (ERP)
     path('admin-panel/coupons/', views.admin_coupons, name='admin_coupons'),
@@ -88,6 +98,13 @@ urlpatterns = [
     path('dashboard/', views.investor_dashboard, name='investor_dashboard'),
     path('portal/profile/', views.investor_profile, name='investor_profile'),
     path('portal/kyc/', views.investor_kyc, name='investor_kyc'),
+    
+    # Fractionalizer (Seller) Area
+    path('portal/fractionalizer/onboarding/', views.fractionalizer_onboarding, name='fractionalizer_onboarding'),
+    path('portal/fractionalizer/dashboard/', views.fractionalizer_dashboard, name='fractionalizer_dashboard'),
+    path('portal/fractionalizer/create/', views.fractionalizer_create_project, name='fractionalizer_create_project'),
+    path('portal/fractionalizer/edit/<int:project_id>/', views.fractionalizer_edit_project, name='fractionalizer_edit_project'),
+    path('portal/fractionalizer/drops/', views_drops.seller_drops_overview, name='seller_drops_overview'),
 
     # Password Reset
     path('password-reset/', auth_views.PasswordResetView.as_view(
@@ -98,6 +115,9 @@ urlpatterns = [
     path('password-reset/done/', auth_views.PasswordResetDoneView.as_view(template_name='booking/investor/password_reset_done.html'), name='password_reset_done'),
     path('password-reset-confirm/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(template_name='booking/investor/password_reset_confirm.html'), name='password_reset_confirm'),
     path('password-reset-complete/', auth_views.PasswordResetCompleteView.as_view(template_name='booking/investor/password_reset_complete.html'), name='password_reset_complete'),
+    
+    # Public Marketplace
+    path('marketplace/', views.marketplace_public, name='marketplace_public'),
     
     # Protected Catalog using Django (Moved from Hostinger index2.html)
     path('projects/', views.investor_catalog, name='investor_catalog'),

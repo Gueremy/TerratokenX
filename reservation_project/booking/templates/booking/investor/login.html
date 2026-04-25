@@ -108,7 +108,7 @@
             {% for message in messages %}
             <div
                 class="p-3 rounded-lg text-sm border flex items-start gap-2 {% if message.tags == 'error' %}bg-red-500/10 border-red-500/30 text-red-200{% else %}bg-green-500/10 border-green-500/30 text-green-200{% endif %}">
-                <span class="material-icons text-sm mt-0.5">{% if message.tags == 'error' %}error_outline{% else           %}check_circle{% endif %}</span>
+                <span class="material-icons text-sm mt-0.5">{% if message.tags == 'error' %}error_outline{% else %}check_circle{% endif %}</span>
                 <span>{{ message }}</span>
             </div>
             {% endfor %}

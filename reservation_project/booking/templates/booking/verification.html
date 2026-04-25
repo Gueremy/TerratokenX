@@ -1,0 +1,246 @@
+{% extends 'booking/base.html' %}
+{% load static %}
+{% block title %}Verificación de Identidad (KYC) - TerraTokenX{% endblock %}
+
+{% block extra_css %}
+<style>
+    .kyc-container {
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 20px;
+    }
+
+    .kyc-card {
+        background: #0d0d0d;
+        border: 1px solid #222;
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 30px;
+    }
+
+    .kyc-header {
+        background: #111;
+        padding: 25px;
+        border-bottom: 1px solid #222;
+        text-align: center;
+    }
+
+    .kyc-status-badge {
+        display: inline-block;
+        padding: 6px 16px;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-top: 10px;
+    }
+
+    .status-pendiente {
+        background: rgba(255, 193, 7, 0.1);
+        color: #ffc107;
+        border: 1px solid rgba(255, 193, 7, 0.3);
+    }
+
+    .status-aprobado {
+        background: rgba(40, 167, 69, 0.1);
+        color: #28a745;
+        border: 1px solid rgba(40, 167, 69, 0.3);
+    }
+
+    .status-en_revision {
+        background: rgba(23, 162, 184, 0.1);
+        color: #17a2b8;
+        border: 1px solid rgba(23, 162, 184, 0.3);
+    }
+
+    .upload-box {
+        border: 2px dashed #333;
+        border-radius: 12px;
+        padding: 40px 20px;
+        text-align: center;
+        background: #050505;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .upload-box:hover {
+        border-color: #d4af37;
+        background: rgba(212, 175, 55, 0.05);
+    }
+
+    .upload-icon {
+        font-size: 2rem;
+        color: #666;
+        margin-bottom: 15px;
+    }
+
+    .file-input {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .btn-gold {
+        background: #d4af37;
+        color: #000;
+        border: none;
+        padding: 15px 40px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        width: 100%;
+        border-radius: 8px;
+        transition: all 0.3s;
+    }
+
+    .btn-gold:hover {
+        background: #e5c453;
+        transform: translateY(-2px);
+    }
+
+    .limit-info {
+        display: flex;
+        justify-content: space-between;
+        background: #1a1a1a;
+        padding: 20px;
+        margin-top: 20px;
+        border-radius: 8px;
+        border: 1px solid #333;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="kyc-container">
+
+    <!-- Status Header -->
+    <div class="text-center mb-5">
+        <h2 class="fw-bold text-uppercase tracking-widest text-gold mb-2">Verificación de Identidad</h2>
+        <p class="text-muted">Desbloquea límites de inversión superiores completando tu perfil KYC.</p>
+    </div>
+
+    <!-- Current Status Card -->
+    <div class="kyc-card">
+        <div class="kyc-header">
+            <h5 class="m-0 text-white uppercase">Estado Actual</h5>
+            <div class="kyc-status-badge status-{{ user_profile.kyc_status|lower }}">
+                {{ user_profile.get_kyc_status_display }}
+            </div>
+        </div>
+        <div class="p-4">
+            <div class="limit-info">
+                <div>
+                    <div class="text-muted small uppercase mb-1">Tu Nivel Actual</div>
+                    <div class="fw-bold text-white">{{ kyc_tier_label }}</div>
+                </div>
+                <div class="text-end">
+                    <div class="text-muted small uppercase mb-1">Límite Disponible</div>
+                    <div class="fw-bold text-gold">${{ remaining_usd }} USD</div>
+                </div>
+            </div>
+
+            {% if user_profile.kyc_status == 'APROBADO' %}
+            <div class="mt-4 text-center text-success">
+                <i class="fas fa-check-circle fa-3x mb-3"></i>
+                <h4>¡Tu cuenta está verificada!</h4>
+                <p>Disfrutas de los límites máximos de inversión.</p>
+                <a href="{% url 'investor_catalog' %}" class="btn btn-outline-light mt-3">Volver a Proyectos</a>
+            </div>
+            {% elif user_profile.kyc_status == 'REVISION' %}
+            <div class="mt-4 text-center text-info">
+                <i class="fas fa-clock fa-3x mb-3"></i>
+                <h4>En Revisión</h4>
+                <p>Tu solicitud está siendo procesada por nuestro equipo de compliance. Te notificaremos pronto.</p>
+                <a href="{% url 'investor_dashboard' %}" class="btn btn-outline-light mt-3">Ir al Dashboard</a>
+            </div>
+            {% else %}
+            <div class="mt-4">
+                <div class="alert alert-warning bg-transparent border-warning text-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Para invertir más de <strong>$500 USD</strong>, necesitamos verificar tu identidad según
+                    regulaciones internacionales.
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Upload Form -->
+    {% if user_profile.kyc_status == 'PENDIENTE' or user_profile.kyc_status == 'RECHAZADO' %}
+    <form method="post" enctype="multipart/form-data" class="kyc-card">
+        {% csrf_token %}
+        <div class="kyc-header text-start">
+            <h5 class="m-0 text-white uppercase"><i class="fas fa-file-upload text-gold me-2"></i>Subir Documentos</h5>
+        </div>
+
+        <div class="p-4">
+            <div class="row g-4">
+                <!-- ID Front -->
+                <div class="col-md-6">
+                    <label class="d-block mb-2 text-muted small fw-bold uppercase">Cédula / ID (Frente)</label>
+                    <div class="upload-box" id="box-front">
+                        <input type="file" name="documento_frontal" class="file-input" required
+                            onchange="updateFileName(this, 'box-front')">
+                        <i class="fas fa-id-card upload-icon"></i>
+                        <div class="small text-white file-label">Haga clic o arrastre imagen</div>
+                        <div class="x-small text-muted mt-1">JPG, PNG o PDF</div>
+                    </div>
+                </div>
+
+                <!-- ID Back -->
+                <div class="col-md-6">
+                    <label class="d-block mb-2 text-muted small fw-bold uppercase">Cédula / ID (Reverso)</label>
+                    <div class="upload-box" id="box-back">
+                        <input type="file" name="documento_reverso" class="file-input" required
+                            onchange="updateFileName(this, 'box-back')">
+                        <i class="fas fa-id-card upload-icon"></i>
+                        <div class="small text-white file-label">Haga clic o arrastre imagen</div>
+                        <div class="x-small text-muted mt-1">JPG, PNG o PDF</div>
+                    </div>
+                </div>
+
+                <!-- Selfie -->
+                <div class="col-12">
+                    <label class="d-block mb-2 text-muted small fw-bold uppercase">Selfie con Documento</label>
+                    <div class="upload-box" id="box-selfie">
+                        <input type="file" name="selfie" class="file-input" required
+                            onchange="updateFileName(this, 'box-selfie')">
+                        <i class="fas fa-camera upload-icon"></i>
+                        <div class="small text-white file-label">Foto sosteniendo tu documento</div>
+                        <div class="x-small text-muted mt-1">Asegúrate que tu rostro y el ID sean visibles</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <button type="submit" class="btn-gold shadow-lg">
+                    ENVIAR SOLICITUD DE VERIFICACIÓN <i class="fas fa-paper-plane ms-2"></i>
+                </button>
+            </div>
+        </div>
+    </form>
+    {% endif %}
+
+</div>
+
+<script>
+    function updateFileName(input, boxId) {
+        const box = document.getElementById(boxId);
+        const label = box.querySelector('.file-label');
+        const icon = box.querySelector('.upload-icon');
+
+        if (input.files && input.files[0]) {
+            label.textContent = input.files[0].name;
+            label.classList.add('text-gold');
+            box.style.borderColor = '#d4af37';
+            icon.classList.remove('fa-id-card', 'fa-camera');
+            icon.classList.add('fa-check-circle', 'text-success');
+        }
+    }
+</script>
+{% endblock %}

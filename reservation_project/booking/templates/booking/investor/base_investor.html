@@ -1,0 +1,90 @@
+{% load static humanize %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}TerraTokenX | Panel{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        emerald: {
+                            50: '#ecfdf5', 100: '#d1fae5', 200: '#a7f3d0', 300: '#6ee7b7',
+                            400: '#34d399', 500: '#10b981', 600: '#059669', 700: '#047857',
+                            800: '#065f46', 900: '#064e3b',
+                        },
+                        dark: {
+                            900: '#0a0a0a', 800: '#111111', 700: '#1a1a1a', 600: '#242424', 500: '#2d2d2d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #111827 100%);
+        }
+
+        .glass-panel {
+            background: rgba(26, 26, 26, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+    </style>
+</head>
+
+<body class="bg-dark-900 text-gray-100 h-screen overflow-hidden flex">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-dark-800 border-r border-emerald-500/20 flex flex-col hidden md:flex">
+        <div class="p-6 border-b border-emerald-500/20 flex items-center gap-3">
+            <div
+                class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center font-bold text-white shadow-lg">
+                <span class="text-xl">V</span>
+            </div>
+            <span class="text-xl font-bold tracking-tight text-white">
+                Panel<span class="text-emerald-500">Vendedor</span>
+            </span>
+        </div>
+        <nav class="flex-1 p-6 space-y-2">
+            <a href="{% url 'fractionalizer_dashboard' %}"
+                class="flex items-center gap-3 px-3 py-3 rounded-lg {% if active_tab == 'projects' or not active_tab %}bg-emerald-500/10 text-emerald-400 border-l-4 border-emerald-500{% else %}text-gray-400 hover:bg-dark-700{% endif %} transition-all">
+                <span class="material-icons text-emerald-400">dashboard</span> Mis Proyectos
+            </a>
+            <a href="{% url 'seller_drops_overview' %}"
+                class="flex items-center gap-3 px-3 py-3 rounded-lg {% if active_tab == 'drops' %}bg-emerald-500/10 text-emerald-400 border-l-4 border-emerald-500{% else %}text-gray-400 hover:bg-dark-700{% endif %} transition-all">
+                <span class="material-icons text-emerald-400">bolt</span> Drops (Ventas)
+            </a>
+            <a href="{% url 'investor_dashboard' %}"
+                class="flex items-center gap-3 px-3 py-3 rounded-lg text-gray-400 hover:bg-dark-700 transition-all mt-8 border-t border-gray-800 pt-4">
+                <span class="material-icons text-emerald-400">arrow_back</span> Modo Inversor
+            </a>
+        </nav>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+        <header
+            class="h-16 border-b border-emerald-500/20 flex items-center justify-between px-6 bg-dark-800/80 backdrop-blur-md sticky top-0 z-10">
+            <h1 class="text-sm font-medium text-gray-400">Gestión / <span class="text-emerald-500">{% block page_title %}Dashboard{% endblock %}</span></h1>
+            <div class="flex items-center gap-3">
+                <span
+                    class="px-2 py-1 rounded text-xs font-bold uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                    {{ user.profile.company_name|default:"Empresa" }}
+                </span>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-6 md:p-12">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+</body>
+
+</html>

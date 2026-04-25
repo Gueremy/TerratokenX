@@ -4,13 +4,14 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
 from .forms import ReservaForm, AdminReservaForm, ProyectoForm, ProyectoImagenFormSet
-from .models import Reserva, DiaFeriado, Coupon, Configuracion, Proyecto
+from .models import Reserva, DiaFeriado, Coupon, Configuracion, Proyecto, ProjectDrop, UserProfile
 from .services.firmavirtual import FirmaVirtualService
 from django.contrib import messages
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
 from django.db.models import Count
+from django.utils import timezone
 from datetime import datetime, timedelta, date
 import os
 from django.contrib.admin.views.decorators import staff_member_required
@@ -288,8 +289,10 @@ def eliminar_reserva(request, reserva_id):
     from django.template import RequestContext
     return HttpResponse(Template(html_template).render(RequestContext(request, {'reserva': reserva})))
 
+@login_required
 def reservation_form(request):
     print("DEBUG: CARGANDO VISTA reservation_form (v2)")
+    from .models import Proyecto, Reserva, Configuracion, ProjectDrop, UserProfile
     
     # 1. Detectar Proyecto desde Slug (opcional)
     project_slug = request.GET.get('project_slug') or request.GET.get('slug')
@@ -324,33 +327,142 @@ def reservation_form(request):
             elif reserva.cantidad_tokens > reserva.proyecto.tokens_disponibles:
                 form.add_error('cantidad_tokens', f"Lo sentimos, solo quedan {reserva.proyecto.tokens_disponibles} tokens.")
             else:
-                # Todo OK - El total se recalcula en el save() del modelo basado en cantidad y cupón
-                metodo_pago = request.POST.get('metodo_pago', 'MP')
-                reserva.metodo_pago = metodo_pago
-                reserva.save()
+                # 4. Sistema de Drops Completo
+                from booking.models import ProjectDrop
+                now = timezone.now()
+                drop_activo = reserva.proyecto.drops.filter(
+                    activo=True,
+                    fecha_inicio__lte=now,
+                    fecha_fin__gte=now
+                ).first()
                 
-                # Log con detalles del monto calculado
-                with open('debug_form.log', 'a', encoding='utf-8') as f:
-                    f.write(f"[{datetime.now()}] Reserva OK #{reserva.id}: {reserva.cantidad_tokens} tokens, Total: ${reserva.total}, Cupón: {reserva.coupon}\n")
+                drop_error = False
                 
-                # Enviar email...
-                import threading
-                def send_email_async(res_id):
-                    try:
-                        r = Reserva.objects.get(id=res_id)
-                        subject = 'Tu solicitud de reserva - TerraTokenX'
-                        template = 'booking/email/pending_reservation_mp.html'
-                        if r.metodo_pago == 'CRYPTO':
-                            subject = '⏳ Instrucciones para finalizar tu inversión'
-                            template = 'booking/email/pending_reservation_crypto.html'
-                        html_msg = render_to_string(template, {'reserva': r})
-                        send_mail(subject, '', settings.DEFAULT_FROM_EMAIL, [r.correo], html_message=html_msg)
-                    except: pass
-                threading.Thread(target=send_email_async, args=(reserva.id,)).start()
+                # ── CERROJO: Si el proyecto exige Drops, bloquear sin Drop activo ──
+                if reserva.proyecto.venta_solo_drops and not drop_activo:
+                    # Verificar si hay un próximo Drop programado
+                    proximo_drop = reserva.proyecto.drops.filter(
+                        activo=True,
+                        fecha_inicio__gt=now
+                    ).order_by('fecha_inicio').first()
+                    
+                    if proximo_drop:
+                        form.add_error(None, f"⏳ La venta está cerrada. Próximo Drop: {proximo_drop.nombre} — abre el {proximo_drop.fecha_inicio.strftime('%d/%m/%Y %H:%M')}.")
+                    else:
+                        form.add_error(None, "🔒 La venta está cerrada. No hay Drops programados. Sigue nuestras redes para enterarte del próximo lanzamiento.")
+                    drop_error = True
+                
+                if drop_activo and not drop_error:
+                    # ── STOCK DEL DROP (Corrección DR-03) ──
+                    # Calculamos el stock real disponible en este drop
+                    stock_real_drop = drop_activo.tokens_disponibles_drop - drop_activo.tokens_vendidos_drop
+                    
+                    if reserva.cantidad_tokens > stock_real_drop:
+                        if stock_real_drop <= 0:
+                            form.add_error('cantidad_tokens', "¡Los tokens de este Drop se han agotado! Espera el próximo Drop.")
+                        else:
+                            form.add_error('cantidad_tokens', f"Solo quedan {stock_real_drop} tokens en este Drop.")
+                        drop_error = True
+                    
+                    # ── ANTI-BALLENA: Límite por usuario en este Drop ──
+                    if not drop_error and drop_activo.max_tokens_por_usuario and request.user.is_authenticated:
+                        tokens_ya_comprados = Reserva.objects.filter(
+                            drop=drop_activo,
+                            user=request.user,
+                            estado_pago__in=['PENDIENTE', 'EN_REVISION', 'CONFIRMADO']
+                        ).aggregate(total=models.Sum('cantidad_tokens'))['total'] or 0
+                        
+                        tokens_disponibles_usuario = drop_activo.max_tokens_por_usuario - tokens_ya_comprados
+                        
+                        if reserva.cantidad_tokens > tokens_disponibles_usuario:
+                            if tokens_disponibles_usuario <= 0:
+                                form.add_error('cantidad_tokens', f"🐋 Ya alcanzaste el máximo de {drop_activo.max_tokens_por_usuario} tokens por persona en este Drop.")
+                            else:
+                                form.add_error('cantidad_tokens', f"🐋 Solo puedes comprar {tokens_disponibles_usuario} tokens más en este Drop (límite: {drop_activo.max_tokens_por_usuario} por persona).")
+                            drop_error = True
+                    
+                    # ── PRECIO DEL DROP Y TOTAL (Corrección DR-04) ──
+                    if not drop_error:
+                         # Si hay precio override, lo usamos para el cálculo del total
+                         precio_final = drop_activo.precio_override if drop_activo.precio_override else reserva.proyecto.precio_token
+                         
+                         # Forzamos el total aquí para asegurar que se cobre lo correcto
+                         reserva.total = reserva.cantidad_tokens * precio_final
+                         
+                         # Vinculamos el Drop
+                         reserva.drop = drop_activo
 
-                if reserva.metodo_pago == 'CRYPTO':
-                    return crear_orden_cryptomarket(request, reserva)
-                return redirect('create_mp_preference', reserva_id=reserva.id)
+                # ── KYC CHECK / LIMITES DE INVERSION (GLOBAL - SIEMPRE SE EJECUTA) ──
+                if not drop_error and request.user.is_authenticated:
+                    try:
+                        # Obtener perfil (asegurar existencia)
+                        profile, _ = UserProfile.objects.get_or_create(user=request.user)
+                        
+                        # Calcular monto estimado de esta compra usando el total ya calculado o base
+                        # Si no hay drop activo o error, usamos precio base
+                        if hasattr(reserva, 'total') and reserva.total > 0:
+                             monto_estimado_usd = float(reserva.total)
+                        else:
+                             monto_estimado_usd = float(reserva.cantidad_tokens) * float(reserva.proyecto.precio_token)
+                        
+                        # DEBUG
+                        print(f"🔍 KYC DEBUG: User={request.user.username} | Tier={profile.kyc_tier} | Limit Restante=${profile.remaining_limit} | Compra=${monto_estimado_usd}")
+                        
+                        # Verificar límite restante del usuario
+                        limite_restante = float(profile.remaining_limit)
+                        
+                        if monto_estimado_usd > limite_restante:
+                            tier_display = profile.get_kyc_tier_display()
+                            msg = f"⛔ BLOQUEO KYC: Vas a comprar ${monto_estimado_usd:,.0f} USD, pero tu límite disponible es de ${limite_restante:,.0f} USD ({tier_display}). Verifícate para aumentar tu cupo."
+                            print(f"🚫 BLOCKED: {msg}")
+                            form.add_error(None, msg)
+                            drop_error = True
+                            
+                    except Exception as e:
+                        print(f"❌ CRITICAL KYC ERROR: {e}")
+                        # FAIL-CLOSED: Si falla el chequeo, bloqueamos por seguridad
+                        form.add_error(None, f"Error técnico verificando perfil de inversor. Intente nuevamente. ({e})")
+                        drop_error = True
+                
+                if not drop_error:
+                    # Todo OK - Guardamos
+                    metodo_pago = request.POST.get('metodo_pago', 'MP')
+                    reserva.metodo_pago = metodo_pago
+                    
+                    # Si no se calculó total arriba (ej: compra normal sin drop), calcularlo ahora
+                    if not reserva.total:
+                        reserva.total = reserva.cantidad_tokens * reserva.proyecto.precio_token
+                        
+                    reserva.save()
+                    
+                    # Actualizar tokens vendidos del Drop
+                    if drop_activo:
+                        drop_activo.tokens_vendidos_drop += reserva.cantidad_tokens
+                        drop_activo.save(update_fields=['tokens_vendidos_drop'])
+                    
+                    # Log con detalles del monto calculado
+                    with open('debug_form.log', 'a', encoding='utf-8') as f:
+                        drop_info = f", Drop: {drop_activo.nombre}" if drop_activo else ""
+                        f.write(f"[{datetime.now()}] Reserva OK #{reserva.id}: {reserva.cantidad_tokens} tokens, Total: ${reserva.total}, Cupón: {reserva.coupon}{drop_info}\n")
+                    
+                    # Enviar email...
+                    import threading
+                    def send_email_async(res_id):
+                        try:
+                            r = Reserva.objects.get(id=res_id)
+                            subject = 'Tu solicitud de reserva - TerraTokenX'
+                            template = 'booking/email/pending_reservation_mp.html'
+                            if r.metodo_pago == 'CRYPTO':
+                                subject = '⏳ Instrucciones para finalizar tu inversión'
+                                template = 'booking/email/pending_reservation_crypto.html'
+                            html_msg = render_to_string(template, {'reserva': r})
+                            send_mail(subject, '', settings.DEFAULT_FROM_EMAIL, [r.correo], html_message=html_msg)
+                        except: pass
+                    threading.Thread(target=send_email_async, args=(reserva.id,)).start()
+
+                    if reserva.metodo_pago == 'CRYPTO':
+                        return crear_orden_cryptomarket(request, reserva)
+                    return redirect('create_mp_preference', reserva_id=reserva.id)
 
         # Si llegamos aquí con error
         with open('debug_form.log', 'a', encoding='utf-8') as f:
@@ -371,18 +483,75 @@ def reservation_form(request):
     # --- Contexto para la validación del lado del cliente (JavaScript) ---
     config = Configuracion.load()
     
-    # Obtener solo proyectos activos (estado='Activo') para el selector
-    proyectos_activos = Proyecto.objects.filter(activo=True, estado='Activo')
+    # Obtener solo proyectos activos
+    proyectos_activos_qs = Proyecto.objects.filter(activo=True, estado='Activo')
     
+    # Construir data enriquecida para JS (Manejo de Drops y Stock)
+    import json
+    proyectos_js_list = []
+    now = timezone.now()
+    
+    for p in proyectos_activos_qs:
+        # Lógica de Drop para el Frontend
+        drop_activo = p.drops.filter(activo=True, fecha_inicio__lte=now, fecha_fin__gte=now).first()
+        
+        # Precio
+        precio_real = drop_activo.precio_override if (drop_activo and drop_activo.precio_override) else p.precio_token
+        
+        # Stock
+        stock_real = p.tokens_disponibles # Stock general
+        if drop_activo:
+             stock_drop = drop_activo.tokens_disponibles_drop - drop_activo.tokens_vendidos_drop
+             # El stock disponible es el del Drop, acotado por el total real del proyecto si fuese menor
+             stock_real = stock_drop 
+             
+             # Anti-whale check simple para frontend (opcional, por ahora stock global del drop)
+             if drop_activo.max_tokens_por_usuario:
+                  # Nota: Para saber cuánto le queda al user específico habría que filtrar por user, 
+                  # pero para el selector general usamos el stock del drop.
+                  pass
+
+        proyectos_js_list.append({
+            'id': p.id,
+            'nombre': p.nombre,
+            'precio': precio_real,
+            'rentabilidad': p.rentabilidad_estimada,
+            'imagen': p.imagen_portada_url if p.imagen_portada_url else (p.imagen_portada.url if p.imagen_portada else ''),
+            'stock': stock_real if stock_real > 0 else 0
+        })
+    
+    proyectos_js_data = json.dumps(proyectos_js_list)
+
     # Determinar precio a mostrar (Proyecto específico o Configuración Global)
     precio_actual = proyecto_seleccionado.precio_token if proyecto_seleccionado else config.precio_base_token
+
+    # DATOS KYC PARA EL FRONTEND
+    kyc_info = {
+        'remaining_usd': 500, # Default Nivel 0
+        'limit_usd': 500,
+        'tier_label': 'Nivel 0 (Básico)',
+        'is_authenticated': request.user.is_authenticated
+    }
+    
+    if request.user.is_authenticated:
+        try:
+            # Asegurar importación aquí por si acaso
+            from .models import UserProfile
+            profile, _ = UserProfile.objects.get_or_create(user=request.user)
+            kyc_info['remaining_usd'] = float(profile.remaining_limit)
+            kyc_info['limit_usd'] = float(profile.limit_usd)
+            kyc_info['tier_label'] = profile.get_kyc_tier_display()
+        except Exception as e:
+            print(f"Error cargando KYC info para frontend: {e}")
 
     return render(request, 'booking/reservation_form_v2.html', {
         'form': form,
         'config': config,
         'precio_base_token': precio_actual, # Contexto dinámico
         'proyecto': proyecto_seleccionado,  # Contexto del proyecto
-        'proyectos_activos': proyectos_activos, # Lista para selector
+        'proyectos_activos': proyectos_activos_qs, # Lista para selector Django puro
+        'proyectos_js_data': proyectos_js_data, # JSON para AlpineJS
+        'kyc_info': kyc_info, # Info para JS
     })
 
 
@@ -1115,7 +1284,10 @@ def admin_project_create(request):
         form = ProyectoForm(request.POST, request.FILES)
         formset = ProyectoImagenFormSet(request.POST, request.FILES)
         if form.is_valid() and formset.is_valid():
-            proyecto = form.save()
+            proyecto = form.save(commit=False)
+            if not proyecto.owner:
+                proyecto.owner = request.user
+            proyecto.save()
             # Associate images with the newly created project
             images = formset.save(commit=False)
             for img in images:
@@ -1364,6 +1536,10 @@ def admin_dashboard(request):
     
     # Proyectos Activos
     projects_active = Proyecto.objects.filter(activo=True, estado='Activo').count()
+
+    # KYB Pendientes
+    from .models import UserProfile
+    pending_kyb_requests = UserProfile.objects.filter(kyb_status='REVIEW').count()
     
     # === TOP PROYECTOS (tokens × precio) ===
     top_projects = []
@@ -1433,6 +1609,7 @@ def admin_dashboard(request):
             'signed_contracts': signed_contracts,
             'pending_signatures': pending_signatures,
             'projects_active': projects_active,
+            'pending_kyb_requests': pending_kyb_requests,
         },
         'top_projects': top_projects,
         'recent_sales': recent_sales,
@@ -1598,14 +1775,38 @@ def admin_coupon_delete(request, coupon_id):
 @staff_member_required
 def admin_edit_user(request, user_id):
     """
-    Editar datos básicos de un usuario (nombre, apellido, email).
+    Editar datos básicos de un usuario (nombre, apellido, email) y Nivel KYC.
     """
+    from .models import UserProfile
     user = get_object_or_404(User, id=user_id)
+    
     if request.method == 'POST':
         user.first_name = request.POST.get('first_name')
         user.last_name = request.POST.get('last_name')
         user.email = request.POST.get('email')
         user.save()
+        
+        # Actualizar Nivel KYC
+        new_tier = request.POST.get('kyc_tier')
+        if new_tier is not None:
+            try:
+                profile, _ = UserProfile.objects.get_or_create(user=user)
+                old_tier = profile.kyc_tier
+                profile.kyc_tier = int(new_tier)
+                
+                # Si se sube de nivel manualmente a > 0, asumimos que está verificado
+                if int(new_tier) > 0 and profile.kyc_status != UserProfile.KYC_APROBADO:
+                    profile.kyc_status = UserProfile.KYC_APROBADO
+                
+                # Si se baja a nivel 0, podríamos dejarlo como aprobado o no, pero mejor no tocar status si baja
+                
+                profile.save()
+                
+                if old_tier != int(new_tier):
+                    messages.info(request, f"Nivel KYC actualizado de {old_tier} a {new_tier}.")
+            except Exception as e:
+                messages.error(request, f"Error actualizando perfil KYC: {e}")
+
         messages.success(request, f"Usuario {user.email} actualizado correctamente.")
         return redirect('admin_users')
     
@@ -1658,13 +1859,18 @@ def admin_kyc_list(request):
     from .models import UserProfile
     perfiles = UserProfile.objects.all().order_by('-fecha_kyc')
     
+    
     # Filtrar si es necesario
     status_filter = request.GET.get('status')
     if status_filter:
         perfiles = perfiles.filter(kyc_status=status_filter)
-        
+    
+    # KYB Pendientes (Siempre mostrar si hay)
+    kyb_profiles = UserProfile.objects.filter(kyb_status='REVIEW').order_by('-fecha_kyc')
+
     return render(request, 'booking/admin/kyc.html', {
         'perfiles': perfiles,
+        'kyb_profiles': kyb_profiles,
         'menu_active': 'kyc',
         'status_filter': status_filter
     })
@@ -1683,12 +1889,39 @@ def admin_kyc_process(request, profile_id):
         
         if action == 'approve':
             profile.kyc_status = UserProfile.KYC_APROBADO
+            # SUBIR DE NIVEL: Al aprobar documentos, pasa a Nivel 1 ($10k USD)
+            profile.kyc_tier = 1 
             profile.comentarios_admin = ""
-            messages.success(request, f"KYC de {profile.user.username} APROBADO.")
+            messages.success(request, f"KYC de {profile.user.username} APROBADO. Nivel actualizado a 1 ($10k Límite).")
         elif action == 'reject':
             profile.kyc_status = UserProfile.KYC_RECHAZADO
+            # BAJAR DE NIVEL: Si se rechaza, vuelve a básico
+            profile.kyc_tier = 0
             profile.comentarios_admin = reason
             messages.warning(request, f"KYC de {profile.user.username} RECHAZADO: {reason}")
+            
+        profile.save()
+        
+    return redirect('admin_kyc_list')
+
+@staff_member_required
+def admin_kyb_process(request, profile_id):
+    """
+    Aprobar o rechazar un KYB (Fraccionador).
+    """
+    from .models import UserProfile
+    profile = get_object_or_404(UserProfile, id=profile_id)
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'approve':
+            profile.kyb_status = 'APPROVED'
+            profile.user_type = 'FRACTIONALIZER'
+            messages.success(request, f"Fraccionador {profile.company_name} APROBADO.")
+        elif action == 'reject':
+            profile.kyb_status = 'REJECTED'
+            messages.warning(request, f"Solicitud de {profile.company_name} RECHAZADA.")
             
         profile.save()
         
@@ -1880,30 +2113,511 @@ def investor_dashboard(request):
 def investor_catalog(request):
     """
     Catálogo de proyectos protegido (Solo usuarios registrados).
+    Separa proyectos Premium (INTERNAL) de Marketplace (EXTERNAL).
+    Incluye info de Drops activos.
     """
-    proyectos = Proyecto.objects.filter(activo=True).order_by('-created_at')
+    from booking.models import ProjectDrop
+    now = timezone.now()
+    
+    proyectos_premium = Proyecto.objects.filter(
+        activo=True, owner_type='INTERNAL'
+    ).prefetch_related('drops').order_by('-created_at')
+    
+    proyectos_marketplace = Proyecto.objects.filter(
+        activo=True, owner_type='EXTERNAL', compliance_status='APPROVED'
+    ).prefetch_related('drops').order_by('-created_at')
+    
+    # Anotar drop activo en cada proyecto
+    def anotar_drops(proyectos):
+        for p in proyectos:
+            p.drop_live = None
+            p.drop_upcoming = None
+            for d in p.drops.all():
+                if d.activo and d.fecha_inicio <= now <= d.fecha_fin:
+                    p.drop_live = d
+                    break
+                elif d.activo and now < d.fecha_inicio:
+                    if p.drop_upcoming is None or d.fecha_inicio < p.drop_upcoming.fecha_inicio:
+                        p.drop_upcoming = d
+        return proyectos
+    
+    anotar_drops(proyectos_premium)
+    anotar_drops(proyectos_marketplace)
+    
     return render(request, 'booking/investor/catalog.html', {
-        'proyectos': proyectos,
+        'proyectos_premium': proyectos_premium,
+        'proyectos_marketplace': proyectos_marketplace,
         'user': request.user
+    })
+
+
+def marketplace_public(request):
+    """
+    Vista PÚBLICA del Marketplace (sin login requerido).
+    Muestra todos los proyectos aprobados para atraer nuevos inversores.
+    Incluye info de Drops activos.
+    """
+    from booking.models import ProjectDrop
+    now = timezone.now()
+    
+    proyectos_premium = Proyecto.objects.filter(
+        activo=True, owner_type='INTERNAL'
+    ).prefetch_related('drops').order_by('-created_at')
+    
+    proyectos_marketplace = Proyecto.objects.filter(
+        activo=True, owner_type='EXTERNAL', compliance_status='APPROVED'
+    ).prefetch_related('drops').order_by('-created_at')
+    
+    # Anotar drop activo
+    def anotar_drops(proyectos):
+        for p in proyectos:
+            p.drop_live = None
+            p.drop_upcoming = None
+            for d in p.drops.all():
+                if d.activo and d.fecha_inicio <= now <= d.fecha_fin:
+                    p.drop_live = d
+                    break
+                elif d.activo and now < d.fecha_inicio:
+                    if p.drop_upcoming is None or d.fecha_inicio < p.drop_upcoming.fecha_inicio:
+                        p.drop_upcoming = d
+        return proyectos
+    
+    anotar_drops(proyectos_premium)
+    anotar_drops(proyectos_marketplace)
+    
+    return render(request, 'booking/investor/marketplace.html', {
+        'proyectos_premium': proyectos_premium,
+        'proyectos_marketplace': proyectos_marketplace,
+        'user': request.user if request.user.is_authenticated else None,
     })
 
 @login_required(login_url='investor_login')
 def investor_project_detail(request, slug):
     """
     Vista detallada del proyecto integrada totalmente en Django.
+    Incluye proyectos relacionados (mismo tipo o aleatorios) y sistema de Drops.
     """
     proyecto = get_object_or_404(Proyecto, slug=slug)
     secciones = proyecto.secciones.filter(activo=True).order_by('orden')
     imagenes = proyecto.imagenes.all()
-    documentos = proyecto.documentos.all() # El template decidirá qué mostrar según visibilidad
+    documentos = proyecto.documentos.all()
+    
+    # ===== DROPS: Detectar drop activo o próximo =====
+    from booking.models import ProjectDrop
+    now = timezone.now()
+    
+    # Buscar drop EN VIVO (activo + dentro del rango de fechas)
+    drop_activo = proyecto.drops.filter(
+        activo=True,
+        fecha_inicio__lte=now,
+        fecha_fin__gte=now
+    ).first()
+    
+    # Si no hay drop en vivo, buscar el PRÓXIMO
+    drop_proximo = None
+    if not drop_activo:
+        drop_proximo = proyecto.drops.filter(
+            activo=True,
+            fecha_inicio__gt=now
+        ).order_by('fecha_inicio').first()
+    
+    # Todos los drops del proyecto (para timeline)
+    todos_drops = proyecto.drops.filter(activo=True).order_by('fecha_inicio')
+    
+    # Proyectos relacionados: mismo tipo primero, luego otros
+    relacionados = list(
+        Proyecto.objects.filter(
+            activo=True, tipo=proyecto.tipo
+        ).exclude(id=proyecto.id).order_by('?')[:6]
+    )
+    
+    # Si no hay suficientes del mismo tipo, rellenar con otros
+    if len(relacionados) < 6:
+        faltan = 6 - len(relacionados)
+        ids_excluir = [proyecto.id] + [p.id for p in relacionados]
+        extras = Proyecto.objects.filter(
+            activo=True
+        ).exclude(id__in=ids_excluir).order_by('?')[:faltan]
+        relacionados.extend(extras)
 
     context = {
         'proyecto': proyecto,
         'secciones': secciones,
         'imagenes': imagenes,
         'documentos': documentos,
+        'relacionados': relacionados,
+        'drop_activo': drop_activo,
+        'drop_proximo': drop_proximo,
+        'todos_drops': todos_drops,
         'user': request.user
     }
     return render(request, 'booking/investor/project_detail.html', context)
 
 
+# ==================== FRACCIONADOR (KYB) & SELLER PANEL ====================
+
+@login_required(login_url='investor_login')
+def fractionalizer_onboarding(request):
+    """
+    Vista para postulación de Fraccionadores (KYB).
+    """
+    from .models import UserProfile
+    profile, created = UserProfile.objects.get_or_create(user=request.user)
+    
+    if request.method == 'POST':
+        profile.company_name = request.POST.get('company_name')
+        profile.company_tax_id = request.POST.get('company_tax_id')
+        profile.company_legal_rep = request.POST.get('company_legal_rep')
+        
+        if 'company_docs' in request.FILES:
+            profile.company_docs = request.FILES['company_docs']
+            
+        # Cambiar estado
+        profile.user_type = 'FRACTIONALIZER' 
+        profile.kyb_status = 'REVIEW'
+        profile.save()
+        
+        messages.success(request, "Solicitud enviada exitosamente. Revisaremos tu empresa en 48 horas.")
+        return redirect('fractionalizer_dashboard')
+        
+    return render(request, 'booking/investor/fractionalizer_onboarding.html')
+
+@login_required(login_url='investor_login')
+def fractionalizer_dashboard(request):
+    """
+    Dashboard para vendedores (Fraccionadores).
+    """
+    from .models import Proyecto
+    
+    # Solo mostrar proyectos de este usuario
+    # Si es admin, mostrar TODOS para facilitar testing/gestión
+    if request.user.is_superuser:
+        proyectos = Proyecto.objects.all().order_by('-created_at')
+    else:
+        proyectos = Proyecto.objects.filter(owner=request.user)
+    
+    # Calcular KPIs para el dashboard
+    total_proyectos = proyectos.count()
+    total_tokens_vendidos = 0
+    total_capital = 0
+    
+    # Iterar para sumar (lógica simple MVP)
+    for p in proyectos:
+        # Asumiendo que p.tokens_vendidos y precio base (100)
+        # Si tokens_vendidos es property, esto funciona en Python
+        vendidos = getattr(p, 'tokens_vendidos', 0)
+        total_tokens_vendidos += vendidos
+        total_capital += vendidos * 100 # Precio base HARDCODED por ahora (100 USD)
+    
+    from .models import UserProfile
+    if not hasattr(request.user, 'profile'):
+        UserProfile.objects.create(user=request.user)
+
+    return render(request, 'booking/investor/fractionalizer_dashboard.html', {
+        'proyectos': proyectos,
+        'kpi': {
+            'total_proyectos': total_proyectos,
+            'tokens_vendidos': total_tokens_vendidos,
+            'capital': total_capital
+        },
+        'user': request.user
+    })
+
+
+@login_required(login_url='investor_login')
+def fractionalizer_create_project(request):
+    """
+    Vista (Wizard) para crear un nuevo proyecto.
+    Requiere KYB aprobado.
+    """
+    from .models import Proyecto, ProyectoImagen
+    from django.utils.text import slugify
+    
+    # 1. Validar que sea fraccionador aprobado
+    if not hasattr(request.user, 'profile') or request.user.profile.kyb_status != 'APPROVED':
+        messages.error(request, "Debes tener tu cuenta de Fraccionador aprobada para crear proyectos.")
+        return redirect('fractionalizer_dashboard')
+        
+    if request.method == 'POST':
+        nombre = request.POST.get('nombre')
+        ubicacion = request.POST.get('ubicacion')
+        descripcion = request.POST.get('descripcion')
+        tokens_totales = request.POST.get('tokens_totales', 1500)
+        tipo = request.POST.get('tipo', 'Terreno')
+        pagina_oficial_url = request.POST.get('pagina_oficial_url')
+        video_url = request.POST.get('video_url')
+        
+        # Datos RWA para preservación y validación
+        lat_raw = request.POST.get('gps_lat', '').replace(',', '.')
+        lng_raw = request.POST.get('gps_lng', '').replace(',', '.')
+        spv_name = request.POST.get('spv_legal_name', '')
+        data_room = request.POST.get('data_room_url', '')
+
+        # Contexto para preservar datos en caso de error
+        form_data = {
+            'nombre': nombre,
+            'ubicacion': ubicacion,
+            'descripcion': descripcion,
+            'tokens_totales': tokens_totales,
+            'tipo': tipo,
+            'pagina_oficial_url': pagina_oficial_url,
+            'video_url': video_url,
+            'gps_lat': lat_raw,
+            'gps_lng': lng_raw,
+            'spv_legal_name': spv_name,
+            'data_room_url': data_room,
+            'imagen_portada_name': request.FILES['imagen_portada'].name if 'imagen_portada' in request.FILES else None,
+            'archivo_propiedad_name': request.FILES['archivo_propiedad'].name if 'archivo_propiedad' in request.FILES else None
+        }
+        
+        # 1. Validaciones básicas (Nombre y Ubicación)
+        if not nombre or not ubicacion:
+            messages.error(request, "Nombre y Ubicación son obligatorios.")
+            return render(request, 'booking/investor/fractionalizer_create_project.html', {
+                'form_data': form_data,
+                'error_message': "Nombre y Ubicación son obligatorios."
+            })
+
+        # 2. Validación Archivo de Propiedad (Obligatorio)
+        if 'archivo_propiedad' not in request.FILES:
+            messages.error(request, "Es obligatorio subir la Escritura o Certificado de Dominio.")
+            return render(request, 'booking/investor/fractionalizer_create_project.html', {
+                'form_data': form_data,
+                'error_message': "Es obligatorio subir la Escritura o Certificado de Dominio."
+            })
+
+        # 3. Validación GPS (Estricta: Rango y Formato)
+        gps_lat_val = None
+        gps_lng_val = None
+        
+        if lat_raw and lng_raw:
+            try:
+                lat_float = float(lat_raw)
+                lng_float = float(lng_raw)
+
+                # Validación de Rango de Seguridad (-90 a 90 / -180 a 180)
+                if abs(lat_float) > 90:
+                    return render(request, 'booking/investor/fractionalizer_create_project.html', {
+                        'form_data': form_data,
+                        'error_message': f"Latitud inválida ({lat_float}). Debe estar entre -90 y 90. Verifica el punto decimal."
+                    })
+                
+                if abs(lng_float) > 180:
+                     return render(request, 'booking/investor/fractionalizer_create_project.html', {
+                        'form_data': form_data,
+                        'error_message': f"Longitud inválida ({lng_float}). Debe estar entre -180 y 180. Verifica el punto decimal."
+                    })
+
+                gps_lat_val = lat_float
+                gps_lng_val = lng_float
+                
+            except ValueError:
+                return render(request, 'booking/investor/fractionalizer_create_project.html', {
+                    'form_data': form_data,
+                    'error_message': "Error en formato GPS. Usa números decimales con punto (ej: -41.32)."
+                })
+
+        # --- CREACIÓN DEL PROYECTO ---
+        p = Proyecto()
+        p.nombre = nombre
+        p.ubicacion = ubicacion
+        p.descripcion = descripcion
+        try:
+            p.tokens_totales = int(tokens_totales)
+        except ValueError:
+            p.tokens_totales = 1500
+            
+        p.tipo = tipo
+        p.pagina_oficial_url = pagina_oficial_url
+        p.video_url = video_url
+        
+        p.owner = request.user
+        p.owner_type = 'EXTERNAL'
+        p.compliance_status = 'REVIEW' # Nace en revisión
+        p.docs_status = 'MISSING'
+        
+        # Slug único
+        base_slug = slugify(nombre)
+        p.slug = base_slug
+        counter = 1
+        while Proyecto.objects.filter(slug=p.slug).exists():
+            p.slug = f"{base_slug}-{counter}"
+            counter += 1
+            
+        # Asignar Archivo
+        p.archivo_propiedad = request.FILES['archivo_propiedad']
+            
+        # Imagen Portada
+        if 'imagen_portada' in request.FILES:
+             p.imagen_portada = request.FILES['imagen_portada']
+             
+        # Asignar Metadata RWA
+        if gps_lat_val is not None:
+            p.gps_data = {'lat': gps_lat_val, 'lng': gps_lng_val}
+        
+        p.spv_legal_name = spv_name
+        p.data_room_url = data_room
+
+        p.save()
+        
+        # Procesar Galería de Imágenes (Dinámico)
+        # Iteramos buscando inputs con nombre galeria_imagen_N, galeria_url_N, galeria_caption_N
+        # Límite arbitrario de 20 imágenes para evitar bucles infinitos
+        for i in range(20):
+            key_file = f'galeria_imagen_{i}'
+            key_url = f'galeria_url_{i}'
+            key_caption = f'galeria_caption_{i}'
+            
+            file_data = request.FILES.get(key_file)
+            url_data = request.POST.get(key_url)
+            caption_data = request.POST.get(key_caption, '')
+            
+            # Si hay archivo O url, creamos la imagen
+            if file_data or url_data:
+                try:
+                    img = ProyectoImagen(
+                        proyecto=p,
+                        imagen=file_data,
+                        imagen_url=url_data,
+                        caption=caption_data
+                    )
+                    img.save()
+                    print(f"Imagen de galería {i} guardada para proyecto {p.nombre}")
+                except Exception as e:
+                    print(f"Error guardando imagen de galería {i}: {e}")
+            
+        messages.success(request, "¡Proyecto creado exitosamente! Ha sido enviado a revisión legal.")
+        return redirect('fractionalizer_dashboard')
+        
+    return render(request, 'booking/investor/fractionalizer_create_project.html')
+
+@login_required(login_url='investor_login')
+def fractionalizer_edit_project(request, project_id):
+    """
+    Vista de edición para vendedores (Fractionalizers).
+    Permite activar 'venta_solo_drops' y editar info básica.
+    """
+    from .models import Proyecto
+    from .forms import FractionalizerProjectForm
+
+    # Verificar propiedad y KYB
+    proyecto = get_object_or_404(Proyecto, pk=project_id)
+    if proyecto.owner != request.user:
+        messages.error(request, "No tienes permiso para editar este proyecto.")
+        return redirect('fractionalizer_dashboard')
+        
+    if request.method == 'POST':
+        form = FractionalizerProjectForm(request.POST, request.FILES, instance=proyecto)
+        if form.is_valid():
+            p = form.save(commit=False)
+            
+            # --- RWA METADATA HANDLING ---
+            # Guardar coordenadas GPS en formato JSON
+            gps_lat = request.POST.get('gps_lat', '').replace(',', '.')
+            gps_lng = request.POST.get('gps_lng', '').replace(',', '.')
+            
+            print(f"DEBUG: Intentando guardar GPS. Lat: '{gps_lat}', Lng: '{gps_lng}'")
+
+            if gps_lat and gps_lng:
+                try:
+                    p.gps_data = {'lat': float(gps_lat), 'lng': float(gps_lng)}
+                    print(f"DEBUG: GPS Data asignado al objeto: {p.gps_data}")
+                except ValueError as e:
+                    print(f"DEBUG: Error parseando GPS: {e}")
+                    messages.warning(request, f"No se guardaron las coordenadas GPS porque el formato es inválido. Usa punto como decimal (ej: -41.32). Detalle: {e}")
+                    pass 
+            else:
+                print("DEBUG: GPS Lat o Lng vacíos, no se actualiza gps_data.")
+            
+            # Guardar Datos Legales (permitir vaciar)
+            # Nota: spv_legal_name y data_room_url ya son manejados por el form, 
+            # pero esto asegura que si el usuario los vacía, se guarden vacíos
+            # (aunque el form ya debería hacerlo si required=False).
+            p.spv_legal_name = request.POST.get('spv_legal_name', '')
+            p.data_room_url = request.POST.get('data_room_url', '')
+                
+            p.save()
+            print(f"DEBUG: Proyecto guardado. ID: {p.id}")
+            messages.success(request, f"Proyecto '{proyecto.nombre}' actualizado correctamente.")
+            return redirect('fractionalizer_dashboard')
+        else:
+            messages.error(request, "Error al actualizar el proyecto. Revisa los campos.")
+    else:
+        form = FractionalizerProjectForm(instance=proyecto)
+    
+    # --- RWA GPS PRE-PROCESSING ---
+    # Extraemos lat/lng explícitamente para evitar problemas de tipo en el template
+    current_gps_lat = ''
+    current_gps_lng = ''
+    
+    if proyecto.gps_data:
+        if isinstance(proyecto.gps_data, dict):
+            # Asegurar string y punto decimal
+            current_gps_lat = str(proyecto.gps_data.get('lat', '')).replace(',', '.')
+            current_gps_lng = str(proyecto.gps_data.get('lng', '')).replace(',', '.')
+        elif isinstance(proyecto.gps_data, str):
+            try:
+                import json
+                # Fix común para json guardado como repr() de python
+                fixed_json = proyecto.gps_data.replace("'", '"')
+                data = json.loads(fixed_json)
+                current_gps_lat = str(data.get('lat', '')).replace(',', '.')
+                current_gps_lng = str(data.get('lng', '')).replace(',', '.')
+            except Exception as e:
+                print(f"Error decoding GPS data for view: {e}")
+                pass
+
+    return render(request, 'booking/investor/fractionalizer_edit_project.html', {
+        'form': form,
+        'proyecto': proyecto,
+        'current_gps_lat': current_gps_lat, # Variables explícitas para el template
+        'current_gps_lng': current_gps_lng
+    })
+
+
+
+@login_required
+def verification(request):
+    """
+    Vista para subir documentos KYC.
+    """
+    # Defensive check: crear perfil si no existe
+    if not hasattr(request.user, 'profile'):
+        UserProfile.objects.get_or_create(user=request.user)
+    
+    profile = request.user.profile
+    
+    if request.method == 'POST':
+        try:
+            updated = False
+            # Procesar archivos
+            if 'documento_frontal' in request.FILES:
+                profile.documento_identidad_frontal = request.FILES['documento_frontal']
+                updated = True
+            if 'documento_reverso' in request.FILES:
+                profile.documento_identidad_reverso = request.FILES['documento_reverso']
+                updated = True
+            if 'selfie' in request.FILES:
+                profile.selfie_verificacion = request.FILES['selfie']
+                updated = True
+            
+            if updated:
+                # Cambiar estado a REVISION
+                profile.kyc_status = 'REVISION' 
+                profile.fecha_kyc = timezone.now()
+                profile.save()
+                messages.success(request, "Documentos recibidos correctamente. Tu cuenta está ahora EN REVISIÓN.")
+            else:
+                messages.warning(request, "No se adjuntaron documentos nuevos.")
+            
+            return redirect('verification')
+            
+        except Exception as e:
+            messages.error(request, f"Error al subir documentos: {e}")
+    
+    context = {
+        'user_profile': profile,
+        'kyc_tier_label': f"Nivel {profile.kyc_tier}",
+        'remaining_usd': "{:,.0f}".format(profile.remaining_limit),
+    }
+    return render(request, 'booking/verification.html', context)

@@ -1,0 +1,96 @@
+{% extends base_template %}
+
+{% block title %}{{ action }} Drop{% endblock %}
+{% block page_title %}{{ action }} Drop para {{ proyecto.nombre }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl border border-gray-700 rounded-2xl bg-dark-800 p-8 shadow-2xl">
+    <div class="flex items-center gap-3 mb-6 border-b border-gray-700 pb-4">
+        <a href="{% url 'admin_project_drops' proyecto.id %}{% if is_seller_panel %}?panel=seller{% endif %}"
+            class="text-gray-400 hover:text-white transition-colors">
+            <span class="material-icons text-emerald-400">arrow_back</span>
+        </a>
+        <h2 class="text-xl font-bold text-white">{{ action }} Drop</h2>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="space-y-6">
+        {% csrf_token %}
+
+        {% if form.errors %}
+        <div class="bg-red-500/10 border border-red-500/30 text-red-400 p-4 rounded-xl text-sm mb-6">
+            <ul class="list-disc pl-5 space-y-1">
+                {% for field, errors in form.errors.items %}
+                {% for error in errors %}
+                <li><b>{{ field|title }}:</b> {{ error }}</li>
+                {% endfor %}
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Nombre -->
+            <div class="col-span-2">
+                <label class="block text-sm font-medium text-gray-300 mb-2">Nombre del Drop</label>
+                {{ form.nombre }}
+            </div>
+
+            <!-- Fechas -->
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Fecha Inicio</label>
+                {{ form.fecha_inicio }}
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Fecha Fin</label>
+                {{ form.fecha_fin }}
+            </div>
+
+            <!-- Cantidad y Precio -->
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">{{ form.porcentaje_tokens.label }}</label>
+                {{ form.porcentaje_tokens }}
+                <p class="text-xs text-gray-500 mt-1">{{ form.porcentaje_tokens.help_text }}</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Precio Especial (Opcional)</label>
+                {{ form.precio_override }}
+                <p class="text-xs text-gray-500 mt-1">Si está vacío, se usa el precio base: ${{ proyecto.precio_token }}
+                </p>
+            </div>
+
+            <!-- Límite Anti-Ballena -->
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">🐋 Máx. Tokens por Persona</label>
+                {{ form.max_tokens_por_usuario }}
+                <p class="text-xs text-gray-500 mt-1">Vacío = sin límite. Evita que un solo inversor acapare todo el
+                    Drop.</p>
+            </div>
+
+            <!-- Descripción -->
+            <div class="col-span-2">
+                <label class="block text-sm font-medium text-gray-300 mb-2">Descripción (Corta)</label>
+                {{ form.descripcion }}
+            </div>
+
+            <!-- Activo -->
+            <div class="col-span-2 flex items-center gap-3 p-4 bg-dark-900/50 rounded-lg border border-gray-700">
+                {{ form.activo }}
+                <label class="text-sm text-gray-300 cursor-pointer select-none" for="id_activo">
+                    <b>Drop Activo</b> (Visible públicamente si está en fecha)
+                </label>
+            </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-6 border-t border-gray-700 mt-6">
+            <a href="{% url 'admin_project_drops' proyecto.id %}{% if is_seller_panel %}?panel=seller{% endif %}"
+                class="px-6 py-2.5 text-gray-400 hover:text-white font-medium transition-colors">
+                Cancelar
+            </a>
+            <button type="submit"
+                class="px-8 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg shadow-red-600/20 transition-all hover:scale-105">
+                {{ action }} Drop
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

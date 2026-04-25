@@ -1,346 +1,953 @@
-﻿{% load static %}
-<!DOCTYPE html>
-<html lang="es">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TerraTokenX | {{ proyecto.nombre }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        gold: {
-                            50: '#fff9e6', 100: '#fef0c3', 200: '#fde68a', 300: '#fcd34d',
-                            400: '#f4c430', 500: '#d4af37', 600: '#b8960f', 700: '#92750c',
-                            800: '#6b5610', 900: '#4a3c12',
-                        },
-                        dark: {
-                            900: '#0a0a0a', 800: '#111111', 700: '#1a1a1a',
-                            600: '#242424', 500: '#2d2d2d',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #0a0a0a 0%, #111827 100%);
-        }
-
-        .glass-panel {
-            background: rgba(26, 26, 26, 0.8);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(212, 175, 55, 0.15);
-        }
-
-        .gold-glow {
-            box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
-        }
-
-        .text-gold-gradient {
-            background: linear-gradient(135deg, #d4af37 0%, #f4d03f 50%, #d4af37 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .nav-item.active {
-            background: linear-gradient(90deg, rgba(212, 175, 55, 0.15) 0%, transparent 100%);
-            border-left: 3px solid #d4af37;
-            color: #d4af37;
-        }
-
-        .nav-item:hover {
-            background: rgba(212, 175, 55, 0.1);
-        }
-
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #d4af3744;
-            border-radius: 10px;
-        }
-    </style>
-</head>
-
-<body class="bg-dark-900 text-gray-100 h-screen overflow-hidden flex">
-
-    <!-- Sidebar (Same as Dashboard) -->
-    <aside
-        class="w-64 bg-dark-800 border-r border-gold-500/20 flex flex-col transition-all duration-300 z-20 hidden md:flex">
-        <div class="p-6 border-b border-gold-500/20 flex items-center gap-3">
-            <div
-                class="w-10 h-10 bg-gradient-to-br from-gold-500 to-gold-600 rounded-lg flex items-center justify-center font-bold text-dark-900 shadow-lg gold-glow">
-                <span class="text-xl">T</span>
-            </div>
-            <span class="text-xl font-bold tracking-tight">
-                <span class="text-gold-gradient">TerraToken</span><span class="text-gold-500">X</span>
-            </span>
-        </div>
-
-        <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
-            <p class="px-3 text-xs font-semibold text-gold-500/60 uppercase tracking-wider mb-2">Mi Portafolio</p>
-            <a href="{% url 'investor_dashboard' %}"
-                class="nav-item flex items-center gap-3 px-3 py-3 rounded-lg text-gray-400 transition-all">
-                <span class="material-icons text-xl">dashboard</span>
-                <span class="text-sm font-medium">Dashboard</span>
-            </a>
-            <a href="{% url 'investor_catalog' %}"
-                class="nav-item flex items-center gap-3 px-3 py-3 rounded-lg text-gray-400 transition-all active">
-                <span class="material-icons text-xl">storefront</span>
-                <span class="text-sm font-medium">Catálogo Proyectos</span>
-            </a>
-            <p class="px-3 text-xs font-semibold text-gold-500/60 uppercase tracking-wider mb-2 mt-6">Cuenta</p>
-            <a href="{% url 'investor_profile' %}"
-                class="nav-item flex items-center gap-3 px-3 py-3 rounded-lg text-gray-400 transition-all">
-                <span class="material-icons text-xl">person</span>
-                <span class="text-sm font-medium">Mi Perfil</span>
-            </a>
-            <a href="{% url 'investor_kyc' %}"
-                class="nav-item flex items-center gap-3 px-3 py-3 rounded-lg text-gray-400 transition-all">
-                <span class="material-icons text-xl">verified_user</span>
-                <span class="text-sm font-medium">Verificación KYC</span>
-            </a>
-        </nav>
-
-        <div class="p-4 border-t border-gold-500/20">
-            <form action="{% url 'logout' %}" method="post">
-                {% csrf_token %}
-                <button type="submit"
-                    class="flex items-center gap-2 text-red-400 hover:text-red-300 text-sm font-medium px-2 py-2 rounded hover:bg-red-500/10 transition-colors w-full">
-                    <span class="material-icons text-lg">logout</span> Salir
-                </button>
-            </form>
-        </div>
-    </aside>
-
-    <!-- Main Content -->
-    <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
-        <!-- Header -->
-        <header
-            class="h-16 border-b border-gold-500/20 flex items-center justify-between px-6 bg-dark-800/80 backdrop-blur-md sticky top-0 z-10">
-            <div class="flex items-center gap-4">
-                <h1 class="text-sm font-medium text-gray-400">Detalles del <span class="text-gold-500">Proyecto</span>
-                </h1>
-            </div>
-            <div class="flex items-center gap-4">
-                <div class="hidden sm:block text-right">
-                    <p class="text-sm font-medium text-gold-500">{{ user.first_name }}</p>
-                    <p class="text-[10px] text-gold-500/60 uppercase">Inversionista</p>
-                </div>
-                <div
-                    class="w-10 h-10 bg-gradient-to-br from-gold-500 to-gold-600 rounded-full flex items-center justify-center text-dark-900 gold-glow">
-                    <span class="material-icons text-sm">person</span>
-                </div>
-            </div>
-        </header>
-
-        <!-- Scrollable Area -->
-        <div class="flex-1 overflow-y-auto custom-scrollbar p-6">
-
-            <!-- Breadcrumbs -->
-            <div class="mb-6 flex items-center gap-2 text-xs text-gray-500 uppercase tracking-wider">
-                <a href="{% url 'investor_catalog' %}" class="hover:text-gold-500 transition-colors">Catálogo</a>
-                <span class="material-icons text-xs">chevron_right</span>
-                <span class="text-gold-500">{{ proyecto.nombre }}</span>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-                <!-- Left: Content & Gallery -->
-                <div class="lg:col-span-2 space-y-8">
-
-                    <!-- Main Display -->
-                    <div class="space-y-4">
-                        <h2 class="text-3xl font-bold text-white">{{ proyecto.nombre }}</h2>
-                        <div class="flex items-center gap-4 text-sm text-gray-400">
-                            <span class="flex items-center gap-1"><span
-                                    class="material-icons text-gold-500 text-sm">location_on</span> {{                 proyecto.ubicacion }}</span>
-                            <span class="flex items-center gap-1"><span
-                                    class="material-icons text-gold-500 text-sm">category</span> {{ proyecto.tipo                 }}</span>
-                        </div>
-                    </div>
-
-                    <!-- Main Image / Video -->
-                    <div
-                        class="relative aspect-video rounded-2xl overflow-hidden border border-gold-500/20 shadow-2xl group">
-                        {% if proyecto.video_url %}
-                        <!-- Interactive Video Iframe logic here if needed, or just image as placeholder -->
-                        {% endif %}
-                        <img id="main-display-img"
-                            src="{% if proyecto.imagen_portada %}{{ proyecto.imagen_portada.url }}{% else %}{{ proyecto.imagen_portada_url }}{% endif %}"
-                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                            alt="{{ proyecto.nombre }}">
-                        <div class="absolute inset-0 bg-gradient-to-t from-dark-900/80 via-transparent to-transparent">
-                        </div>
-                    </div>
-
-                    <!-- Gallery -->
-                    {% if imagenes %}
-                    <div class="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
-                        {% for img in imagenes %}
-                        <div class="w-32 h-24 flex-shrink-0 rounded-xl overflow-hidden border border-gold-500/10 hover:border-gold-500/50 cursor-pointer transition-all"
-                            onclick="document.getElementById('main-display-img').src = '{% if img.imagen %}{{ img.imagen.url }}{% else %}{{ img.imagen_url }}{% endif %}'">
-                            <img src="{% if img.imagen %}{{ img.imagen.url }}{% else %}{{ img.imagen_url }}{% endif %}"
-                                class="w-full h-full object-cover">
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-
-                    <!-- Sections / Tabs -->
-                    <div class="glass-panel rounded-2xl p-6">
-                        <div
-                            class="flex border-b border-gold-500/10 mb-6 overflow-x-auto whitespace-nowrap scrollbar-hide">
-                            <button class="tab-btn px-6 py-3 text-sm font-bold text-gold-500 border-b-2 border-gold-500"
-                                onclick="switchTab(this, 'resumen')">Resumen</button>
-                            {% for sec in secciones %}
-                            <button
-                                class="tab-btn px-6 py-3 text-sm font-medium text-gray-400 hover:text-gold-500 transition-colors"
-                                onclick="switchTab(this, 'sec-{{ sec.id }}')">{{ sec.nombre }}</button>
-                            {% endfor %}
-                        </div>
-
-                        <div id="tab-content"
-                            class="prose prose-invert max-w-none text-gray-300 text-sm leading-relaxed">
-                            <div id="resumen" class="tab-panel animate-fade-in">
-                                {{ proyecto.descripcion|linebreaks }}
-                            </div>
-                            {% for sec in secciones %}
-                            <div id="sec-{{ sec.id }}" class="tab-panel hidden animate-fade-in">
-                                {{ sec.contenido|safe }}
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Right: Stats & Investment -->
-                <div class="lg:col-span-1">
-                    <div class="sticky top-6 space-y-6">
-
-                        <!-- Investment Card -->
-                        <div class="glass-panel rounded-2xl p-8 relative overflow-hidden">
-                            <div
-                                class="absolute top-0 right-0 w-32 h-32 bg-gold-500/5 rounded-full blur-3xl -mr-16 -mt-16">
-                            </div>
-
-                            <div class="flex justify-between items-start mb-8">
-                                <div>
-                                    <p class="text-[10px] text-gold-500/60 uppercase tracking-widest mb-1">Precio Token
-                                    </p>
-                                    <h3 class="text-3xl font-bold text-white">${{ proyecto.precio_token }} <span
-                                            class="text-xs font-normal text-gray-500">USD</span></h3>
-                                </div>
-                                <div class="text-right">
-                                    <p class="text-[10px] text-green-500/60 uppercase tracking-widest mb-1">Rentabilidad
-                                    </p>
-                                    <h3 class="text-xl font-bold text-green-400">{{ proyecto.rentabilidad_estimada }}
-                                    </h3>
-                                </div>
-                            </div>
-
-                            <!-- Progress -->
-                            <div class="space-y-3 mb-8">
-                                <div class="flex justify-between text-xs">
-                                    <span class="text-gray-400">Progreso Recaudación</span>
-                                    <span class="text-gold-500 font-bold">{{ proyecto.porcentaje_vendido }}%</span>
-                                </div>
-                                <div class="h-2 bg-dark-900 rounded-full overflow-hidden">
-                                    <div class="h-full bg-gradient-to-r from-gold-600 to-gold-400 rounded-full"
-                                        style="width: {{ proyecto.porcentaje_vendido }}%"></div>
-                                </div>
-                                <p class="text-[10px] text-gray-500 flex items-center gap-1">
-                                    <span class="material-icons text-[12px] text-gold-500">flash_on</span> Actualizado
-                                    en tiempo real
-                                </p>
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-4 mb-8">
-                                <div class="p-3 bg-dark-900/50 rounded-xl border border-gold-500/10">
-                                    <p class="text-[8px] text-gold-500/60 uppercase mb-1">Disponibles</p>
-                                    <p class="text-sm font-bold">{{ proyecto.tokens_disponibles }} Tokens</p>
-                                </div>
-                                <div class="p-3 bg-dark-900/50 rounded-xl border border-gold-500/10">
-                                    <p class="text-[8px] text-gold-500/60 uppercase mb-1">Mínimo</p>
-                                    <p class="text-sm font-bold">1 Token</p>
-                                </div>
-                            </div>
-
-                            <!-- CTA Button -->
-                            <a href="{% url 'reservation_form' %}?project_slug={{ proyecto.slug }}"
-                                class="block w-full py-4 bg-gradient-to-r from-gold-600 to-gold-400 hover:from-gold-500 hover:to-gold-300 text-dark-900 font-bold text-center rounded-xl shadow-lg hover:shadow-gold-500/30 transition-all transform hover:-translate-y-1 uppercase tracking-wider">
-                                Comprar Tokens Ahora
-                            </a>
-
-                            {% if proyecto.pagina_oficial_url %}
-                            <a href="{{ proyecto.pagina_oficial_url }}" target="_blank"
-                                class="block w-full mt-4 py-2 text-center text-xs text-gold-500 hover:text-gold-400 transition-colors">
-                                Ver Web Oficial del Proyecto
-                            </a>
-                            {% endif %}
-                        </div>
-
-                        <!-- Data Room (Documents) -->
-                        <div class="glass-panel rounded-2xl p-6">
-                            <h4 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
-                                <span class="material-icons text-gold-500 text-sm">folder_shared</span> Data Room /
-                                Legal
-                            </h4>
-                            <div class="space-y-3">
-                                {% for doc in documentos %}
-                                <a href="{{ doc.archivo.url }}"
-                                    class="flex items-center justify-between p-3 rounded-xl bg-dark-900/30 border border-gold-500/5 hover:border-gold-500/30 transition-all group">
-                                    <div class="flex items-center gap-3">
-                                        <span
-                                            class="material-icons text-gray-500 group-hover:text-gold-500 transition-colors">description</span>
-                                        <span class="text-xs text-gray-300 group-hover:text-white transition-colors">{{                       doc.titulo }}</span>
-                                    </div>
-                                    <span
-                                        class="material-icons text-xs text-gray-600 group-hover:text-gold-500 transition-colors">download</span>
-                                </a>
-                                {% empty %}
-                                <p class="text-xs text-gray-600 italic">No hay documentos cargados.</p>
-                                {% endfor %}
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </main>
-
-    <script>
-        function switchTab(btn, tabId) {
-            // Update buttons
-            document.querySelectorAll('.tab-btn').forEach(b => {
-                b.classList.remove('text-gold-500', 'border-b-2', 'border-gold-500', 'font-bold');
-                b.classList.add('text-gray-400', 'font-medium');
-            });
-            btn.classList.add('text-gold-500', 'border-b-2', 'border-gold-500', 'font-bold');
-            btn.classList.remove('text-gray-400', 'font-medium');
-
-            // Update panels
-            document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
-            document.getElementById(tabId).classList.remove('hidden');
-        }
-    </script>
-
-</body>
-
+{% load static %}
+
+<!DOCTYPE html>
+
+<html lang="es">
+
+
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>TerraTokenX | {{ proyecto.nombre }}</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+
+        tailwind.config = {
+
+            theme: {
+
+                extend: {
+
+                    colors: {
+
+                        gold: {
+
+                            50: '#fff9e6', 100: '#fef0c3', 200: '#fde68a', 300: '#fcd34d',
+
+                            400: '#f4c430', 500: '#d4af37', 600: '#b8960f', 700: '#92750c',
+
+                            800: '#6b5610', 900: '#4a3c12',
+
+                        },
+
+                        dark: {
+
+                            900: '#0a0a0a', 800: '#111111', 700: '#1a1a1a',
+
+                            600: '#242424', 500: '#2d2d2d',
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    </script>
+
+    <style>
+        body {
+
+            font-family: 'Inter', sans-serif;
+
+            background: linear-gradient(135deg, #0a0a0a 0%, #111827 100%);
+
+        }
+
+
+
+        .glass-panel {
+
+            background: rgba(26, 26, 26, 0.8);
+
+            backdrop-filter: blur(10px);
+
+            border: 1px solid rgba(212, 175, 55, 0.15);
+
+        }
+
+
+
+        .gold-glow {
+
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+
+        }
+
+
+
+        .text-gold-gradient {
+
+            background: linear-gradient(135deg, #d4af37 0%, #f4d03f 50%, #d4af37 100%);
+
+            -webkit-background-clip: text;
+
+            -webkit-text-fill-color: transparent;
+
+            background-clip: text;
+
+        }
+
+
+
+        .nav-item.active {
+
+            background: linear-gradient(90deg, rgba(212, 175, 55, 0.15) 0%, transparent 100%);
+
+            border-left: 3px solid #d4af37;
+
+            color: #d4af37;
+
+        }
+
+
+
+        .nav-item:hover {
+
+            background: rgba(212, 175, 55, 0.1);
+
+        }
+
+
+
+        .custom-scrollbar::-webkit-scrollbar {
+
+            width: 4px;
+
+        }
+
+
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+
+            background: transparent;
+
+        }
+
+
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+
+            background: #d4af3744;
+
+            border-radius: 10px;
+
+        }
+
+
+        /* Drop Countdown Animations */
+        @keyframes pulse-live {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .live-pulse {
+            animation: pulse-live 1.5s ease-in-out infinite;
+        }
+
+        @keyframes countdown-glow {
+
+            0%,
+            100% {
+                box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 0 25px rgba(239, 68, 68, 0.6);
+            }
+        }
+
+        .countdown-glow {
+            animation: countdown-glow 2s ease-in-out infinite;
+        }
+    </style>
+
+</head>
+
+
+
+<body class="bg-dark-900 text-gray-100 h-screen overflow-hidden flex">
+
+
+
+    <!-- Sidebar (Same as Dashboard) -->
+
+    <aside
+        class="w-64 bg-dark-800 border-r border-gold-500/20 flex flex-col transition-all duration-300 z-20 hidden md:flex">
+
+        <div class="p-6 border-b border-gold-500/20 flex items-center gap-3">
+
+            <div
+                class="w-10 h-10 bg-gradient-to-br from-gold-500 to-gold-600 rounded-lg flex items-center justify-center font-bold text-dark-900 shadow-lg gold-glow">
+
+                <span class="text-xl">T</span>
+
+            </div>
+
+            <span class="text-xl font-bold tracking-tight">
+
+                <span class="text-gold-gradient">TerraToken</span><span class="text-gold-500">X</span>
+
+            </span>
+
+        </div>
+
+
+
+        <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
+
+            <p class="px-3 text-xs font-semibold text-gold-500/60 uppercase tracking-wider mb-2">Mi Portafolio</p>
+
+            <a href="{% url 'investor_dashboard' %}"
+                class="nav-item flex items-center gap-3 px-3 py-3 rounded-lg text-gray-400 transition-all">
+
+                <span class="material-icons text-xl">dashboard</span>
+
+                <span class="text-sm font-medium">Dashboard</span>
+
+            </a>
+
+            <a href="{% url 'investor_catalog' %}"
+                class="nav-item flex items-center gap-3 px-3 py-3 rounded-lg text-gray-400 transition-all active">
+
+                <span class="material-icons text-xl">storefront</span>
+
+                <span class="text-sm font-medium">Catálogo Proyectos</span>
+
+            </a>
+
+            <p class="px-3 text-xs font-semibold text-gold-500/60 uppercase tracking-wider mb-2 mt-6">Cuenta</p>
+
+            <a href="{% url 'investor_profile' %}"
+                class="nav-item flex items-center gap-3 px-3 py-3 rounded-lg text-gray-400 transition-all">
+
+                <span class="material-icons text-xl">person</span>
+
+                <span class="text-sm font-medium">Mi Perfil</span>
+
+            </a>
+
+            <a href="{% url 'investor_kyc' %}"
+                class="nav-item flex items-center gap-3 px-3 py-3 rounded-lg text-gray-400 transition-all">
+
+                <span class="material-icons text-xl">verified_user</span>
+
+                <span class="text-sm font-medium">Verificación KYC</span>
+
+            </a>
+
+        </nav>
+
+
+
+        <div class="p-4 border-t border-gold-500/20">
+
+            <form action="{% url 'logout' %}" method="post">
+
+                {% csrf_token %}
+
+                <button type="submit"
+                    class="flex items-center gap-2 text-red-400 hover:text-red-300 text-sm font-medium px-2 py-2 rounded hover:bg-red-500/10 transition-colors w-full">
+
+                    <span class="material-icons text-lg">logout</span> Salir
+
+                </button>
+
+            </form>
+
+        </div>
+
+    </aside>
+
+
+
+    <!-- Main Content -->
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+
+        <!-- Header -->
+
+        <header
+            class="h-16 border-b border-gold-500/20 flex items-center justify-between px-6 bg-dark-800/80 backdrop-blur-md sticky top-0 z-10">
+
+            <div class="flex items-center gap-4">
+
+                <h1 class="text-sm font-medium text-gray-400">Detalles del <span class="text-gold-500">Proyecto</span>
+
+                </h1>
+
+            </div>
+
+            <div class="flex items-center gap-4">
+
+                <div class="hidden sm:block text-right">
+
+                    <p class="text-sm font-medium text-gold-500">{{ user.first_name }}</p>
+
+                    <p class="text-[10px] text-gold-500/60 uppercase">Inversionista</p>
+
+                </div>
+
+                <div
+                    class="w-10 h-10 bg-gradient-to-br from-gold-500 to-gold-600 rounded-full flex items-center justify-center text-dark-900 gold-glow">
+
+                    <span class="material-icons text-sm">person</span>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+
+        <!-- Scrollable Area -->
+
+        <div class="flex-1 overflow-y-auto custom-scrollbar p-6">
+
+
+
+            <!-- Breadcrumbs -->
+
+            <div class="mb-6 flex items-center gap-2 text-xs text-gray-500 uppercase tracking-wider">
+
+                <a href="{% url 'investor_catalog' %}" class="hover:text-gold-500 transition-colors">Catálogo</a>
+
+                <span class="material-icons text-xs">chevron_right</span>
+
+                <span class="text-gold-500">{{ proyecto.nombre }}</span>
+
+            </div>
+
+
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+
+
+                <!-- Left: Content & Gallery -->
+
+                <div class="lg:col-span-2 space-y-8">
+
+
+
+                    <!-- Main Display -->
+
+                    <div class="space-y-4">
+
+                        <h2 class="text-3xl font-bold text-white">{{ proyecto.nombre }}</h2>
+
+                        <div class="flex items-center gap-4 text-sm text-gray-400">
+
+                            <span class="flex items-center gap-1"><span
+                                    class="material-icons text-gold-500 text-sm">location_on</span> {{ proyecto.ubicacion }}</span>
+
+                            <span class="flex items-center gap-1"><span
+                                    class="material-icons text-gold-500 text-sm">category</span> {{ proyecto.tipo }}</span>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <!-- Main Image / Video -->
+
+                    <div
+                        class="relative aspect-video rounded-2xl overflow-hidden border border-gold-500/20 shadow-2xl group">
+
+                        {% if proyecto.video_url %}
+
+                        <!-- Interactive Video Iframe logic here if needed, or just image as placeholder -->
+
+                        {% endif %}
+
+                        <img id="main-display-img"
+                            src="{% if proyecto.imagen_portada %}{{ proyecto.imagen_portada.url }}{% else %}{{ proyecto.imagen_portada_url }}{% endif %}"
+                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                            alt="{{ proyecto.nombre }}">
+
+                        <div class="absolute inset-0 bg-gradient-to-t from-dark-900/80 via-transparent to-transparent">
+
+                        </div>
+
+                    </div>
+
+
+
+                    <!-- Gallery -->
+
+                    {% if imagenes %}
+
+                    <div class="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
+
+                        {% for img in imagenes %}
+
+                        <div class="w-32 h-24 flex-shrink-0 rounded-xl overflow-hidden border border-gold-500/10 hover:border-gold-500/50 cursor-pointer transition-all"
+                            onclick="document.getElementById('main-display-img').src = '{% if img.imagen %}{{ img.imagen.url }}{% else %}{{ img.imagen_url }}{% endif %}'">
+
+                            <img src="{% if img.imagen %}{{ img.imagen.url }}{% else %}{{ img.imagen_url }}{% endif %}"
+                                class="w-full h-full object-cover">
+
+                        </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                    {% endif %}
+
+
+
+                    <!-- Sections / Tabs -->
+
+                    <div class="glass-panel rounded-2xl p-6">
+
+                        <div
+                            class="flex border-b border-gold-500/10 mb-6 overflow-x-auto whitespace-nowrap scrollbar-hide">
+
+                            <button class="tab-btn px-6 py-3 text-sm font-bold text-gold-500 border-b-2 border-gold-500"
+                                onclick="switchTab(this, 'resumen')">Resumen</button>
+
+                            {% for sec in secciones %}
+
+                            <button
+                                class="tab-btn px-6 py-3 text-sm font-medium text-gray-400 hover:text-gold-500 transition-colors"
+                                onclick="switchTab(this, 'sec-{{ sec.id }}')">{{ sec.nombre }}</button>
+
+                            {% endfor %}
+
+                        </div>
+
+
+
+                        <div id="tab-content"
+                            class="prose prose-invert max-w-none text-gray-300 text-sm leading-relaxed">
+
+                            <div id="resumen" class="tab-panel animate-fade-in">
+
+                                {{ proyecto.descripcion|linebreaks }}
+
+                            </div>
+
+                            {% for sec in secciones %}
+
+                            <div id="sec-{{ sec.id }}" class="tab-panel hidden animate-fade-in">
+
+                                {{ sec.contenido|safe }}
+
+                            </div>
+
+                            {% endfor %}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- Right: Stats & Investment -->
+
+                <div class="lg:col-span-1">
+
+                    <div class="sticky top-6 space-y-6">
+
+
+
+                        <!-- Investment Card -->
+
+                        <div class="glass-panel rounded-2xl p-8 relative overflow-hidden">
+
+                            <div
+                                class="absolute top-0 right-0 w-32 h-32 bg-gold-500/5 rounded-full blur-3xl -mr-16 -mt-16">
+
+                            </div>
+
+
+
+                            <div class="flex justify-between items-start mb-8">
+
+                                <div>
+
+                                    <p class="text-[10px] text-gold-500/60 uppercase tracking-widest mb-1">Precio Token
+
+                                    </p>
+
+                                    <h3 class="text-3xl font-bold text-white">${{ proyecto.precio_token }} <span
+                                            class="text-xs font-normal text-gray-500">USD</span></h3>
+
+                                </div>
+
+                                <div class="text-right">
+
+                                    <p class="text-[10px] text-green-500/60 uppercase tracking-widest mb-1">Rentabilidad
+
+                                    </p>
+
+                                    <h3 class="text-xl font-bold text-green-400">{{ proyecto.rentabilidad_estimada }}
+
+                                    </h3>
+
+                                </div>
+
+                            </div>
+
+
+
+                            <!-- Progress -->
+
+                            <div class="space-y-3 mb-8">
+
+                                <div class="flex justify-between text-xs">
+
+                                    <span class="text-gray-400">Progreso Recaudación</span>
+
+                                    <span class="text-gold-500 font-bold">{{ proyecto.porcentaje_vendido }}%</span>
+
+                                </div>
+
+                                <div class="h-2 bg-dark-900 rounded-full overflow-hidden">
+
+                                    <div class="h-full bg-gradient-to-r from-gold-600 to-gold-400 rounded-full"
+                                        style="width: {{ proyecto.porcentaje_vendido }}%"></div>
+
+                                </div>
+
+                                <p class="text-[10px] text-gray-500 flex items-center gap-1">
+
+                                    <span class="material-icons text-[12px] text-gold-500">flash_on</span> Actualizado
+
+                                    en tiempo real
+
+                                </p>
+
+                            </div>
+
+
+
+                            <div class="grid grid-cols-2 gap-4 mb-8">
+
+                                <div class="p-3 bg-dark-900/50 rounded-xl border border-gold-500/10">
+
+                                    <p class="text-[8px] text-gold-500/60 uppercase mb-1">Disponibles</p>
+
+                                    <p class="text-sm font-bold">{{ proyecto.tokens_disponibles }} Tokens</p>
+
+                                </div>
+
+                                <div class="p-3 bg-dark-900/50 rounded-xl border border-gold-500/10">
+
+                                    <p class="text-[8px] text-gold-500/60 uppercase mb-1">Mínimo</p>
+
+                                    <p class="text-sm font-bold">1 Token</p>
+
+                                </div>
+
+                            </div>
+
+
+
+
+                            <!-- ===== DROP SYSTEM ===== -->
+                            {% if drop_activo %}
+                            <!-- DROP EN VIVO -->
+                            <div class="mb-6 p-4 rounded-xl border border-red-500/30 bg-red-500/5 countdown-glow">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <span class="w-2.5 h-2.5 bg-red-500 rounded-full live-pulse"></span>
+                                    <span class="text-xs font-bold text-red-400 uppercase tracking-wider">Drop En
+                                        Vivo</span>
+                                </div>
+                                <h4 class="text-sm font-bold text-white mb-1">{{ drop_activo.nombre }}</h4>
+                                {% if drop_activo.descripcion %}
+                                <p class="text-[10px] text-gray-400 mb-3">{{ drop_activo.descripcion }}</p>
+                                {% endif %}
+
+                                <!-- Countdown -->
+                                <div class="grid grid-cols-4 gap-2 mb-3" id="drop-countdown">
+                                    <div class="bg-dark-900/80 rounded-lg p-2 text-center">
+                                        <p class="text-lg font-bold text-red-400" id="cd-days">--</p>
+                                        <p class="text-[8px] text-gray-500 uppercase">Días</p>
+                                    </div>
+                                    <div class="bg-dark-900/80 rounded-lg p-2 text-center">
+                                        <p class="text-lg font-bold text-red-400" id="cd-hours">--</p>
+                                        <p class="text-[8px] text-gray-500 uppercase">Horas</p>
+                                    </div>
+                                    <div class="bg-dark-900/80 rounded-lg p-2 text-center">
+                                        <p class="text-lg font-bold text-red-400" id="cd-mins">--</p>
+                                        <p class="text-[8px] text-gray-500 uppercase">Min</p>
+                                    </div>
+                                    <div class="bg-dark-900/80 rounded-lg p-2 text-center">
+                                        <p class="text-lg font-bold text-red-400" id="cd-secs">--</p>
+                                        <p class="text-[8px] text-gray-500 uppercase">Seg</p>
+                                    </div>
+                                </div>
+
+                                <!-- Drop Stats -->
+                                <div class="flex justify-between text-[10px] mb-1">
+                                    <span class="text-gray-400">Tokens en este Drop</span>
+                                    <span class="text-red-400 font-bold">{{ drop_activo.tokens_restantes }} / {{ drop_activo.tokens_disponibles_drop }}</span>
+                                </div>
+                                <div class="h-1.5 bg-dark-900 rounded-full overflow-hidden">
+                                    <div class="h-full bg-gradient-to-r from-red-600 to-red-400 rounded-full transition-all"
+                                        style="width:{{ drop_activo.porcentaje_vendido_drop }}%"></div>
+                                </div>
+
+                                {% if drop_activo.precio_override %}
+                                <div class="mt-3 flex items-center gap-2">
+                                    <span class="text-[10px] text-gray-500 line-through">${{ proyecto.precio_token }}
+                                        USD</span>
+                                    <span class="text-sm font-bold text-green-400">${{ drop_activo.precio_override }}
+                                        USD</span>
+                                    <span
+                                        class="px-1.5 py-0.5 bg-green-500/20 text-green-400 text-[8px] font-bold rounded">OFERTA
+                                        DROP</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <!-- Hidden data for JS countdown -->
+                            <input type="hidden" id="drop-target-date" value="{{ drop_activo.fecha_fin|date:'c' }}">
+                            <input type="hidden" id="drop-mode" value="live">
+
+                            {% elif drop_proximo %}
+                            <!-- DROP PRÓXIMO -->
+                            <div class="mb-6 p-4 rounded-xl border border-gold-500/20 bg-gold-500/5">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <span class="material-icons text-gold-500 text-sm">schedule</span>
+                                    <span class="text-xs font-bold text-gold-500 uppercase tracking-wider">Próximo
+                                        Drop</span>
+                                </div>
+                                <h4 class="text-sm font-bold text-white mb-1">{{ drop_proximo.nombre }}</h4>
+                                {% if drop_proximo.descripcion %}
+                                <p class="text-[10px] text-gray-400 mb-3">{{ drop_proximo.descripcion }}</p>
+                                {% endif %}
+
+                                <!-- Countdown hasta apertura -->
+                                <p class="text-[9px] text-gray-500 uppercase tracking-wider mb-2">La venta abre en:</p>
+                                <div class="grid grid-cols-4 gap-2 mb-3" id="drop-countdown">
+                                    <div class="bg-dark-900/80 rounded-lg p-2 text-center">
+                                        <p class="text-lg font-bold text-gold-400" id="cd-days">--</p>
+                                        <p class="text-[8px] text-gray-500 uppercase">Días</p>
+                                    </div>
+                                    <div class="bg-dark-900/80 rounded-lg p-2 text-center">
+                                        <p class="text-lg font-bold text-gold-400" id="cd-hours">--</p>
+                                        <p class="text-[8px] text-gray-500 uppercase">Horas</p>
+                                    </div>
+                                    <div class="bg-dark-900/80 rounded-lg p-2 text-center">
+                                        <p class="text-lg font-bold text-gold-400" id="cd-mins">--</p>
+                                        <p class="text-[8px] text-gray-500 uppercase">Min</p>
+                                    </div>
+                                    <div class="bg-dark-900/80 rounded-lg p-2 text-center">
+                                        <p class="text-lg font-bold text-gold-400" id="cd-secs">--</p>
+                                        <p class="text-[8px] text-gray-500 uppercase">Seg</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex justify-between text-[10px]">
+                                    <span class="text-gray-400">Tokens en Drop</span>
+                                    <span class="text-gold-500 font-bold">{{ drop_proximo.tokens_disponibles_drop }}
+                                        tokens</span>
+                                </div>
+                                {% if drop_proximo.precio_override %}
+                                <div class="mt-2 flex items-center gap-2">
+                                    <span class="text-[10px] text-gray-500">Precio especial:</span>
+                                    <span class="text-sm font-bold text-gold-400">${{ drop_proximo.precio_override }}
+                                        USD</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <!-- Hidden data for JS countdown -->
+                            <input type="hidden" id="drop-target-date" value="{{ drop_proximo.fecha_inicio|date:'c' }}">
+                            <input type="hidden" id="drop-mode" value="upcoming">
+                            {% endif %}
+
+                            <!-- CTA Button -->
+
+                            <!-- Lógica de Botón de Compra y Bloqueo -->
+                            {% if proyecto.venta_solo_drops and not drop_activo %}
+                            <!-- CASO 1: VENTA CERRADA (Solo Drops activo + Sin Drop en vivo) -->
+                            <button disabled
+                                class="block w-full py-4 bg-gray-800 text-gray-500 font-bold text-center rounded-xl border border-gray-700 cursor-not-allowed uppercase tracking-wider">
+                                {% if drop_proximo %}
+                                ⏳ Espera la apertura...
+                                {% else %}
+                                🔒 Venta Cerrada
+                                {% endif %}
+                            </button>
+                            <p class="text-[10px] text-center text-gray-500 mt-2">
+                                {% if drop_proximo %}
+                                La venta se habilitará automáticamente cuando inicie el Drop.
+                                {% else %}
+                                Este proyecto solo vende durante ventanas de Drop específicas.
+                                {% endif %}
+                            </p>
+
+                            {% else %}
+                            <!-- CASO 2: VENTA ABIERTA (Drop en vivo O Venta libre) -->
+                            <a href="{% url 'reservation_form' %}?project_slug={{ proyecto.slug }}"
+                                class="block w-full py-4 bg-gradient-to-r {% if drop_activo %}from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 animate-pulse{% else %}from-gold-600 to-gold-400 hover:from-gold-500 hover:to-gold-300{% endif %} text-white font-bold text-center rounded-xl shadow-lg {% if drop_activo %}shadow-red-500/30{% else %}shadow-gold-500/30{% endif %} transition-all transform hover:-translate-y-1 uppercase tracking-wider">
+                                {% if drop_activo %}
+                                🔥 Comprar en Drop
+                                {% else %}
+                                Comprar Tokens Ahora
+                                {% endif %}
+                            </a>
+                            {% endif %}
+
+
+
+                            {% if proyecto.pagina_oficial_url %}
+
+                            <a href="{{ proyecto.pagina_oficial_url }}" target="_blank"
+                                class="block w-full mt-4 py-2 text-center text-xs text-gold-500 hover:text-gold-400 transition-colors">
+
+                                Ver Web Oficial del Proyecto
+
+                            </a>
+
+                            {% endif %}
+
+                        </div>
+
+
+
+                        <!-- Data Room (Documents) -->
+
+                        <div class="glass-panel rounded-2xl p-6">
+
+                            <h4 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+
+                                <span class="material-icons text-gold-500 text-sm">folder_shared</span> Data Room /
+
+                                Legal
+
+                            </h4>
+
+                            <div class="space-y-3">
+
+                                {% for doc in documentos %}
+
+                                <a href="{{ doc.archivo.url }}"
+                                    class="flex items-center justify-between p-3 rounded-xl bg-dark-900/30 border border-gold-500/5 hover:border-gold-500/30 transition-all group">
+
+                                    <div class="flex items-center gap-3">
+
+                                        <span
+                                            class="material-icons text-gray-500 group-hover:text-gold-500 transition-colors">description</span>
+
+                                        <span class="text-xs text-gray-300 group-hover:text-white transition-colors">{{ doc.titulo }}</span>
+
+                                    </div>
+
+                                    <span
+                                        class="material-icons text-xs text-gray-600 group-hover:text-gold-500 transition-colors">download</span>
+
+                                </a>
+
+                                {% empty %}
+
+                                <p class="text-xs text-gray-600 italic">No hay documentos cargados.</p>
+
+                                {% endfor %}
+
+                            </div>
+
+                        </div>
+
+
+
+                    </div>
+
+                </div>
+
+
+
+            </div>
+
+            <!-- ===== PROYECTOS RELACIONADOS ===== -->
+            {% if relacionados %}
+            <div class="mt-16 pt-10 border-t border-gold-500/10">
+                <div class="flex items-center gap-3 mb-8">
+                    <span class="material-icons text-gold-500">recommend</span>
+                    <h2 class="text-2xl font-bold text-white">También te puede interesar</h2>
+                    <div class="flex-1 h-px bg-gradient-to-r from-gold-500/20 to-transparent ml-4"></div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for r in relacionados %}
+                    <a href="{% url 'investor_project_detail' r.slug %}"
+                        class="glass-panel group rounded-2xl overflow-hidden hover:scale-[1.02] transition-all duration-300 block">
+                        <div class="h-40 overflow-hidden relative">
+                            <img src="{% if r.imagen_portada %}{{ r.imagen_portada.url }}{% else %}{{ r.imagen_portada_url }}{% endif %}"
+                                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                alt="{{ r.nombre }}">
+                            <div class="absolute inset-0 bg-gradient-to-t from-dark-900 via-transparent to-transparent">
+                            </div>
+                            <div class="absolute top-3 left-3">
+                                <span
+                                    class="px-2 py-0.5 bg-dark-900/60 backdrop-blur-md border border-gold-500/20 rounded-full text-[9px] font-bold text-gold-500 uppercase flex items-center gap-1">
+                                    <span class="material-icons text-emerald-400" style="font-size:10px">location_on</span> {{ r.ubicacion }}
+                                </span>
+                            </div>
+                            {% if r.tipo %}
+                            <div class="absolute bottom-2 left-3">
+                                <span
+                                    class="px-2 py-0.5 bg-dark-900/70 backdrop-blur text-gray-300 text-[8px] font-bold rounded uppercase">{{ r.tipo }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="p-4 space-y-3">
+                            <h3
+                                class="text-sm font-bold text-white group-hover:text-gold-500 transition-colors line-clamp-1">
+                                {{ r.nombre }}</h3>
+                            <p class="text-gray-500 text-[11px] line-clamp-2 leading-relaxed">{{ r.descripcion }}</p>
+                            <div class="flex items-center justify-between pt-3 border-t border-gold-500/10">
+                                <div>
+                                    <p class="text-[8px] text-gold-500/50 uppercase tracking-wider">Precio</p>
+                                    <p class="text-xs font-bold text-white">${{ r.precio_token }} <span
+                                            class="text-[9px] text-gray-500">USD</span></p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-[8px] text-green-500/50 uppercase tracking-wider">Rentab.</p>
+                                    <p class="text-xs font-bold text-green-400">{{ r.rentabilidad_estimada }}</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-[8px] text-gold-500/50 uppercase tracking-wider">Vendido</p>
+                                    <p class="text-xs font-bold text-gold-500">{{ r.porcentaje_vendido }}%</p>
+                                </div>
+                            </div>
+                            <div class="h-1 bg-dark-900 rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-gold-600 to-gold-400 rounded-full"
+                                    style="width:{{ r.porcentaje_vendido }}%"></div>
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+
+                <div class="text-center mt-10">
+                    <a href="{% url 'investor_catalog' %}"
+                        class="inline-flex items-center gap-2 px-6 py-2.5 border border-gold-500/30 text-gold-500 font-medium rounded-xl text-sm hover:bg-gold-500/10 transition-colors">
+                        <span class="material-icons text-sm">storefront</span> Ver Catálogo Completo
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+
+
+        </div>
+
+    </main>
+
+
+
+    <script>
+
+        function switchTab(btn, tabId) {
+
+            // Update buttons
+
+            document.querySelectorAll('.tab-btn').forEach(b => {
+
+                b.classList.remove('text-gold-500', 'border-b-2', 'border-gold-500', 'font-bold');
+
+                b.classList.add('text-gray-400', 'font-medium');
+
+            });
+
+            btn.classList.add('text-gold-500', 'border-b-2', 'border-gold-500', 'font-bold');
+
+            btn.classList.remove('text-gray-400', 'font-medium');
+
+
+
+            // Update panels
+
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+
+            document.getElementById(tabId).classList.remove('hidden');
+
+        }
+
+    </script>
+
+
+
+
+    <!-- Drop Countdown Script -->
+    <script>
+        (function () {
+            const targetEl = document.getElementById('drop-target-date');
+            const modeEl = document.getElementById('drop-mode');
+            if (!targetEl) return;
+
+            const targetDate = new Date(targetEl.value).getTime();
+            const mode = modeEl ? modeEl.value : 'live';
+
+            function updateCountdown() {
+                const now = new Date().getTime();
+                const diff = targetDate - now;
+
+                if (diff <= 0) {
+                    // Timer ended
+                    document.getElementById('cd-days').textContent = '00';
+                    document.getElementById('cd-hours').textContent = '00';
+                    document.getElementById('cd-mins').textContent = '00';
+                    document.getElementById('cd-secs').textContent = '00';
+
+                    if (mode === 'upcoming') {
+                        // Drop just opened - reload page
+                        setTimeout(() => location.reload(), 2000);
+                    } else if (mode === 'live') {
+                        // Drop just ended
+                        const countdownEl = document.getElementById('drop-countdown');
+                        if (countdownEl) {
+                            countdownEl.innerHTML = '<div class="col-span-4 text-center py-2"><span class="text-red-400 font-bold text-sm">\u00a1Drop Finalizado!</span></div>';
+                        }
+                    }
+                    return;
+                }
+
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const secs = Math.floor((diff % (1000 * 60)) / 1000);
+
+                document.getElementById('cd-days').textContent = String(days).padStart(2, '0');
+                document.getElementById('cd-hours').textContent = String(hours).padStart(2, '0');
+                document.getElementById('cd-mins').textContent = String(mins).padStart(2, '0');
+                document.getElementById('cd-secs').textContent = String(secs).padStart(2, '0');
+            }
+
+            updateCountdown();
+            setInterval(updateCountdown, 1000);
+        })();
+    </script>
+
+</body>
+
+
+
 </html>

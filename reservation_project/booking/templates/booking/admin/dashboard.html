@@ -5,6 +5,24 @@
 {% block page_title %}Dashboard General{% endblock %}
 
 {% block content %}
+{% if kpi.pending_kyb_requests > 0 %}
+<div class="mb-8 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-2xl flex items-center justify-between">
+    <div class="flex items-center gap-4">
+        <div class="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center text-yellow-500">
+            <span class="material-icons text-emerald-400">business_center</span>
+        </div>
+        <div>
+            <h3 class="text-white font-bold">Solicitudes KYB Pendientes</h3>
+            <p class="text-gray-400 text-sm">Hay <span class="text-yellow-400 font-bold">{{ kpi.pending_kyb_requests }}</span> empresas esperando validación.</p>
+        </div>
+    </div>
+    <a href="{% url 'admin_kyc_list' %}"
+        class="px-6 py-2 bg-yellow-500 hover:bg-yellow-400 text-dark-900 font-bold rounded-lg shadow-lg flex items-center gap-2 transition-all">
+        <span class="material-icons text-sm">visibility</span> Revisar
+    </a>
+</div>
+{% endif %}
+
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
     <div class="glass-panel rounded-2xl p-6 relative overflow-hidden group hover:scale-[1.02] transition-transform">
         <div class="absolute inset-0 bg-gradient-to-br from-green-500/10 to-emerald-600/10"></div>
@@ -85,7 +103,8 @@
                     <tr class="hover:bg-gray-800/50">
                         <td class="py-4">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
+                                <div
+                                    class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
                                     {{ proyecto.nombre|slice:":1" }}
                                 </div>
                                 <div>
@@ -98,16 +117,20 @@
                             <span class="text-white font-semibold">{{ proyecto.tokens_vendidos }}</span>
                             <span class="text-gray-500 text-sm">/ {{ proyecto.tokens_totales }}</span>
                         </td>
-                        <td class="py-4 text-green-400 font-semibold">${{ proyecto.ingresos|floatformat:0|intcomma }}</td>
+                        <td class="py-4 text-green-400 font-semibold">${{ proyecto.ingresos|floatformat:0|intcomma }}
+                        </td>
                         <td class="py-4">
                             <div class="w-full bg-gray-700 rounded-full h-2">
-                                <div class="h-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-500" style="width: {{ proyecto.porcentaje_vendido }}%"></div>
+                                <div class="h-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-500"
+                                    style="width: {{ proyecto.porcentaje_vendido }}%"></div>
                             </div>
                             <span class="text-xs text-gray-400">{{ proyecto.porcentaje_vendido }}%</span>
                         </td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="4" class="py-8 text-center text-gray-500">No hay proyectos</td></tr>
+                    <tr>
+                        <td colspan="4" class="py-8 text-center text-gray-500">No hay proyectos</td>
+                    </tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -122,7 +145,8 @@
         <div class="space-y-4">
             {% for venta in recent_sales %}
             <div class="flex items-center gap-4 p-3 rounded-lg bg-gray-800/50 hover:bg-gray-800">
-                <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold bg-gray-500/20 text-gray-400">
+                <div
+                    class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold bg-gray-500/20 text-gray-400">
                     {{ venta.nombre|slice:":2"|upper }}
                 </div>
                 <div class="flex-1 min-w-0">
@@ -138,7 +162,8 @@
             <p class="text-center text-gray-500 py-4">Sin actividad</p>
             {% endfor %}
         </div>
-        <a href="{% url 'admin_sales' %}" class="mt-4 block text-center text-blue-400 text-sm hover:underline py-2">Ver todas →</a>
+        <a href="{% url 'admin_sales' %}" class="mt-4 block text-center text-blue-400 text-sm hover:underline py-2">Ver
+            todas →</a>
     </div>
 </div>
 
@@ -176,37 +201,38 @@
                 <p class="text-sm text-gray-400 mt-1">Rechazados</p>
             </div>
         </div>
-        <a href="{% url 'admin_signatures' %}" class="mt-6 block w-full text-center bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 rounded-xl">
+        <a href="{% url 'admin_signatures' %}"
+            class="mt-6 block w-full text-center bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 rounded-xl">
             Gestionar Firmas
         </a>
     </div>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    var ctx = document.getElementById('signaturesChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Enviados', 'Pendientes', 'Firmados', 'Rechazados'],
-            datasets: [{
-                data: [{{ signatures_stats.sent|default:0 }}, {{ signatures_stats.pending|default:0 }}, {{ signatures_stats.signed|default:0 }}, {{ signatures_stats.rejected|default:0 }}],
-                backgroundColor: ['#3b82f6', '#eab308', '#22c55e', '#ef4444'],
-                borderWidth: 0,
-                hoverOffset: 10
+    document.addEventListener('DOMContentLoaded', function () {
+        var ctx = document.getElementById('signaturesChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Enviados', 'Pendientes', 'Firmados', 'Rechazados'],
+                datasets: [{
+                    data: [{{ signatures_stats.sent|default:0 }}, {{ signatures_stats.pending|default:0 }}, {{ signatures_stats.signed|default:0 }}, {{ signatures_stats.rejected|default:0 }}],
+        backgroundColor: ['#3b82f6', '#eab308', '#22c55e', '#ef4444'],
+        borderWidth: 0,
+        hoverOffset: 10
             }]
         },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '70%',
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { color: '#9ca3af', padding: 20, usePointStyle: true }
-                }
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '70%',
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: { color: '#9ca3af', padding: 20, usePointStyle: true }
             }
         }
+    }
     });
 });
 </script>
