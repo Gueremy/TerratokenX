@@ -809,7 +809,6 @@ def api_project_detail(request):
             'slug': p.slug,
             'descripcion': p.descripcion,
             'ubicacion': p.ubicacion,
-            'rentabilidad_estimada': p.rentabilidad_estimada,
             'imagen': img_url,
             'precio_token_usd': p.precio_token,
             'pagina_oficial_url': p.pagina_oficial_url,

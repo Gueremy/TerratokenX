@@ -320,8 +320,8 @@
                                             x-text="formatNumber(activeProject.precio)"></span> USD</div>
                                 </div>
                                 <div class="info-box">
-                                    <div class="info-label">RENTABILIDAD</div>
-                                    <div class="info-value text-success" x-text="activeProject.rentabilidad"></div>
+                                    <div class="info-label">TIPO</div>
+                                    <div class="info-value text-success" x-text="activeProject.tipo"></div>
                                 </div>
                             </div>
 
@@ -605,7 +605,7 @@
         "id": "{{ p.id }}",
         "nombre": "{{ p.nombre|escapejs }}",
         "precio": {{ p.precio_token|default:100 }},
-        "rentabilidad": "{{ p.rentabilidad_estimada|escapejs }}",
+        "tipo": "{{ p.tipo|escapejs }}",
         "imagen": "{{ p.imagen_portada_url|default:'' }}"
     }{% if not forloop.last %},{% endif %}
     {% endfor %}

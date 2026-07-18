@@ -103,7 +103,7 @@ class ProyectoForm(forms.ModelForm):
     class Meta:
         from .models import Proyecto
         model = Proyecto
-        fields = ['nombre', 'slug', 'descripcion', 'ubicacion', 'precio_token', 'tokens_totales', 'rentabilidad_estimada', 'imagen_portada', 'imagen_portada_url', 'video_url', 'activo', 'tipo', 'estado', 'pagina_oficial_url']
+        fields = ['nombre', 'slug', 'descripcion', 'ubicacion', 'precio_token', 'tokens_totales', 'imagen_portada', 'imagen_portada_url', 'video_url', 'activo', 'tipo', 'estado', 'pagina_oficial_url']
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white'}),
             'slug': forms.TextInput(attrs={'class': 'w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white'}),
@@ -111,7 +111,6 @@ class ProyectoForm(forms.ModelForm):
             'ubicacion': forms.TextInput(attrs={'class': 'w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white'}),
             'precio_token': forms.NumberInput(attrs={'class': 'w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white'}),
             'tokens_totales': forms.NumberInput(attrs={'class': 'w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white'}),
-            'rentabilidad_estimada': forms.TextInput(attrs={'class': 'w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white'}),
             'imagen_portada': forms.FileInput(attrs={'class': 'w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white'}),
             'imagen_portada_url': forms.URLInput(attrs={'class': 'w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white', 'placeholder': 'https://ejemplo.com/imagen.jpg'}),
             'video_url': forms.URLInput(attrs={'class': 'w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white', 'placeholder': 'https://www.youtube.com/watch?v=...'}),

@@ -2,11 +2,15 @@
 
 import logging
 import uuid
+from decimal import Decimal
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 logger = logging.getLogger('booking')
+
+from ..constants import EstadoPago, MetodoPago  # noqa: E402
+from .base import SoftDeleteModel  # noqa: E402
 
 # Modelo para los cupones de descuento
 class Coupon(models.Model):
@@ -23,28 +27,25 @@ class Coupon(models.Model):
         today = timezone.now().date()
         return self.is_active and self.valid_from <= today <= self.valid_to
 
-class Reserva(models.Model):
-    # --- Estados de Pago ---
-    ESTADO_PENDIENTE = 'PENDIENTE'
-    ESTADO_EN_REVISION = 'EN_REVISION'
-    ESTADO_CONFIRMADO = 'CONFIRMADO'
-    
-    ESTADO_PAGO_CHOICES = [
-        (ESTADO_PENDIENTE, 'Pendiente'),
-        (ESTADO_EN_REVISION, 'En Revisión'),
-        (ESTADO_CONFIRMADO, 'Confirmado'),
-    ]
+class Reserva(SoftDeleteModel):
+    # --- Estados de Pago (aliases de compatibilidad sobre constants.EstadoPago) ---
+    ESTADO_PENDIENTE = EstadoPago.PENDIENTE
+    ESTADO_EN_REVISION = EstadoPago.EN_REVISION
+    ESTADO_CONFIRMADO = EstadoPago.CONFIRMADO
+    ESTADO_RECHAZADO = EstadoPago.RECHAZADO
+    ESTADO_FALLIDO = EstadoPago.FALLIDO
+    ESTADO_REEMBOLSADO = EstadoPago.REEMBOLSADO
 
     # --- Campos existentes ---
     nombre = models.CharField(max_length=100)
     correo = models.EmailField()
     direccion = models.CharField(max_length=200, blank=True, null=True)
-    
+
     # Nuevo campo de estado de pago (reemplaza pagado boolean)
     estado_pago = models.CharField(
         max_length=15,
-        choices=ESTADO_PAGO_CHOICES,
-        default=ESTADO_PENDIENTE,
+        choices=EstadoPago.choices,
+        default=EstadoPago.PENDIENTE,
         verbose_name="Estado de Pago"
     )
     
@@ -70,20 +71,16 @@ class Reserva(models.Model):
     # --- Nuevos campos (Tokens) ---
     cantidad_tokens = models.PositiveIntegerField("Cantidad de Tokens", default=1)
     numero_reserva = models.CharField(max_length=10, editable=False, unique=True, blank=True)
-    total = models.PositiveIntegerField("Total", default=0)
+    total = models.DecimalField("Total", max_digits=12, decimal_places=2, default=Decimal('0.00'))
     coupon = models.ForeignKey(Coupon, on_delete=models.SET_NULL, null=True, blank=True)
     # Nuevo: Vinculación con Proyecto
     proyecto = models.ForeignKey('Proyecto', on_delete=models.CASCADE, null=True, blank=True, related_name='reserva_set')
     user = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='reserva_set')
 
-    PAYMENT_METHOD_CHOICES = [
-        ('MP', 'Mercado Pago'),
-        ('CRYPTO', 'Cripto'),
-    ]
     metodo_pago = models.CharField(
         max_length=15,
-        choices=PAYMENT_METHOD_CHOICES,
-        default='MP',
+        choices=MetodoPago.choices,
+        default=MetodoPago.MP,
         verbose_name="Método de Pago"
     )
 
@@ -123,15 +120,15 @@ class Reserva(models.Model):
         else:
             precio_unitario = config.precio_base_token
             
-        self.total = precio_unitario * self.cantidad_tokens
-        
+        self.total = Decimal(precio_unitario) * self.cantidad_tokens
+
         # Aplicar descuento si hay un cupón válido
         if self.coupon and self.coupon.is_valid():
-            descuento = (self.total * self.coupon.discount_percentage) / 100
+            descuento = (self.total * self.coupon.discount_percentage) / Decimal('100')
             self.total -= descuento
 
         # No aplicar comisión extra (a petición del usuario)
-        self.total = int(self.total)
+        self.total = self.total.quantize(Decimal('0.01'))
 
         # Detectar si el estado cambió a CONFIRMADO para disparar acciones post-pago
         recien_confirmada = False
@@ -154,10 +151,20 @@ class Reserva(models.Model):
 
         # Después de guardar, si toca disparar acciones por confirmación de pago
         if recien_confirmada:
-            # 1. Enviar email de bienvenida al cliente
+            # 1. Actualizar contadores materializados (tokens vendidos e inversión acumulada)
+            if self.proyecto_id:
+                Proyecto.objects.filter(pk=self.proyecto_id).update(
+                    tokens_vendidos=models.F('tokens_vendidos') + self.cantidad_tokens
+                )
+            if self.user_id:
+                UserProfile.objects.filter(user_id=self.user_id).update(
+                    investment_total_usd=models.F('investment_total_usd') + self.total
+                )
+
+            # 2. Enviar email de bienvenida al cliente
             self._send_welcome_email()
 
-            # 2. Crear cuenta de usuario si no existe
+            # 3. Crear cuenta de usuario si no existe
             self._create_user_account()
 
     def _create_user_account(self):
@@ -235,7 +242,7 @@ class DiaFeriado(models.Model):
     def __str__(self):
         return f"{self.fecha} - {self.descripcion}"
 
-class Proyecto(models.Model):
+class Proyecto(SoftDeleteModel):
     nombre = models.CharField(max_length=200)
     slug = models.SlugField(unique=True, blank=True, help_text="URL amigable (ej: refugio-patagonia). Se genera sola si se deja vacío.")
     descripcion = models.TextField(blank=True)
@@ -247,9 +254,8 @@ class Proyecto(models.Model):
     video_url = models.URLField(blank=True, null=True, help_text="URL del video del proyecto (YouTube, Vimeo, etc.)")
     
     # Tokenomics
-    precio_token = models.PositiveIntegerField(default=100, help_text="Precio por token en USD")
+    precio_token = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('100.00'), help_text="Precio por token en USD")
     tokens_totales = models.PositiveIntegerField(default=1500)
-    rentabilidad_estimada = models.CharField(max_length=50, default="12-18% Anual")
     
     # Estado
     activo = models.BooleanField(default=True, help_text="Visible en la web")
@@ -278,6 +284,24 @@ class Proyecto(models.Model):
     # Enlace a la página oficial del proyecto (para botón "Ir a web")
     pagina_oficial_url = models.URLField(blank=True, null=True, help_text='Enlace a la página oficial del proyecto')
 
+    # --- Dueño del proyecto (fraccionador) ---
+    OWNER_TYPE_CHOICES = [
+        ('INTERNAL', 'Interno (Joan)'),
+        ('EXTERNAL', 'Externo (Fraccionador)'),
+    ]
+    owner = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='proyectos')
+    owner_type = models.CharField(max_length=10, choices=OWNER_TYPE_CHOICES, default='INTERNAL')
+
+    # --- Datos RWA ---
+    gps_data = models.JSONField(null=True, blank=True)
+    legal_hash = models.CharField(max_length=66, blank=True)
+    spv_legal_name = models.CharField(max_length=200, blank=True)
+    docs_manifest_hash = models.CharField(max_length=66, blank=True)
+    venta_solo_drops = models.BooleanField(default=False, help_text="Si está activo, solo se puede comprar con Drop activo")
+
+    # Contador materializado (se actualiza en confirmar_reserva y con la task sync_tokens_vendidos)
+    tokens_vendidos = models.PositiveIntegerField(default=0)
+
     def save(self, *args, **kwargs):
         # Autogenerar slug único a partir del nombre si no viene definido
         if not self.slug:
@@ -285,7 +309,7 @@ class Proyecto(models.Model):
             base_slug = slugify(self.nombre)[:45] or 'proyecto'
             slug = base_slug
             contador = 2
-            while Proyecto.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+            while Proyecto.all_objects.filter(slug=slug).exclude(pk=self.pk).exists():
                 slug = f"{base_slug}-{contador}"
                 contador += 1
             self.slug = slug
@@ -308,9 +332,8 @@ class Proyecto(models.Model):
     def __str__(self):
         return self.nombre
 
-    @property
-    def tokens_vendidos(self):
-        # Calcular tokens vendidos dinámicamente
+    def calcular_tokens_vendidos(self):
+        """Suma real de tokens en reservas confirmadas (para la task de sync)."""
         return self.reserva_set.filter(estado_pago='CONFIRMADO').aggregate(
             total=models.Sum('cantidad_tokens')
         )['total'] or 0
@@ -387,7 +410,7 @@ class ProyectoDocumento(models.Model):
         return f"{self.proyecto.nombre} - {self.titulo}"
 
 class Configuracion(models.Model):
-    precio_base_token = models.PositiveIntegerField(default=100, verbose_name="Precio Base Token (USD)")
+    precio_base_token = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('100.00'), verbose_name="Precio Base Token (USD)")
     # Deprecado: tokens_totales se mueve a Proyecto
     tokens_totales = models.PositiveIntegerField(default=1500, verbose_name="Tokens Totales del Proyecto (Deprecado)")
 
@@ -429,6 +452,12 @@ class UserProfile(models.Model):
         choices=KYC_STATUS_CHOICES,
         default=KYC_PENDIENTE
     )
+
+    # --- Tiers y límites KYC (1=Bronze 2=Silver 3=Gold 4=Black) ---
+    kyc_tier = models.IntegerField(default=1)
+    investment_total_usd = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    kyc_verificado_en = models.DateTimeField(null=True, blank=True)
+    didit_session_id = models.CharField(max_length=100, blank=True)
     
     # KYC Documents
     documento_identidad_frontal = models.ImageField(upload_to='kyc/documentos/', blank=True, null=True)
