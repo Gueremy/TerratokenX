@@ -213,21 +213,18 @@ class Reserva(SoftDeleteModel):
         def send_email():
             try:
                 # Recargar el objeto de la base de datos para asegurar datos frescos
+                from booking.integrations.resend import _enviar
                 from booking.models import Reserva
                 reserva_actual = Reserva.objects.get(pk=self.pk)
 
                 context = {'reserva': reserva_actual}
                 html_message = render_to_string('booking/emails/payment_confirmed_welcome.html', context)
 
-                send_mail(
+                _enviar(
+                    to=reserva_actual.correo,
                     subject=f'Bienvenido a TerraTokenX - Reserva #{reserva_actual.numero_reserva}',
-                    message='',
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[reserva_actual.correo],
-                    fail_silently=False,
-                    html_message=html_message,
+                    html=html_message,
                 )
-                logger.info("Email de bienvenida enviado a %s", reserva_actual.correo)
             except Exception as e:
                 logger.error("Error enviando email de bienvenida: %s", e)
         

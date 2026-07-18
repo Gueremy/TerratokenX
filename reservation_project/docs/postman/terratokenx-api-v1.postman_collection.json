@@ -1,0 +1,80 @@
+{
+  "info": {
+    "name": "TerraTokenX API v1",
+    "description": "API REST del backend TerraTokenX (Fase 1). Auth: Bearer token JWT.\n\nFlujo típico: login → comprar → webhook confirma → mis-inversiones.\nVariables: {{base_url}} (ej: http://localhost:8000), {{access}}, {{refresh}}.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {"key": "base_url", "value": "http://localhost:8000"},
+    {"key": "access", "value": ""},
+    {"key": "refresh", "value": ""}
+  ],
+  "item": [
+    {
+      "name": "Públicos",
+      "item": [
+        {"name": "Listar proyectos (marketplace)", "request": {"method": "GET", "url": "{{base_url}}/api/v1/proyectos/"}},
+        {"name": "Detalle proyecto", "request": {"method": "GET", "url": "{{base_url}}/api/v1/proyectos/refugio-patagonia/"}},
+        {"name": "Drop activo del proyecto", "request": {"method": "GET", "url": "{{base_url}}/api/v1/proyectos/refugio-patagonia/drop/"}},
+        {"name": "Tiers", "request": {"method": "GET", "url": "{{base_url}}/api/v1/tiers/"}},
+        {"name": "Fees", "request": {"method": "GET", "url": "{{base_url}}/api/v1/fees/"}}
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {"name": "Login", "request": {"method": "POST", "url": "{{base_url}}/api/v1/auth/login/", "header": [{"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\n  \"username\": \"usuario\",\n  \"password\": \"clave\"\n}"}}},
+        {"name": "Refresh token", "request": {"method": "POST", "url": "{{base_url}}/api/v1/auth/refresh/", "header": [{"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\n  \"refresh\": \"{{refresh}}\"\n}"}}},
+        {"name": "Logout (blacklist)", "request": {"method": "POST", "url": "{{base_url}}/api/v1/auth/logout/", "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{access}}"}], "body": {"mode": "raw", "raw": "{\n  \"refresh\": \"{{refresh}}\"\n}"}}},
+        {"name": "Registro", "request": {"method": "POST", "url": "{{base_url}}/api/v1/auth/registro/", "header": [{"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\n  \"email\": \"nuevo@correo.cl\",\n  \"password\": \"clave-segura\",\n  \"first_name\": \"Nombre\"\n}"}}},
+        {"name": "Password reset (solicitar)", "request": {"method": "POST", "url": "{{base_url}}/api/v1/auth/password/reset/", "header": [{"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\n  \"email\": \"usuario@correo.cl\"\n}"}}},
+        {"name": "Password reset (confirmar)", "request": {"method": "POST", "url": "{{base_url}}/api/v1/auth/password/reset/confirm/", "header": [{"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\n  \"uid\": \"...\",\n  \"token\": \"...\",\n  \"password\": \"nueva-clave\"\n}"}}}
+      ]
+    },
+    {
+      "name": "Inversor",
+      "item": [
+        {"name": "Mis inversiones", "request": {"method": "GET", "url": "{{base_url}}/api/v1/mis-inversiones/", "header": [{"key": "Authorization", "value": "Bearer {{access}}"}]}},
+        {"name": "Mis créditos (saldo)", "request": {"method": "GET", "url": "{{base_url}}/api/v1/mis-creditos/", "header": [{"key": "Authorization", "value": "Bearer {{access}}"}]}},
+        {"name": "Historial de créditos", "request": {"method": "GET", "url": "{{base_url}}/api/v1/mis-creditos/historial/", "header": [{"key": "Authorization", "value": "Bearer {{access}}"}]}},
+        {"name": "Comprar créditos (cotizar)", "request": {"method": "POST", "url": "{{base_url}}/api/v1/creditos/comprar/", "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{access}}"}], "body": {"mode": "raw", "raw": "{\n  \"monto_usd\": \"500.00\",\n  \"metodo_pago\": \"MP\"\n}"}}},
+        {"name": "Comprar tokens", "request": {"method": "POST", "url": "{{base_url}}/api/v1/comprar/", "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{access}}"}], "body": {"mode": "raw", "raw": "{\n  \"proyecto_id\": 1,\n  \"cantidad_tokens\": 3,\n  \"metodo_pago\": \"MP\",\n  \"creditos_aplicar\": \"0.00\"\n}"}}},
+        {"name": "Perfil (GET)", "request": {"method": "GET", "url": "{{base_url}}/api/v1/perfil/", "header": [{"key": "Authorization", "value": "Bearer {{access}}"}]}},
+        {"name": "Perfil (PUT)", "request": {"method": "PUT", "url": "{{base_url}}/api/v1/perfil/", "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{access}}"}], "body": {"mode": "raw", "raw": "{\n  \"telefono\": \"+56912345678\",\n  \"rut\": \"12.345.678-9\"\n}"}}},
+        {"name": "Iniciar KYC (Didit)", "request": {"method": "POST", "url": "{{base_url}}/api/v1/kyc/iniciar/", "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{access}}"}], "body": {"mode": "raw", "raw": "{\n  \"tier_requerido\": 2\n}"}}}
+      ]
+    },
+    {
+      "name": "Fraccionador",
+      "item": [
+        {"name": "Mis proyectos", "request": {"method": "GET", "url": "{{base_url}}/api/v1/fraccionador/proyectos/", "header": [{"key": "Authorization", "value": "Bearer {{access}}"}]}},
+        {"name": "Crear proyecto", "request": {"method": "POST", "url": "{{base_url}}/api/v1/fraccionador/proyectos/", "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{access}}"}], "body": {"mode": "raw", "raw": "{\n  \"nombre\": \"Campo Los Coigües\",\n  \"descripcion\": \"Terreno con bosque nativo\",\n  \"ubicacion\": \"Región de Los Lagos\",\n  \"precio_token\": \"120.00\",\n  \"tokens_totales\": 500\n}"}}},
+        {"name": "Detalle / editar mi proyecto", "request": {"method": "PUT", "url": "{{base_url}}/api/v1/fraccionador/proyectos/1/", "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{access}}"}], "body": {"mode": "raw", "raw": "{\n  \"descripcion\": \"Actualizada\"\n}"}}},
+        {"name": "Mis ventas", "request": {"method": "GET", "url": "{{base_url}}/api/v1/fraccionador/ventas/", "header": [{"key": "Authorization", "value": "Bearer {{access}}"}]}},
+        {"name": "Mis drops", "request": {"method": "GET", "url": "{{base_url}}/api/v1/fraccionador/drops/", "header": [{"key": "Authorization", "value": "Bearer {{access}}"}]}},
+        {"name": "Crear drop", "request": {"method": "POST", "url": "{{base_url}}/api/v1/fraccionador/drops/", "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{access}}"}], "body": {"mode": "raw", "raw": "{\n  \"proyecto\": 1,\n  \"nombre\": \"Drop 1\",\n  \"numero\": 1,\n  \"stock_total\": 150,\n  \"stock_disponible\": 150,\n  \"fecha_inicio\": \"2026-08-01T00:00:00Z\",\n  \"fecha_fin\": \"2026-09-01T00:00:00Z\",\n  \"activo\": true\n}"}}}
+      ]
+    },
+    {
+      "name": "Admin (Joan)",
+      "item": [
+        {"name": "Todos los proyectos", "request": {"method": "GET", "url": "{{base_url}}/api/v1/admin/proyectos/", "header": [{"key": "Authorization", "value": "Bearer {{access}}"}]}},
+        {"name": "Editar tier", "request": {"method": "PUT", "url": "{{base_url}}/api/v1/admin/tiers/1/", "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{access}}"}], "body": {"mode": "raw", "raw": "{\n  \"nombre\": \"Bronze\",\n  \"cap_creditos_usd\": \"1000.00\",\n  \"descuento_fees_pct\": \"7.50\",\n  \"descuento_creditos_pct\": \"10.00\",\n  \"kyc_requerido\": \"lite\"\n}"}}},
+        {"name": "Editar fee", "request": {"method": "PUT", "url": "{{base_url}}/api/v1/admin/fees/1/", "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{access}}"}], "body": {"mode": "raw", "raw": "{\n  \"porcentaje\": \"1.50\",\n  \"monto_minimo_usd\": \"500.00\",\n  \"descripcion\": \"Listing\",\n  \"activo\": true\n}"}}},
+        {"name": "Fraccionadores (pendientes)", "request": {"method": "GET", "url": "{{base_url}}/api/v1/admin/fraccionadores/?estado=PENDIENTE", "header": [{"key": "Authorization", "value": "Bearer {{access}}"}]}},
+        {"name": "Aprobar fraccionador", "request": {"method": "POST", "url": "{{base_url}}/api/v1/admin/fraccionadores/1/aprobar/", "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{access}}"}], "body": {"mode": "raw", "raw": "{\n  \"notas\": \"Documentación validada\"\n}"}}},
+        {"name": "Rechazar fraccionador", "request": {"method": "POST", "url": "{{base_url}}/api/v1/admin/fraccionadores/1/rechazar/", "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{access}}"}], "body": {"mode": "raw", "raw": "{\n  \"notas\": \"Faltan documentos\"\n}"}}},
+        {"name": "Audit log", "request": {"method": "GET", "url": "{{base_url}}/api/v1/admin/auditlog/?accion=reserva.confirmada", "header": [{"key": "Authorization", "value": "Bearer {{access}}"}]}}
+      ]
+    },
+    {
+      "name": "Webhooks (referencia — los llaman las pasarelas)",
+      "item": [
+        {"name": "MercadoPago", "request": {"method": "POST", "url": "{{base_url}}/api/webhooks/mp/", "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "x-signature", "value": "ts=...,v1=HMAC"}, {"key": "x-request-id", "value": "..."}], "body": {"mode": "raw", "raw": "{\n  \"type\": \"payment\",\n  \"data\": {\"id\": \"123\"}\n}"}}},
+        {"name": "Cryptomus", "request": {"method": "POST", "url": "{{base_url}}/api/webhooks/cryptomus/", "header": [{"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\n  \"status\": \"paid\",\n  \"uuid\": \"...\",\n  \"order_id\": \"1\",\n  \"is_final\": true,\n  \"sign\": \"MD5(body_b64 + api_key)\"\n}"}}},
+        {"name": "Kushki", "request": {"method": "POST", "url": "{{base_url}}/api/webhooks/kushki/", "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "x-kushki-signature", "value": "HMAC-SHA256(body)"}], "body": {"mode": "raw", "raw": "{\n  \"status\": \"approved\",\n  \"metadata\": {\"reserva_id\": \"1\"}\n}"}}},
+        {"name": "Didit (KYC)", "request": {"method": "POST", "url": "{{base_url}}/api/webhooks/didit/", "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "x-didit-signature", "value": "sha256=HMAC"}], "body": {"mode": "raw", "raw": "{\n  \"vendor_data\": \"1\",\n  \"status\": \"approved\",\n  \"session_id\": \"sess_...\",\n  \"completed_steps\": [\"id_verification\", \"passive_liveness\", \"face_match\"]\n}"}}}
+      ]
+    }
+  ]
+}

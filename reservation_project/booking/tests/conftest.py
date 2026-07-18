@@ -1,6 +1,16 @@
 import pytest
 
-from .factories import (
+
+@pytest.fixture(autouse=True)
+def _limpiar_cache():
+    """Evita que throttles y selectors cacheados contaminen entre tests."""
+    from django.core.cache import cache
+    cache.clear()
+    yield
+    cache.clear()
+
+
+from .factories import (  # noqa: E402
     CreditBalanceFactory,
     DropFactory,
     ProyectoFactory,

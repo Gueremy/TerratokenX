@@ -1,9 +1,51 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
+from rest_framework_simplejwt.views import TokenRefreshView
+
 from . import views
-# Force reload
+from .views import api
 
 urlpatterns = [
+    # ══════════════ API REST v1 (frontend React) ══════════════
+    # Públicos
+    path('api/v1/proyectos/', api.ProyectosListView.as_view(), name='api-proyectos'),
+    path('api/v1/proyectos/<slug:slug>/', api.ProyectoDetailView.as_view(), name='api-proyecto-detail'),
+    path('api/v1/proyectos/<slug:slug>/drop/', api.ProyectoDropView.as_view(), name='api-proyecto-drop'),
+    path('api/v1/tiers/', api.TiersPublicView.as_view(), name='api-tiers'),
+    path('api/v1/fees/', api.FeesPublicView.as_view(), name='api-fees'),
+
+    # Auth JWT
+    path('api/v1/auth/login/', api.LoginView.as_view(), name='api-login'),
+    path('api/v1/auth/refresh/', TokenRefreshView.as_view(), name='api-refresh'),
+    path('api/v1/auth/logout/', api.LogoutView.as_view(), name='api-logout'),
+    path('api/v1/auth/registro/', api.RegistroView.as_view(), name='api-registro'),
+    path('api/v1/auth/password/reset/', api.PasswordResetView.as_view(), name='api-password-reset'),
+    path('api/v1/auth/password/reset/confirm/', api.PasswordResetConfirmView.as_view(), name='api-password-reset-confirm'),
+
+    # Inversor
+    path('api/v1/mis-inversiones/', api.MisInversionesView.as_view(), name='api-mis-inversiones'),
+    path('api/v1/mis-creditos/', api.MisCreditosView.as_view(), name='api-mis-creditos'),
+    path('api/v1/mis-creditos/historial/', api.MisCreditosHistorialView.as_view(), name='api-mis-creditos-historial'),
+    path('api/v1/creditos/comprar/', api.ComprarCreditosView.as_view(), name='api-creditos-comprar'),
+    path('api/v1/comprar/', api.ComprarView.as_view(), name='api-comprar'),
+    path('api/v1/perfil/', api.PerfilView.as_view(), name='api-perfil'),
+    path('api/v1/kyc/iniciar/', api.KYCIniciarView.as_view(), name='api-kyc-iniciar'),
+
+    # Fraccionador
+    path('api/v1/fraccionador/proyectos/', api.FraccionadorProyectosView.as_view(), name='api-frac-proyectos'),
+    path('api/v1/fraccionador/proyectos/<int:pk>/', api.FraccionadorProyectoDetailView.as_view(), name='api-frac-proyecto-detail'),
+    path('api/v1/fraccionador/ventas/', api.FraccionadorVentasView.as_view(), name='api-frac-ventas'),
+    path('api/v1/fraccionador/drops/', api.FraccionadorDropsView.as_view(), name='api-frac-drops'),
+
+    # Admin Joan
+    path('api/v1/admin/proyectos/', api.AdminProyectosView.as_view(), name='api-admin-proyectos'),
+    path('api/v1/admin/tiers/<int:pk>/', api.AdminTierUpdateView.as_view(), name='api-admin-tier'),
+    path('api/v1/admin/fees/<int:pk>/', api.AdminFeeUpdateView.as_view(), name='api-admin-fee'),
+    path('api/v1/admin/fraccionadores/', api.AdminFraccionadoresView.as_view(), name='api-admin-fraccionadores'),
+    path('api/v1/admin/fraccionadores/<int:pk>/<str:accion>/', api.AdminFraccionadorAccionView.as_view(), name='api-admin-fraccionador-accion'),
+    path('api/v1/admin/auditlog/', api.AdminAuditLogView.as_view(), name='api-admin-auditlog'),
+
+    # ══════════════ Vistas legacy (templates server-side) ══════════════
     path('', views.landing_page, name='landing'),
     path('buy/', views.reservation_form, name='reservation_form'),
     path('success/<int:reserva_id>/', views.reservation_success, name='reservation_success'),
