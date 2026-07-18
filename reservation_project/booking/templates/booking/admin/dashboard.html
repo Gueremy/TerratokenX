@@ -34,20 +34,6 @@
     </div>
 
     <div class="glass-panel rounded-2xl p-6 relative overflow-hidden group hover:scale-[1.02] transition-transform">
-        <div class="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-violet-600/10"></div>
-        <div class="relative">
-            <div class="flex items-center justify-between mb-4">
-                <div class="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
-                    <span class="material-icons text-purple-400 text-2xl">verified</span>
-                </div>
-                <span class="text-xs text-purple-400 bg-purple-500/20 px-2 py-1 rounded-full">{{ kpi.pending_signatures }} pend.</span>
-            </div>
-            <p class="text-gray-400 text-sm mb-1">Contratos Firmados</p>
-            <p class="text-3xl font-bold text-white">{{ kpi.signed_contracts }}</p>
-        </div>
-    </div>
-
-    <div class="glass-panel rounded-2xl p-6 relative overflow-hidden group hover:scale-[1.02] transition-transform">
         <div class="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-amber-600/10"></div>
         <div class="relative">
             <div class="flex items-center justify-between mb-4">
@@ -142,72 +128,4 @@
     </div>
 </div>
 
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <div class="glass-panel rounded-2xl p-6">
-        <h2 class="text-lg font-semibold text-white mb-6 flex items-center gap-2">
-            <span class="material-icons text-purple-400">pie_chart</span>
-            Estado de Contratos
-        </h2>
-        <div class="flex items-center justify-center h-64">
-            <canvas id="signaturesChart"></canvas>
-        </div>
-    </div>
-
-    <div class="glass-panel rounded-2xl p-6">
-        <h2 class="text-lg font-semibold text-white mb-6 flex items-center gap-2">
-            <span class="material-icons text-purple-400">analytics</span>
-            Metricas de Firmas
-        </h2>
-        <div class="grid grid-cols-2 gap-4">
-            <div class="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 text-center">
-                <p class="text-3xl font-bold text-blue-400">{{ signatures_stats.sent|default:0 }}</p>
-                <p class="text-sm text-gray-400 mt-1">Enviados</p>
-            </div>
-            <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 text-center">
-                <p class="text-3xl font-bold text-yellow-400">{{ signatures_stats.pending|default:0 }}</p>
-                <p class="text-sm text-gray-400 mt-1">Pendientes</p>
-            </div>
-            <div class="bg-green-500/10 border border-green-500/20 rounded-xl p-4 text-center">
-                <p class="text-3xl font-bold text-green-400">{{ signatures_stats.signed|default:0 }}</p>
-                <p class="text-sm text-gray-400 mt-1">Firmados</p>
-            </div>
-            <div class="bg-red-500/10 border border-red-500/20 rounded-xl p-4 text-center">
-                <p class="text-3xl font-bold text-red-400">{{ signatures_stats.rejected|default:0 }}</p>
-                <p class="text-sm text-gray-400 mt-1">Rechazados</p>
-            </div>
-        </div>
-        <a href="{% url 'admin_signatures' %}" class="mt-6 block w-full text-center bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 rounded-xl">
-            Gestionar Firmas
-        </a>
-    </div>
-</div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    var ctx = document.getElementById('signaturesChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Enviados', 'Pendientes', 'Firmados', 'Rechazados'],
-            datasets: [{
-                data: [{{ signatures_stats.sent|default:0 }}, {{ signatures_stats.pending|default:0 }}, {{ signatures_stats.signed|default:0 }}, {{ signatures_stats.rejected|default:0 }}],
-                backgroundColor: ['#3b82f6', '#eab308', '#22c55e', '#ef4444'],
-                borderWidth: 0,
-                hoverOffset: 10
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '70%',
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { color: '#9ca3af', padding: 20, usePointStyle: true }
-                }
-            }
-        }
-    });
-});
-</script>
 {% endblock %}

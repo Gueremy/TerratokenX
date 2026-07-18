@@ -212,48 +212,20 @@
 
                     <h2 class="text-2xl font-bold text-white mt-12 mb-6 flex items-center gap-2">
                         <span class="material-icons text-gold-500">verified</span>
-                        Método de Certificación
+                        Billetera Digital
                     </h2>
 
                     <div class="glass-panel rounded-3xl p-8 space-y-6">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <!-- Opción FirmaVirtual (Activa) -->
-                            <label
-                                class="relative flex flex-col p-6 rounded-2xl border-2 border-gold-500 bg-gold-500/5 cursor-pointer transition-all">
-                                <input type="radio" name="metodo_certificacion" value="FIRMA_VIRTUAL" {% if profile.metodo_certificacion == 'FIRMA_VIRTUAL' %}checked{% endif %}
-                                    class="absolute opacity-0">
-                                <div class="flex items-center justify-between mb-4">
-                                    <span class="material-icons text-gold-500 text-3xl">draw</span>
-                                    <span
-                                        class="bg-gold-500 text-dark-900 text-[10px] font-bold px-2 py-0.5 rounded">RECOMENDADO</span>
-                                </div>
-                                <h4 class="text-white font-bold mb-1">Contrato Legal Digital</h4>
-                                <p class="text-xs text-gray-400 leading-relaxed">Firma de contrato mediante FirmaVirtual
-                                    con validez legal notarial.</p>
-                            </label>
-
-                            <!-- Opción Smart Contract (Próximamente) -->
-                            <div
-                                class="relative flex flex-col p-6 rounded-2xl border-2 border-gray-700 bg-gray-800/20 opacity-60 cursor-not-allowed">
-                                <div class="flex items-center justify-between mb-4">
-                                    <span class="material-icons text-gray-500 text-3xl">token</span>
-                                    <span
-                                        class="bg-gray-700 text-gray-400 text-[10px] font-bold px-2 py-0.5 rounded uppercase">Próximamente</span>
-                                </div>
-                                <h4 class="text-gray-400 font-bold mb-1">Título Digital (NFT)</h4>
-                                <p class="text-xs text-gray-500 leading-relaxed">Certificación inmutable en la red
-                                    Polygon. No disponible temporalmente.</p>
-                            </div>
-
-                            <div class="space-y-2 md:col-span-2">
+                        <div class="grid grid-cols-1 gap-6">
+                            <div class="space-y-2">
                                 <label class="text-xs font-bold text-gold-500 uppercase tracking-widest">Billetera
                                     Polygon (Opcional)</label>
                                 <input type="text" name="wallet_address"
                                     value="{{ profile.wallet_address|default_if_none:'' }}"
                                     class="w-full bg-dark-900/50 border border-gold-500/10 rounded-xl px-4 py-3 text-white transition-all"
-                                    placeholder="0x..." {% if profile.metodo_certificacion != 'SMART_CONTRACT' %}disabled{% endif %}>
-                                <p class="text-[10px] text-gray-500">Solo necesaria para el método de Título Digital.
-                                </p>
+                                    placeholder="0x...">
+                                <p class="text-[10px] text-gray-500">Necesaria para recibir tus tokens cuando la
+                                    emisión en blockchain esté disponible.</p>
                             </div>
                         </div>
                     </div>

@@ -1,16 +1,19 @@
 # En tu archivo models.py
 
+import logging
 import uuid
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+
+logger = logging.getLogger('booking')
 
 # Modelo para los cupones de descuento
 class Coupon(models.Model):
     code = models.CharField(max_length=50, unique=True)
     discount_percentage = models.PositiveIntegerField(help_text="Porcentaje de descuento (e.g., 10 para 10%)")
     is_active = models.BooleanField(default=True)
-    valid_from = models.DateField()
+    valid_from = models.DateField(default=timezone.localdate)
     valid_to = models.DateField()
 
     def __str__(self):
@@ -54,24 +57,15 @@ class Reserva(models.Model):
     crypto_address = models.CharField(max_length=255, null=True, blank=True, help_text="Dirección de depósito asignada")
     payment_window_start = models.DateTimeField(null=True, blank=True, help_text="Inicio de la ventana de espera del pago")
     
-    # --- Datos para Contrato Legal (FirmaVirtual) ---
-    rut = models.CharField("RUT Firmante", max_length=20, blank=True, null=True, help_text="RUT de quien firma (Persona o Rep. Legal)")
-    telefono = models.CharField(max_length=20, blank=True, null=True, help_text="Fundamental para FirmaVirtual")
-    
+    # --- Datos legales del comprador ---
+    rut = models.CharField("RUT", max_length=20, blank=True, null=True, help_text="RUT del comprador (Persona o Rep. Legal)")
+    telefono = models.CharField(max_length=20, blank=True, null=True)
+
     # Datos para Persona Jurídica
     es_empresa = models.BooleanField(default=False, verbose_name="¿Es Persona Jurídica?")
     razon_social = models.CharField(max_length=200, blank=True, null=True, help_text="Solo si es empresa")
     rut_empresa = models.CharField(max_length=20, blank=True, null=True, help_text="RUT de la empresa")
     cargo_representante = models.CharField(max_length=100, blank=True, null=True, help_text="Ej: Gerente General")
-
-    # Integración FirmaVirtual (Tracking)
-    firmavirtual_id = models.CharField(max_length=100, blank=True, null=True, help_text="ID del trámite en FV (request_id)")
-    firmavirtual_url = models.URLField(max_length=500, blank=True, null=True, help_text="Link para firmar")
-    firmavirtual_status = models.CharField(max_length=50, default='pending', help_text="Estado: pending, signed, rejected")
-    firmavirtual_files_ids = models.JSONField(default=list, blank=True, help_text="IDs de archivos asociados")
-    
-    # Archivo Final
-    contrato_firmado = models.FileField(upload_to='contratos_firmados/', blank=True, null=True)
 
     # --- Nuevos campos (Tokens) ---
     cantidad_tokens = models.PositiveIntegerField("Cantidad de Tokens", default=1)
@@ -84,8 +78,7 @@ class Reserva(models.Model):
 
     PAYMENT_METHOD_CHOICES = [
         ('MP', 'Mercado Pago'),
-        ('CRYPTO', 'CryptoMarket'),
-        ('CRYPTO_MANUAL', 'Crypto (Manual)'),
+        ('CRYPTO', 'Cripto'),
     ]
     metodo_pago = models.CharField(
         max_length=15,
@@ -93,6 +86,14 @@ class Reserva(models.Model):
         default='MP',
         verbose_name="Método de Pago"
     )
+
+    # --- Referencias de pasarelas de pago ---
+    mp_payment_id = models.CharField(max_length=100, blank=True, db_index=True, help_text="ID de pago en MercadoPago")
+    cryptomus_uuid = models.CharField(max_length=100, blank=True, null=True, unique=True, help_text="UUID del invoice en Cryptomus")
+    kushki_token = models.CharField(max_length=100, blank=True, help_text="Token de transacción Kushki")
+
+    # Blockchain (Fase 3)
+    tx_hash = models.CharField(max_length=66, blank=True, help_text="Hash de la transacción de mint")
 
     # Propiedad computada para compatibilidad con código existente
     @property
@@ -132,30 +133,32 @@ class Reserva(models.Model):
         # No aplicar comisión extra (a petición del usuario)
         self.total = int(self.total)
 
-        # Detectar si el estado cambió a CONFIRMADO para disparar FirmaVirtual
-        trigger_firmavirtual = False
+        # Detectar si el estado cambió a CONFIRMADO para disparar acciones post-pago
+        recien_confirmada = False
         if self.pk:
             # Si es una actualización, verificar si el estado cambió
             try:
                 old_instance = Reserva.objects.get(pk=self.pk)
+                # Una reserva CONFIRMADA no puede volver a PENDIENTE (protección de estado)
+                if (old_instance.estado_pago == self.ESTADO_CONFIRMADO
+                        and self.estado_pago == self.ESTADO_PENDIENTE):
+                    raise ValidationError(
+                        "Una reserva CONFIRMADA no puede volver a estado PENDIENTE."
+                    )
                 if old_instance.estado_pago != self.ESTADO_CONFIRMADO and self.estado_pago == self.ESTADO_CONFIRMADO:
-                    trigger_firmavirtual = True
+                    recien_confirmada = True
             except Reserva.DoesNotExist:
                 pass
 
         super().save(*args, **kwargs)
-        
+
         # Después de guardar, si toca disparar acciones por confirmación de pago
-        if trigger_firmavirtual:
+        if recien_confirmada:
             # 1. Enviar email de bienvenida al cliente
             self._send_welcome_email()
-            
+
             # 2. Crear cuenta de usuario si no existe
             self._create_user_account()
-            
-            # 3. Disparar FirmaVirtual si no tiene contrato ya
-            if not self.firmavirtual_id:
-                self._trigger_firmavirtual_contract()
 
     def _create_user_account(self):
         """
@@ -181,7 +184,7 @@ class Reserva(models.Model):
             )
             self.user = user
             self.save(update_fields=['user'])
-            print(f"👤 Usuario creado automáticamente: {user.username} ({self.correo})")
+            logger.info("Usuario creado automaticamente: %s (%s)", user.username, self.correo)
             return user
         user = User.objects.get(email=self.correo)
         self.user = user
@@ -202,57 +205,25 @@ class Reserva(models.Model):
                 # Recargar el objeto de la base de datos para asegurar datos frescos
                 from booking.models import Reserva
                 reserva_actual = Reserva.objects.get(pk=self.pk)
-                
+
                 context = {'reserva': reserva_actual}
-                print(f"DEBUG EMAIL: numero_reserva={reserva_actual.numero_reserva}, nombre={reserva_actual.nombre}")
-                
                 html_message = render_to_string('booking/emails/payment_confirmed_welcome.html', context)
-                
-                # Debug: verificar si el template se renderizó
-                if '{{ reserva' in html_message:
-                    print("ERROR: Template NO se renderizó correctamente!")
-                else:
-                    print("DEBUG: Template renderizado OK")
-                
+
                 send_mail(
-                    subject=f'🎉 ¡Bienvenido a TerraTokenX! - Reserva #{reserva_actual.numero_reserva}',
+                    subject=f'Bienvenido a TerraTokenX - Reserva #{reserva_actual.numero_reserva}',
                     message='',
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     recipient_list=[reserva_actual.correo],
                     fail_silently=False,
                     html_message=html_message,
                 )
-                print(f"📧 Email de bienvenida enviado a {reserva_actual.correo}")
+                logger.info("Email de bienvenida enviado a %s", reserva_actual.correo)
             except Exception as e:
-                print(f"❌ Error enviando email de bienvenida: {e}")
+                logger.error("Error enviando email de bienvenida: %s", e)
         
         # Ejecutar en hilo separado
         email_thread = threading.Thread(target=send_email)
         email_thread.start()
-
-    def _trigger_firmavirtual_contract(self):
-        """
-        Dispara la creación del contrato en FirmaVirtual.
-        Se ejecuta automáticamente cuando el pago pasa a CONFIRMADO.
-        """
-        try:
-            from booking.services.firmavirtual import FirmaVirtualService
-            service = FirmaVirtualService()
-            result = service.create_contract_request(self)
-            
-            if 'error' not in result and result.get('status') == 'success':
-                # Guardar el ID del trámite - está en message.contract.sContractID
-                contract_data = result.get('message', {}).get('contract', {})
-                fv_id = contract_data.get('sContractID')
-                if fv_id:
-                    self.firmavirtual_id = str(fv_id)
-                    self.firmavirtual_status = 'sent'
-                    self.save(update_fields=['firmavirtual_id', 'firmavirtual_status'])
-                print(f"FirmaVirtual: Contrato creado para reserva {self.numero_reserva} - ID: {fv_id}")
-            else:
-                print(f"FirmaVirtual Error para reserva {self.numero_reserva}: {result.get('error')}")
-        except Exception as e:
-            print(f"Excepción FirmaVirtual para reserva {self.numero_reserva}: {str(e)}")
 
     def __str__(self):
         return f"{self.nombre} - {self.numero_reserva}"
@@ -266,7 +237,7 @@ class DiaFeriado(models.Model):
 
 class Proyecto(models.Model):
     nombre = models.CharField(max_length=200)
-    slug = models.SlugField(unique=True, help_text="URL amigable (ej: refugio-patagonia)")
+    slug = models.SlugField(unique=True, blank=True, help_text="URL amigable (ej: refugio-patagonia). Se genera sola si se deja vacío.")
     descripcion = models.TextField(blank=True)
     ubicacion = models.CharField(max_length=200, default="Patagonia Chilena")
     
@@ -308,6 +279,17 @@ class Proyecto(models.Model):
     pagina_oficial_url = models.URLField(blank=True, null=True, help_text='Enlace a la página oficial del proyecto')
 
     def save(self, *args, **kwargs):
+        # Autogenerar slug único a partir del nombre si no viene definido
+        if not self.slug:
+            from django.utils.text import slugify
+            base_slug = slugify(self.nombre)[:45] or 'proyecto'
+            slug = base_slug
+            contador = 2
+            while Proyecto.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                slug = f"{base_slug}-{contador}"
+                contador += 1
+            self.slug = slug
+
         # Auto-fix Google Drive links
         if self.imagen_portada_url and 'drive.google.com' in self.imagen_portada_url:
             import re
@@ -315,12 +297,12 @@ class Proyecto(models.Model):
             match = re.search(r'/file/d/([^/?#]+)', self.imagen_portada_url)
             if not match:
                 match = re.search(r'[?&]id=([^&#]+)', self.imagen_portada_url)
-            
+
             if match:
                 file_id = match.group(1)
                 # Usar lh3.googleusercontent.com es más fiable para imágenes directas (Content-Type correcto)
                 self.imagen_portada_url = f"https://lh3.googleusercontent.com/d/{file_id}"
-        
+
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -456,21 +438,6 @@ class UserProfile(models.Model):
     fecha_kyc = models.DateTimeField(null=True, blank=True)
     comentarios_admin = models.TextField(blank=True, null=True)
     
-    # Métodos de Certificación / Firma
-    METODO_FIRMA_VIRTUAL = 'FIRMA_VIRTUAL'
-    METODO_SMART_CONTRACT = 'SMART_CONTRACT'
-    
-    METODO_CHOICES = [
-        (METODO_FIRMA_VIRTUAL, 'Contrato Legal (FirmaVirtual)'),
-        (METODO_SMART_CONTRACT, 'Título Digital (Smart Contract) - Próximamente'),
-    ]
-    
-    metodo_certificacion = models.CharField(
-        max_length=20,
-        choices=METODO_CHOICES,
-        default=METODO_FIRMA_VIRTUAL,
-        help_text="Elija cómo desea certificar su propiedad"
-    )
     wallet_address = models.CharField(max_length=100, blank=True, null=True, help_text="Dirección de billetera (Opcional)")
 
     def __str__(self):

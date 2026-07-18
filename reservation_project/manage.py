@@ -3,7 +3,8 @@ import os
 import sys
 
 def main():
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'reservation_project.settings')
+    django_env = os.environ.get('DJANGO_ENV', 'local')
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', f'reservation_project.settings.{django_env}')
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

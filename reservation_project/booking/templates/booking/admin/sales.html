@@ -60,7 +60,6 @@
                     <th class="px-4 py-4 font-medium">Cupon</th>
                     <th class="px-4 py-4 font-medium">Metodo</th>
                     <th class="px-4 py-4 font-medium">Estado</th>
-                    <th class="px-4 py-4 font-medium">Contrato</th>
                     <th class="px-4 py-4 font-medium text-right">Acciones</th>
                 </tr>
             </thead>
@@ -94,14 +93,6 @@
                             <span class="text-[10px] text-yellow-400 mt-1 font-medium">{{ reserva.crypto_currency         }}</span>
                             {% endif %}
                         </div>
-                        {% elif reserva.metodo_pago == 'CRYPTO_MANUAL' %}
-                        <div class="flex flex-col">
-                            <span class="px-2 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs">Manual
-                                Cripto</span>
-                            {% if reserva.crypto_currency %}
-                            <span class="text-[10px] text-yellow-400 mt-1 font-medium">{{ reserva.crypto_currency         }}</span>
-                            {% endif %}
-                        </div>
                         {% else %}
                         <span class="text-gray-500 text-xs">Manual</span>
                         {% endif %}
@@ -116,20 +107,6 @@
                         {% else %}
                         <span
                             class="px-2 py-1 rounded-full bg-gray-500/20 text-gray-400 text-xs font-medium">Pendiente</span>
-                        {% endif %}
-                    </td>
-                    <td class="px-4 py-4">
-                        {% if reserva.firmavirtual_id %}
-                        {% if reserva.firmavirtual_status == 'signed' %}
-                        <span class="text-green-400 text-xs">Firmado</span>
-                        {% else %}
-                        <span class="text-blue-400 text-xs">Enviado</span>
-                        {% endif %}
-                        {% elif reserva.estado_pago == 'CONFIRMADO' %}
-                        <a href="{% url 'reenviar_contrato' reserva.id %}"
-                            class="text-yellow-400 text-xs hover:underline">Re-enviar</a>
-                        {% else %}
-                        <span class="text-gray-600 text-xs">-</span>
                         {% endif %}
                     </td>
                     <td class="px-4 py-4 text-right">

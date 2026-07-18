@@ -36,7 +36,24 @@ urllib3==2.5.0
 whitenoise==6.9.0
 django-cors-headers
 django-widget-tweaks
-sendgrid
-django-sendgrid-v5
 xhtml2pdf>=0.2.17
 psycopg2-binary
+
+# API REST + Auth JWT
+djangorestframework==3.15.2
+djangorestframework-simplejwt==5.3.1
+
+# Tareas en background
+celery==5.4.0
+redis==5.2.1
+django-celery-beat==2.7.0
+
+# Email transaccional
+resend==2.4.0
+
+# Testing
+pytest==8.3.4
+pytest-django==4.9.0
+pytest-mock==3.14.0
+factory-boy==3.3.1
+faker==33.1.0

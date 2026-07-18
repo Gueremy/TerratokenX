@@ -8,6 +8,8 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
+      - key: DJANGO_ENV
+        value: production
       - key: SECRET_KEY
         generateValue: true
       - key: WEB_CONCURRENCY

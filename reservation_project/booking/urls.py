@@ -13,7 +13,6 @@ urlpatterns = [
     path('admin-panel/', views.admin_panel, name='admin_panel'),
     path('admin-panel/dashboard/', views.admin_dashboard, name='admin_dashboard'),
     path('admin-panel/sales/', views.admin_sales, name='admin_sales'),
-    path('admin-panel/signatures/', views.admin_signatures, name='admin_signatures'),
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
 
@@ -33,8 +32,7 @@ urlpatterns = [
     path('eliminar-cupon/<int:coupon_id>/', views.eliminar_cupon, name='eliminar_cupon'),
     path('export-reservas-excel/', views.export_reservas_excel, name='export_reservas_excel'),
     path('export-reservas-pdf/', views.export_reservas_pdf, name='export_reservas_pdf'),
-    path('reenviar-contrato/<int:reserva_id>/', views.reenviar_contrato, name='reenviar_contrato'),
-    
+
     # Preview Email
     path('preview-email/', views.preview_email, name='preview_email'),
 
@@ -63,24 +61,11 @@ urlpatterns = [
     # AJAX Coupon Validation
     path('validate-coupon/', views.validate_coupon, name='validate_coupon'),
     
-    # Crypto Payment Flow (DIY)
-    path('payment/crypto/<int:reserva_id>/', views.payment_crypto_view, name='payment_crypto_view'),
-    path('api/crypto/get-details/', views.api_get_crypto_details, name='api_get_crypto_details'),
-    path('api/crypto/check-payment/', views.api_check_payment_status, name='api_check_payment_status'),
-    path('api/crypto/manual-confirm/', views.api_manual_confirm_payment, name='api_manual_confirm_payment'),
-
-    # Crypto Payment Simulation (Development Only)
-    path('simulate-crypto-payment/<int:reserva_id>/', views.simulate_crypto_payment, name='simulate_crypto_payment'),
-    
     # Public API for Landing Page Progress Bar
     path('api/stats/', views.api_stats, name='api_stats'),
     path('api/config/', views.api_config, name='api_config'),
     path('api/projects/', views.api_project_list, name='api_project_list'), # Catálogo
     path('api/project-detail/', views.api_project_detail, name='api_project_detail'), # Detalle dinámico
-    
-    # FirmaVirtual Webhook
-    path('api/webhooks/firmavirtual/', views.firmavirtual_webhook, name='firmavirtual_webhook'),
-    path('api/firmavirtual/status/<int:reserva_id>/', views.firmavirtual_status, name='firmavirtual_status'),
     
     # Investor Portal
     path('portal/login/', views.investor_login, name='investor_login'),
