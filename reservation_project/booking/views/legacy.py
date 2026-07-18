@@ -3,8 +3,8 @@ from django.http import HttpResponse, JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
-from .forms import ReservaForm, AdminReservaForm, ProyectoForm, ProyectoImagenFormSet
-from .models import Reserva, DiaFeriado, Coupon, Configuracion, Proyecto
+from ..forms import ReservaForm, AdminReservaForm, ProyectoForm, ProyectoImagenFormSet
+from ..models import Reserva, DiaFeriado, Coupon, Configuracion, Proyecto
 from django.contrib import messages
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
@@ -338,9 +338,17 @@ def reservation_form(request):
                 threading.Thread(target=send_email_async, args=(reserva.id,)).start()
 
                 if reserva.metodo_pago == 'CRYPTO':
-                    # El pago crypto se integra vía Cryptomus (ver Semana 5).
-                    # Mientras tanto la reserva queda PENDIENTE y se muestra la página de éxito.
-                    return redirect('reservation_success', reserva_id=reserva.id)
+                    # Pago crypto vía Cryptomus: crear invoice y redirigir al checkout
+                    try:
+                        from booking.integrations.cryptomus import crear_invoice
+                        invoice = crear_invoice(str(reserva.total), str(reserva.id))
+                        reserva.cryptomus_uuid = invoice.get('uuid')
+                        reserva.save(update_fields=['cryptomus_uuid'])
+                        return redirect(invoice['url'])
+                    except Exception as e:
+                        logger.error("Error creando invoice Cryptomus para reserva %s: %s", reserva.id, e)
+                        messages.warning(request, "No pudimos generar el pago cripto. Te contactaremos para completar el pago.")
+                        return redirect('reservation_success', reserva_id=reserva.id)
                 return redirect('create_mp_preference', reserva_id=reserva.id)
 
         # Si llegamos aquí con error
@@ -638,7 +646,7 @@ def api_stats(request):
     Si no se especifica, carga el proyecto por defecto (Refugio Patagonia).
     """
     from django.db.models import Sum
-    from .models import Proyecto
+    from ..models import Proyecto
     
     project_id = request.GET.get('project_id')
     slug = request.GET.get('slug')
@@ -685,7 +693,7 @@ def api_config(request):
     API para obtener configuración (precio del token).
     Soporta ?project_id=X.
     """
-    from .models import Proyecto, Configuracion
+    from ..models import Proyecto, Configuracion
     
     project_id = request.GET.get('project_id')
     slug = request.GET.get('slug')
@@ -719,7 +727,7 @@ def api_project_list(request):
     API para obtener la lista de proyectos activos.
     Usada por index.html para generar el catálogo.
     """
-    from .models import Proyecto
+    from ..models import Proyecto
     
     try:
         proyectos = Proyecto.objects.filter(activo=True).order_by('-created_at')
@@ -760,7 +768,7 @@ def api_project_detail(request):
     API para obtener detalles completos de un proyecto específico por slug.
     Usada por index2.html para llenar títulos, imágenes, etc.
     """
-    from .models import Proyecto
+    from ..models import Proyecto
     
     slug = request.GET.get('slug')
     
@@ -831,7 +839,7 @@ def admin_projects(request):
     """
     Vista para listar proyectos en el panel de administración.
     """
-    from .models import Proyecto
+    from ..models import Proyecto
     proyectos = Proyecto.objects.all().order_by('-created_at')
     pending_count = Reserva.objects.filter(estado_pago='PENDIENTE').count()
     return render(request, 'booking/admin/projects.html', {
@@ -843,7 +851,7 @@ def admin_projects(request):
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
 def admin_project_create(request):
-    from .forms import ProyectoForm
+    from ..forms import ProyectoForm
     if request.method == 'POST':
         form = ProyectoForm(request.POST, request.FILES)
         formset = ProyectoImagenFormSet(request.POST, request.FILES)
@@ -908,7 +916,7 @@ def admin_project_edit(request, project_id):
 @user_passes_test(lambda u: u.is_superuser)
 def admin_documento_create(request, project_id):
     """Subir nuevo documento al Data Room de un proyecto"""
-    from .models import Proyecto, ProyectoDocumento
+    from ..models import Proyecto, ProyectoDocumento
     
     proyecto = get_object_or_404(Proyecto, pk=project_id)
     
@@ -936,7 +944,7 @@ def admin_documento_create(request, project_id):
 @user_passes_test(lambda u: u.is_superuser)
 def admin_documento_delete(request, doc_id):
     """Eliminar un documento del Data Room"""
-    from .models import ProyectoDocumento
+    from ..models import ProyectoDocumento
     documento = get_object_or_404(ProyectoDocumento, pk=doc_id)
     project_id = documento.proyecto.id
     documento.delete()
@@ -950,7 +958,7 @@ def admin_documento_delete(request, doc_id):
 @user_passes_test(lambda u: u.is_superuser)
 def admin_section_create(request, project_id):
     """Crear nueva sección para un proyecto"""
-    from .models import Proyecto, ProyectoSeccion
+    from ..models import Proyecto, ProyectoSeccion
     
     proyecto = get_object_or_404(Proyecto, pk=project_id)
     
@@ -980,7 +988,7 @@ def admin_section_create(request, project_id):
 @user_passes_test(lambda u: u.is_superuser)
 def admin_section_edit(request, section_id):
     """Editar sección existente"""
-    from .models import ProyectoSeccion
+    from ..models import ProyectoSeccion
     
     seccion = get_object_or_404(ProyectoSeccion, pk=section_id)
     
@@ -1000,7 +1008,7 @@ def admin_section_edit(request, section_id):
 @user_passes_test(lambda u: u.is_superuser)
 def admin_section_delete(request, section_id):
     """Eliminar sección"""
-    from .models import ProyectoSeccion
+    from ..models import ProyectoSeccion
     
     seccion = get_object_or_404(ProyectoSeccion, pk=section_id)
     project_id = seccion.proyecto.id
@@ -1013,7 +1021,7 @@ def admin_section_delete(request, section_id):
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
 def admin_project_delete(request, project_id):
-    from .models import Proyecto
+    from ..models import Proyecto
     
     proyecto = get_object_or_404(Proyecto, pk=project_id)
     # Optional: Don't hard delete, just deactivate? 
@@ -1262,7 +1270,7 @@ def admin_users(request):
     """
     from django.db.models import Sum, Count, OuterRef, Subquery, Q
     from django.db.models.functions import Coalesce
-    from .models import Reserva
+    from ..models import Reserva
 
     # Subconsulta para obtener strings de proyectos por usuario
     # Como SQLite no tiene group_concat nativo fácil en subqueries de Django, calculamos sumas básicas
@@ -1298,7 +1306,7 @@ def admin_kyc_list(request):
     """
     Lista de perfiles con su estado KYC para validación masiva.
     """
-    from .models import UserProfile
+    from ..models import UserProfile
     perfiles = UserProfile.objects.all().order_by('-fecha_kyc')
     
     # Filtrar si es necesario
@@ -1317,7 +1325,7 @@ def admin_kyc_process(request, profile_id):
     """
     Aprobar o rechazar un KYC.
     """
-    from .models import UserProfile
+    from ..models import UserProfile
     profile = get_object_or_404(UserProfile, id=profile_id)
     
     if request.method == 'POST':
@@ -1436,7 +1444,7 @@ def investor_register(request):
 
 @login_required(login_url='investor_login')
 def investor_profile(request):
-    from .models import UserProfile
+    from ..models import UserProfile
     profile, created = UserProfile.objects.get_or_create(user=request.user)
     
     if request.method == 'POST':
@@ -1457,7 +1465,7 @@ def investor_profile(request):
 
 @login_required(login_url='investor_login')
 def investor_kyc(request):
-    from .models import UserProfile
+    from ..models import UserProfile
     profile, created = UserProfile.objects.get_or_create(user=request.user)
     
     if request.method == 'POST':

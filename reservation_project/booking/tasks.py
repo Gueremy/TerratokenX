@@ -116,6 +116,26 @@ def notificar_revision_manual_task(order_id: str):
     )
 
 
+@shared_task(bind=True, max_retries=5, default_retry_delay=30)
+def procesar_pago_kushki_task(self, reserva_id: str, estado: str):
+    """Confirma o falla la reserva según el estado reportado por Kushki."""
+    try:
+        from .constants import EstadoPago
+        from .exceptions import IdempotenciaError
+        from .services import confirmar_reserva, marcar_reserva_fallida
+
+        estado_lower = (estado or '').lower()
+        try:
+            if estado_lower in ('approved', 'approvedtransaction', 'success', 'completed'):
+                confirmar_reserva(int(reserva_id))
+            elif estado_lower in ('declined', 'failed', 'cancelled', 'void'):
+                marcar_reserva_fallida(int(reserva_id), EstadoPago.FALLIDO, motivo=f'kushki:{estado}')
+        except IdempotenciaError:
+            pass
+    except Exception as exc:
+        raise self.retry(exc=exc)
+
+
 # ── Emails ───────────────────────────────────────────────────────────────────
 
 @shared_task

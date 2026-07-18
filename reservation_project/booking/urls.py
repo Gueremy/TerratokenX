@@ -61,6 +61,12 @@ urlpatterns = [
     # AJAX Coupon Validation
     path('validate-coupon/', views.validate_coupon, name='validate_coupon'),
     
+    # Webhooks de pasarelas (sin auth — verificación por firma)
+    path('api/webhooks/mp/', views.payments.MPWebhookView.as_view(), name='webhook-mp'),
+    path('api/webhooks/cryptomus/', views.payments.CryptomusWebhookView.as_view(), name='webhook-cryptomus'),
+    path('api/webhooks/kushki/', views.payments.KushkiWebhookView.as_view(), name='webhook-kushki'),
+    path('api/webhooks/didit/', views.payments.DiditWebhookView.as_view(), name='webhook-didit'),
+
     # Public API for Landing Page Progress Bar
     path('api/stats/', views.api_stats, name='api_stats'),
     path('api/config/', views.api_config, name='api_config'),
