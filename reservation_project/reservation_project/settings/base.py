@@ -69,7 +69,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    # 'booking.middleware.KYCCheckMiddleware' se registra en Semana 3
+    'booking.middleware.KYCCheckMiddleware',
 ]
 
 ROOT_URLCONF = 'reservation_project.urls'

@@ -111,24 +111,27 @@ class Reserva(SoftDeleteModel):
         if not self.pk:
             self.numero_reserva = uuid.uuid4().hex[:8].upper()
         
-        # Obtener la configuración de precios
-        config = Configuracion.load()
+        # El total se recalcula salvo que un service lo haya fijado explícitamente
+        # (ej: compra vía Drop con precio_override — ver services.crear_reserva_pendiente)
+        if not getattr(self, '_total_manual', False):
+            # Obtener la configuración de precios
+            config = Configuracion.load()
 
-        # Calcular el total: Precio Base (del proyecto o configuración global) * Cantidad
-        if self.proyecto:
-            precio_unitario = self.proyecto.precio_token
-        else:
-            precio_unitario = config.precio_base_token
-            
-        self.total = Decimal(precio_unitario) * self.cantidad_tokens
+            # Calcular el total: Precio Base (del proyecto o configuración global) * Cantidad
+            if self.proyecto:
+                precio_unitario = self.proyecto.precio_token
+            else:
+                precio_unitario = config.precio_base_token
 
-        # Aplicar descuento si hay un cupón válido
-        if self.coupon and self.coupon.is_valid():
-            descuento = (self.total * self.coupon.discount_percentage) / Decimal('100')
-            self.total -= descuento
+            self.total = Decimal(precio_unitario) * self.cantidad_tokens
 
-        # No aplicar comisión extra (a petición del usuario)
-        self.total = self.total.quantize(Decimal('0.01'))
+            # Aplicar descuento si hay un cupón válido
+            if self.coupon and self.coupon.is_valid():
+                descuento = (self.total * self.coupon.discount_percentage) / Decimal('100')
+                self.total -= descuento
+
+            # No aplicar comisión extra (a petición del usuario)
+            self.total = self.total.quantize(Decimal('0.01'))
 
         # Detectar si el estado cambió a CONFIRMADO para disparar acciones post-pago
         recien_confirmada = False
