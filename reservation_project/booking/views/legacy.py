@@ -1511,16 +1511,12 @@ def investor_dashboard(request):
                 proyectos_ids.add(r.proyecto.id)
 
     cantidad_proyectos = len(proyectos_ids)
-    
-    # Plusvalía Estimada (Simulada hardcoded por ahora, luego puede venir del modelo Proyecto)
-    plusvalia_estimada = int(total_invertido * 0.12) # 12% conservador
 
     context = {
         'reservas': reservas,
         'total_invertido': total_invertido,
         'tokens_totales': tokens_totales,
         'cantidad_proyectos': cantidad_proyectos,
-        'plusvalia_estimada': plusvalia_estimada,
         'user': user
     }
 
