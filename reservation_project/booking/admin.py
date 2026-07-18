@@ -2,12 +2,26 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.contrib.humanize.templatetags.humanize import intcomma
 from import_export.admin import ImportExportModelAdmin
-from .models import Reserva, DiaFeriado, Coupon, Configuracion, Proyecto, UserProfile
+from .models import (
+    AuditLog,
+    Configuracion,
+    Coupon,
+    CreditBalance,
+    CreditTransaction,
+    DiaFeriado,
+    FeeConfig,
+    FraccionadorProfile,
+    ProjectDrop,
+    Proyecto,
+    Reserva,
+    TierConfig,
+    UserProfile,
+)
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'rut', 'kyc_status', 'fecha_kyc')
-    list_filter = ('kyc_status',)
+    list_display = ('user', 'rut', 'kyc_status', 'kyc_tier', 'investment_total_usd', 'fecha_kyc')
+    list_filter = ('kyc_status', 'kyc_tier')
     search_fields = ('user__username', 'user__email', 'rut')
 
 @admin.register(Proyecto)
@@ -80,3 +94,72 @@ class ConfiguracionAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         # Prevenir que se elimine la configuración.
         return False
+
+
+# ── Drops, Créditos y Fees ──────────────────────────────────────────────────
+
+@admin.register(ProjectDrop)
+class ProjectDropAdmin(admin.ModelAdmin):
+    list_display = ('proyecto', 'nombre', 'numero', 'stock_disponible', 'stock_total',
+                    'precio_override', 'fecha_inicio', 'fecha_fin', 'activo')
+    list_filter = ('activo', 'proyecto')
+    list_editable = ('activo',)
+    ordering = ('proyecto', 'numero')
+
+
+@admin.register(TierConfig)
+class TierConfigAdmin(admin.ModelAdmin):
+    list_display = ('tier', 'nombre', 'cap_creditos_usd', 'descuento_fees_pct',
+                    'descuento_creditos_pct', 'kyc_requerido')
+    ordering = ('tier',)
+
+
+@admin.register(FeeConfig)
+class FeeConfigAdmin(admin.ModelAdmin):
+    list_display = ('tipo', 'porcentaje', 'monto_minimo_usd', 'activo', 'descripcion')
+    list_editable = ('porcentaje', 'monto_minimo_usd', 'activo')
+
+
+@admin.register(CreditBalance)
+class CreditBalanceAdmin(admin.ModelAdmin):
+    list_display = ('user', 'balance_usd', 'tier', 'expires_at', 'extended')
+    list_filter = ('tier', 'extended')
+    search_fields = ('user__username', 'user__email')
+
+
+@admin.register(CreditTransaction)
+class CreditTransactionAdmin(admin.ModelAdmin):
+    list_display = ('user', 'tipo', 'monto_usd', 'reserva', 'descripcion', 'created_at')
+    list_filter = ('tipo',)
+    search_fields = ('user__username', 'user__email', 'descripcion')
+    date_hierarchy = 'created_at'
+
+    def has_change_permission(self, request, obj=None):
+        return False  # registro inmutable
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(AuditLog)
+class AuditLogAdmin(admin.ModelAdmin):
+    list_display = ('accion', 'objeto_tipo', 'objeto_id', 'user', 'ip_address', 'created_at')
+    list_filter = ('accion', 'objeto_tipo')
+    search_fields = ('accion', 'objeto_tipo')
+    date_hierarchy = 'created_at'
+
+    def has_add_permission(self, request):
+        return False  # inmutable: solo lectura
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(FraccionadorProfile)
+class FraccionadorProfileAdmin(admin.ModelAdmin):
+    list_display = ('user', 'tipo', 'kyb_estado', 'razon_social', 'kyb_fecha_aprobacion')
+    list_filter = ('kyb_estado', 'tipo')
+    search_fields = ('user__username', 'user__email', 'razon_social', 'rut_empresa')

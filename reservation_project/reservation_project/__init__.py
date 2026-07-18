@@ -1,3 +1,3 @@
-# reservation_project/reservation_project/reservation_project/__init__.py
+from .celery import app as celery_app
 
-# This file is intentionally left blank.
+__all__ = ('celery_app',)
