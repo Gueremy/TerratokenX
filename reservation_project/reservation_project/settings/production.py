@@ -17,11 +17,13 @@ DEBUG = False
 _errores = []
 
 # 1. SECRET_KEY: sin ella, sesiones, JWT y tokens de reset son falsificables.
+_generar = ('Generar con: python -c "from django.core.management.utils import '
+            'get_random_secret_key; print(get_random_secret_key())"')
 if not env('SECRET_KEY', default='') or SECRET_KEY == SECRET_KEY_INSEGURA_DEFAULT:
+    _errores.append(f'SECRET_KEY no está definida (o usa el valor de desarrollo). {_generar}')
+elif len(SECRET_KEY) < 50 or SECRET_KEY.startswith('django-insecure-'):
     _errores.append(
-        'SECRET_KEY no está definida (o usa el valor de desarrollo). '
-        'Generar con: python -c "from django.core.management.utils import '
-        'get_random_secret_key; print(get_random_secret_key())"'
+        f'SECRET_KEY es demasiado débil ({len(SECRET_KEY)} caracteres, mínimo 50). {_generar}'
     )
 
 # 2. DATABASE_URL: sin ella se cae a SQLite, donde select_for_update() no

@@ -390,9 +390,8 @@ def reservation_form(request):
                 return redirect('create_mp_preference', reserva_id=reserva.id)
 
         # Si llegamos aquí con error
-        with open('debug_form.log', 'a', encoding='utf-8') as f:
-            f.write(f"[{datetime.now()}] ERROR FORM: {form.errors.as_json()}\n")
-            
+        logger.warning("Formulario de reserva inválido: %s", form.errors.as_json())
+
         return render(request, 'booking/reservation_form_v2.html', {
             'form': form,
             'proyectos_activos': proyectos_activos,
