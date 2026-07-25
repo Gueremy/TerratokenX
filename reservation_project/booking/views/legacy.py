@@ -10,6 +10,7 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
 from django.db.models import Count
+from django.utils import timezone
 from datetime import datetime, timedelta, date
 import os
 from django.contrib.admin.views.decorators import staff_member_required
@@ -888,6 +889,17 @@ def admin_documento_create(request, project_id):
         requiere_nda = request.POST.get('requiere_nda') == 'on'
         
         if titulo and archivo:
+            from django.core.exceptions import ValidationError as DjangoValidationError
+
+            from ..validators import validar_archivo_kyc
+
+            # objects.create() no llama full_clean(): validar explícitamente
+            try:
+                validar_archivo_kyc(archivo)
+            except DjangoValidationError as e:
+                messages.error(request, e.messages[0] if e.messages else str(e))
+                return redirect('project_edit', project_id=project_id)
+
             ProyectoDocumento.objects.create(
                 proyecto=proyecto,
                 titulo=titulo,
@@ -1430,20 +1442,34 @@ def investor_kyc(request):
     profile, created = UserProfile.objects.get_or_create(user=request.user)
     
     if request.method == 'POST':
-        if 'frontal' in request.FILES:
-            profile.documento_identidad_frontal = request.FILES['frontal']
-        if 'reverso' in request.FILES:
-            profile.documento_identidad_reverso = request.FILES['reverso']
-        if 'selfie' in request.FILES:
-            profile.selfie_verificacion = request.FILES['selfie']
-            
+        from django.core.exceptions import ValidationError as DjangoValidationError
+
+        from ..validators import validar_archivo_kyc, validar_imagen
+
+        # Los validators del modelo solo corren en full_clean(); esta vista
+        # asigna los archivos directamente, así que se validan a mano.
+        subidas = [
+            ('frontal', 'documento_identidad_frontal', validar_archivo_kyc),
+            ('reverso', 'documento_identidad_reverso', validar_archivo_kyc),
+            ('selfie', 'selfie_verificacion', validar_imagen),
+        ]
+        try:
+            for campo_form, campo_modelo, validador in subidas:
+                archivo = request.FILES.get(campo_form)
+                if archivo:
+                    validador(archivo)
+                    setattr(profile, campo_modelo, archivo)
+        except DjangoValidationError as e:
+            messages.error(request, e.messages[0] if e.messages else str(e))
+            return redirect('investor_kyc')
+
         profile.kyc_status = UserProfile.KYC_EN_REVISION
         profile.fecha_kyc = timezone.now()
         profile.save()
-        
+
         messages.success(request, "Documentos enviados. Tu identidad está en proceso de verificación.")
         return redirect('investor_kyc')
-        
+
     return render(request, 'booking/investor/kyc.html', {'profile': profile})
 
 @login_required(login_url='investor_login')

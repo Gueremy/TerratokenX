@@ -96,6 +96,42 @@ class TestValidacionDeArchivos:
 
         assert nombre_seguro('foto.png') != nombre_seguro('foto.png')
 
+    def test_vista_kyc_legacy_rechaza_html_malicioso(self, client, user_t1):
+        """Los validators del modelo no corren en save(): la vista valida a mano."""
+        client.force_login(user_t1)
+        malicioso = SimpleUploadedFile('xss.html', b'<script>alert(1)</script>',
+                                       content_type='text/html')
+
+        client.post('/portal/kyc/', {'frontal': malicioso}, follow=True)
+
+        user_t1.profile.refresh_from_db()
+        assert not user_t1.profile.documento_identidad_frontal, (
+            'Se guardó un HTML como documento de identidad'
+        )
+
+    def test_vista_kyc_legacy_acepta_imagen_valida(self, client, user_t1):
+        client.force_login(user_t1)
+        png = SimpleUploadedFile('cedula.png', b'\x89PNG\r\n\x1a\n' + b'0' * 100,
+                                 content_type='image/png')
+
+        client.post('/portal/kyc/', {'frontal': png}, follow=True)
+
+        user_t1.profile.refresh_from_db()
+        assert user_t1.profile.documento_identidad_frontal
+
+    def test_archivo_guardado_no_conserva_el_nombre_original(self, client, user_t1):
+        client.force_login(user_t1)
+        png = SimpleUploadedFile('mi-cedula-secreta.png',
+                                 b'\x89PNG\r\n\x1a\n' + b'0' * 100,
+                                 content_type='image/png')
+
+        client.post('/portal/kyc/', {'frontal': png}, follow=True)
+
+        user_t1.profile.refresh_from_db()
+        ruta = user_t1.profile.documento_identidad_frontal.name
+        assert 'mi-cedula-secreta' not in ruta, f'El nombre original quedó expuesto: {ruta}'
+        assert ruta.startswith('kyc/documentos/')
+
 
 @pytest.mark.django_db
 class TestFirmaMercadoPago:
