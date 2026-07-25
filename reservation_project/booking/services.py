@@ -5,9 +5,12 @@ Los services no conocen HTTP.
 """
 
 import logging
+from datetime import timedelta
 from decimal import Decimal
 
+from django.conf import settings
 from django.db import transaction
+from django.utils import timezone
 
 from .constants import EstadoPago, KYC_LIMITS_USD
 from .exceptions import (
@@ -20,6 +23,27 @@ from .models import AuditLog, ProjectDrop, Reserva, UserProfile
 from .selectors import get_drop_activo
 
 logger = logging.getLogger('booking')
+
+# Ventana en la que dos checkouts idénticos se consideran el mismo (doble click)
+VENTANA_IDEMPOTENCIA_SEGUNDOS = 60
+
+
+def _buscar_reserva_duplicada(user, proyecto_id: int, cantidad_tokens: int, metodo_pago: str):
+    """
+    Detecta un reenvío del mismo checkout (doble click, retry del cliente).
+
+    Devuelve la reserva PENDIENTE idéntica creada dentro de la ventana de
+    idempotencia, o None. Evita duplicar reservas y descontar stock dos veces.
+    """
+    ventana = timezone.now() - timedelta(seconds=VENTANA_IDEMPOTENCIA_SEGUNDOS)
+    return Reserva.objects.filter(
+        user=user,
+        proyecto_id=proyecto_id,
+        cantidad_tokens=cantidad_tokens,
+        metodo_pago=metodo_pago,
+        estado_pago=EstadoPago.PENDIENTE,
+        created_at__gte=ventana,
+    ).order_by('-created_at').first()
 
 
 def validar_compra(proyecto_id: int, user, cantidad_tokens: int, metodo_pago: str):
@@ -66,6 +90,16 @@ def crear_reserva_pendiente(
     """
     drop, total = validar_compra(proyecto_id, user, cantidad_tokens, metodo_pago)
 
+    # Idempotencia: un doble click no debe crear dos reservas ni descontar
+    # el stock dos veces. Se reutiliza la reserva PENDIENTE idéntica reciente.
+    duplicada = _buscar_reserva_duplicada(user, proyecto_id, cantidad_tokens, metodo_pago)
+    if duplicada is not None:
+        logger.info(
+            "Compra duplicada detectada para %s: se reutiliza la reserva %s",
+            user.username, duplicada.numero_reserva,
+        )
+        return duplicada
+
     # Bloquear el Drop para evitar race condition
     drop = ProjectDrop.objects.select_for_update().get(id=drop.id)
 
@@ -77,11 +111,14 @@ def crear_reserva_pendiente(
     drop.stock_disponible -= cantidad_tokens
     drop.save(update_fields=['stock_disponible'])
 
-    # Aplicar créditos (los fees se calculan ANTES, ver services_creditos)
+    # Aplicar créditos (los fees se calculan ANTES, ver services_creditos).
+    # Nunca se descuenta más de lo que cuesta la compra: aplicar $500 a una
+    # compra de $100 debe consumir $100 de créditos, no quemar los $400 restantes.
     total_final = total
     if creditos_aplicar and creditos_aplicar > 0:
         from .services_creditos import aplicar_credito_en_checkout
-        descontado = aplicar_credito_en_checkout(user, creditos_aplicar, reserva=None)
+        a_aplicar = min(creditos_aplicar, total)
+        descontado = aplicar_credito_en_checkout(user, a_aplicar, reserva=None)
         total_final = max(total - descontado, Decimal('0.00'))
 
     # Crear reserva (total manual: el precio del Drop manda, no el precio base)
@@ -133,6 +170,44 @@ def confirmar_reserva(reserva_id: int) -> Reserva:
         datos_despues={'estado': 'CONFIRMADO', 'total': str(reserva.total)},
     )
     return reserva
+
+
+def expirar_reservas_pendientes(minutos: int = None) -> int:
+    """
+    Libera el stock de reservas PENDIENTE abandonadas.
+
+    Sin esto, un carrito abandonado retiene tokens para siempre y el Drop
+    aparece agotado sin haber vendido. La ventana debe superar el lifetime
+    del invoice de Cryptomus (1 h) para no cancelar pagos en curso.
+
+    Devuelve cuántas reservas se liberaron.
+    """
+    if minutos is None:
+        minutos = getattr(settings, 'RESERVA_PENDIENTE_TIMEOUT_MINUTOS', 90)
+
+    limite = timezone.now() - timedelta(minutes=minutos)
+    vencidas = Reserva.objects.filter(
+        estado_pago=EstadoPago.PENDIENTE,
+        created_at__lt=limite,
+    ).values_list('id', flat=True)
+
+    liberadas = 0
+    for reserva_id in list(vencidas):
+        try:
+            marcar_reserva_fallida(
+                reserva_id,
+                EstadoPago.RECHAZADO,
+                motivo=f'expirada: sin pago tras {minutos} minutos',
+            )
+            liberadas += 1
+        except IdempotenciaError:
+            continue  # se confirmó entre el listado y el procesamiento
+        except Exception as e:
+            logger.error("Error expirando la reserva %s: %s", reserva_id, e)
+
+    if liberadas:
+        logger.info("Reservas expiradas y stock liberado: %s", liberadas)
+    return liberadas
 
 
 @transaction.atomic

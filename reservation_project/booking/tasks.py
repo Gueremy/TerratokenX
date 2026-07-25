@@ -198,6 +198,18 @@ def notificar_creditos_por_vencer():
 # ── Mantenimiento ────────────────────────────────────────────────────────────
 
 @shared_task
+def expirar_reservas_pendientes():
+    """
+    Libera stock de reservas PENDIENTE abandonadas (cada 15 min).
+    Un carrito abandonado no debe agotar un Drop.
+    """
+    from .services import expirar_reservas_pendientes as _expirar
+
+    liberadas = _expirar()
+    return f"Reservas expiradas: {liberadas}"
+
+
+@shared_task
 def sync_tokens_vendidos():
     """
     Sincroniza tokens_vendidos en Proyecto con la suma real de reservas

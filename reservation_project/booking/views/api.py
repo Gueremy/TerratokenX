@@ -431,20 +431,48 @@ class AdminProyectosView(generics.ListAPIView):
     queryset = Proyecto.objects.all().prefetch_related('drops')
 
 
-class AdminTierUpdateView(generics.UpdateAPIView):
+class _AuditaCambiosMixin:
+    """Registra en AuditLog cualquier cambio a la configuración de dinero."""
+    accion_auditoria = 'config.modificada'
+
+    def perform_update(self, serializer):
+        antes = {
+            campo: str(valor)
+            for campo, valor in serializer.instance.__dict__.items()
+            if not campo.startswith('_')
+        }
+        instancia = serializer.save()
+        despues = {
+            campo: str(valor)
+            for campo, valor in instancia.__dict__.items()
+            if not campo.startswith('_')
+        }
+        AuditLog.registrar(
+            accion=self.accion_auditoria,
+            objeto=instancia,
+            user=self.request.user,
+            datos_antes=antes,
+            datos_despues=despues,
+            request=self.request,
+        )
+
+
+class AdminTierUpdateView(_AuditaCambiosMixin, generics.UpdateAPIView):
     """PUT /api/v1/admin/tiers/<id>/"""
     permission_classes = [IsAuthenticated, IsJoanAdmin]
     queryset = TierConfig.objects.all()
+    accion_auditoria = 'tier.modificado'
 
     def get_serializer_class(self):
         from booking.serializers import TierConfigAdminSerializer
         return TierConfigAdminSerializer
 
 
-class AdminFeeUpdateView(generics.UpdateAPIView):
+class AdminFeeUpdateView(_AuditaCambiosMixin, generics.UpdateAPIView):
     """PUT /api/v1/admin/fees/<id>/"""
     permission_classes = [IsAuthenticated, IsJoanAdmin]
     queryset = FeeConfig.objects.all()
+    accion_auditoria = 'fee.modificado'
 
     def get_serializer_class(self):
         from booking.serializers import FeeConfigAdminSerializer

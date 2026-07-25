@@ -24,4 +24,8 @@ app.conf.beat_schedule = {
         'task': 'booking.tasks.sync_tokens_vendidos',
         'schedule': crontab(minute='*/15'),
     },
+    'expirar-reservas-pendientes': {
+        'task': 'booking.tasks.expirar_reservas_pendientes',
+        'schedule': crontab(minute='*/15'),
+    },
 }

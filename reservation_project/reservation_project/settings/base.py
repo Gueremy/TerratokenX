@@ -181,6 +181,11 @@ CACHES = {
     }
 }
 
+# ── Reglas de negocio ────────────────────────────────────────────────────────
+# Minutos que una reserva PENDIENTE retiene stock antes de liberarse.
+# Debe superar el lifetime del invoice de Cryptomus (60 min).
+RESERVA_PENDIENTE_TIMEOUT_MINUTOS = env.int('RESERVA_PENDIENTE_TIMEOUT_MINUTOS', default=90)
+
 # ── Pasarelas de pago ────────────────────────────────────────────────────────
 MERCADO_PAGO_PUBLIC_KEY = env('MERCADO_PAGO_PUBLIC_KEY', default='TEST_PUBLIC_KEY')
 MERCADO_PAGO_ACCESS_TOKEN = env('MERCADO_PAGO_ACCESS_TOKEN', default='TEST_ACCESS_TOKEN')

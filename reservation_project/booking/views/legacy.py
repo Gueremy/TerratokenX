@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
@@ -35,6 +35,33 @@ import logging
 
 # Obtener una instancia del logger para registrar errores de forma más detallada
 logger = logging.getLogger(__name__)
+
+SESION_RESERVAS_KEY = 'reservas_de_esta_sesion'
+
+
+def _registrar_reserva_en_sesion(request, reserva_id):
+    """Recuerda qué reservas creó este navegador (soporta compra sin cuenta)."""
+    ids = request.session.get(SESION_RESERVAS_KEY, [])
+    if reserva_id not in ids:
+        ids.append(reserva_id)
+        request.session[SESION_RESERVAS_KEY] = ids[-20:]  # acotar la sesión
+
+
+def _puede_ver_reserva(request, reserva) -> bool:
+    """
+    Autorización a nivel de objeto para una reserva.
+
+    Sin esto, los IDs secuenciales permiten enumerar compras ajenas
+    (montos, proyectos y volumen de ventas del negocio).
+    """
+    if request.user.is_authenticated:
+        if request.user.is_staff or reserva.user_id == request.user.id:
+            return True
+        # Cuentas creadas automáticamente al confirmar: coinciden por correo
+        if reserva.correo and reserva.correo.lower() == (request.user.email or '').lower():
+            return True
+    return reserva.id in request.session.get(SESION_RESERVAS_KEY, [])
+
 
 def create_google_calendar_link(reserva):
     """Genera un enlace para agregar la reserva al Calendario de Google."""
@@ -84,6 +111,11 @@ def create_mp_preference(request, reserva_id):
     Crea una preferencia de pago en Mercado Pago (Checkout Pro) y redirige al usuario.
     """
     reserva = get_object_or_404(Reserva, id=reserva_id)
+
+    # Nadie debe generar preferencias de pago sobre reservas ajenas
+    if not _puede_ver_reserva(request, reserva):
+        raise Http404("Reserva no encontrada")
+
     if reserva.pagado:
         messages.info(request, "Esta reserva ya ha sido pagada.")
         return redirect('reservation_success', reserva_id=reserva.id)
@@ -318,11 +350,16 @@ def reservation_form(request):
                 metodo_pago = request.POST.get('metodo_pago', 'MP')
                 reserva.metodo_pago = metodo_pago
                 reserva.save()
-                
-                # Log con detalles del monto calculado
-                with open('debug_form.log', 'a', encoding='utf-8') as f:
-                    f.write(f"[{datetime.now()}] Reserva OK #{reserva.id}: {reserva.cantidad_tokens} tokens, Total: ${reserva.total}, Cupón: {reserva.coupon}\n")
-                
+
+                # Marcar la reserva como propia de esta sesión: habilita ver la
+                # página de éxito en compras anónimas sin exponer reservas ajenas.
+                _registrar_reserva_en_sesion(request, reserva.id)
+
+                logger.info(
+                    "Reserva #%s creada: %s tokens, total $%s",
+                    reserva.id, reserva.cantidad_tokens, reserva.total,
+                )
+
                 # Enviar email...
                 import threading
                 def send_email_async(res_id):
@@ -396,6 +433,10 @@ def reservation_success(request, reserva_id):
     la URL lo controla el navegador del usuario y NO es una fuente confiable.
     """
     reserva = get_object_or_404(Reserva, id=reserva_id)
+
+    # Autorización a nivel de objeto: los IDs son secuenciales y enumerables.
+    if not _puede_ver_reserva(request, reserva):
+        raise Http404("Reserva no encontrada")
 
     # Solo informativo: qué dijo la pasarela al redirigir. El estado real
     # que se muestra siempre sale de la base de datos.
@@ -570,9 +611,26 @@ import json
 
 def validate_coupon(request):
     """
-    Validates a coupon code via AJAX.
+    Valida un código de cupón vía AJAX.
+
+    Con límite por IP: sin esto el endpoint es anónimo y permite enumerar
+    códigos de descuento por fuerza bruta.
     """
     if request.method == 'POST':
+        from django.core.cache import cache
+
+        ip = (request.META.get('HTTP_X_FORWARDED_FOR', '').split(',')[0].strip()
+              or request.META.get('REMOTE_ADDR', 'desconocida'))
+        clave = f'throttle_cupon_{ip}'
+        intentos = cache.get(clave, 0)
+        if intentos >= 20:
+            return JsonResponse(
+                {'valid': False,
+                 'message': 'Demasiados intentos. Espera unos minutos.'},
+                status=429,
+            )
+        cache.set(clave, intentos + 1, timeout=3600)
+
         try:
             data = json.loads(request.body)
             code = data.get('code', '').strip()
