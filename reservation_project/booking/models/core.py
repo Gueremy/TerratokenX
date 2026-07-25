@@ -9,6 +9,7 @@ from django.utils import timezone
 
 logger = logging.getLogger('booking')
 
+from .. import validators  # noqa: E402
 from ..constants import EstadoPago, MetodoPago  # noqa: E402
 from .base import SoftDeleteModel  # noqa: E402
 
@@ -249,7 +250,7 @@ class Proyecto(SoftDeleteModel):
     ubicacion = models.CharField(max_length=200, default="Patagonia Chilena")
     
     # Imagenes
-    imagen_portada = models.ImageField(upload_to='proyectos/', null=True, blank=True)
+    imagen_portada = models.ImageField(upload_to=validators.ruta_proyectos, null=True, blank=True, validators=[validators.validar_imagen])
     imagen_portada_url = models.URLField(blank=True, null=True, help_text="URL externa de la imagen (opcional, ahorra espacio)")
     video_url = models.URLField(blank=True, null=True, help_text="URL del video del proyecto (YouTube, Vimeo, etc.)")
     
@@ -351,7 +352,7 @@ class Proyecto(SoftDeleteModel):
 # Modelo para la galería de imágenes del proyecto
 class ProyectoImagen(models.Model):
     proyecto = models.ForeignKey('Proyecto', related_name='imagenes', on_delete=models.CASCADE)
-    imagen = models.ImageField(upload_to='proyectos/galeria/', blank=True, null=True)
+    imagen = models.ImageField(upload_to=validators.ruta_proyectos_galeria, blank=True, null=True, validators=[validators.validar_imagen])
     imagen_url = models.URLField(blank=True, null=True, help_text="URL externa de la imagen")
     caption = models.CharField(max_length=200, blank=True)
 
@@ -401,7 +402,7 @@ class ProyectoDocumento(models.Model):
     """
     proyecto = models.ForeignKey('Proyecto', related_name='documentos', on_delete=models.CASCADE)
     titulo = models.CharField(max_length=200)
-    archivo = models.FileField(upload_to='proyectos/documentos/')
+    archivo = models.FileField(upload_to=validators.ruta_proyectos_documentos, validators=[validators.validar_archivo_kyc])
     es_publico = models.BooleanField(default=True, verbose_name="¿Es público?")
     requiere_nda = models.BooleanField(default=False, verbose_name="¿Requiere NDA?")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -460,9 +461,9 @@ class UserProfile(models.Model):
     didit_session_id = models.CharField(max_length=100, blank=True)
     
     # KYC Documents
-    documento_identidad_frontal = models.ImageField(upload_to='kyc/documentos/', blank=True, null=True)
-    documento_identidad_reverso = models.ImageField(upload_to='kyc/documentos/', blank=True, null=True)
-    selfie_verificacion = models.ImageField(upload_to='kyc/selfies/', blank=True, null=True)
+    documento_identidad_frontal = models.ImageField(upload_to=validators.ruta_kyc_documentos, blank=True, null=True, validators=[validators.validar_archivo_kyc])
+    documento_identidad_reverso = models.ImageField(upload_to=validators.ruta_kyc_documentos, blank=True, null=True, validators=[validators.validar_archivo_kyc])
+    selfie_verificacion = models.ImageField(upload_to=validators.ruta_kyc_selfies, blank=True, null=True, validators=[validators.validar_imagen])
     
     fecha_kyc = models.DateTimeField(null=True, blank=True)
     comentarios_admin = models.TextField(blank=True, null=True)

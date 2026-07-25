@@ -172,7 +172,9 @@ class TestMPWebhook:
 
         data_id = '99887'
         request_id = 'req-abc'
-        manifest = f"id:{data_id};request-id:{request_id};"
+        ts = '1704908010'
+        # Template oficial de MP: id + request-id + ts
+        manifest = f"id:{data_id};request-id:{request_id};ts:{ts};"
         v1 = hmac_mod.new(b'test-mp-secret', manifest.encode(), hashlib.sha256).hexdigest()
 
         response = client.post(
@@ -180,7 +182,7 @@ class TestMPWebhook:
             data=json.dumps({'type': 'payment', 'data': {'id': data_id}}),
             content_type='application/json',
             HTTP_X_REQUEST_ID=request_id,
-            HTTP_X_SIGNATURE=f'ts=123,v1={v1}',
+            HTTP_X_SIGNATURE=f'ts={ts},v1={v1}',
         )
         assert response.status_code == 200
         mock_task.assert_called_once_with(data_id)

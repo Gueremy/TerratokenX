@@ -18,20 +18,22 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # Variables de entorno desde .env para desarrollo local
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
-SECRET_KEY = env('SECRET_KEY', default='django-insecure-test-key-local-123')
+# Valor de desarrollo. production.py rechaza el arranque si sigue siendo este.
+SECRET_KEY_INSEGURA_DEFAULT = 'django-insecure-test-key-local-123'
+SECRET_KEY = env('SECRET_KEY', default=SECRET_KEY_INSEGURA_DEFAULT)
 DEBUG = env.bool('DEBUG', default=False)
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+# Hosts: configurables por entorno. En producción se validan (ver production.py).
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['127.0.0.1', 'localhost'])
 
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
-if RENDER_EXTERNAL_HOSTNAME:
+if RENDER_EXTERNAL_HOSTNAME and RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
-    CSRF_TRUSTED_ORIGINS = [f'https://{RENDER_EXTERNAL_HOSTNAME}', 'https://terratokenx.onrender.com', 'https://terratokenx-q7u4.onrender.com', 'https://rwa.terratokenx.com']
-else:
-    CSRF_TRUSTED_ORIGINS = ['https://terratokenx.onrender.com', 'https://terratokenx-q7u4.onrender.com', 'https://rwa.terratokenx.com']
 
-ALLOWED_HOSTS.append('terratokenx-q7u4.onrender.com')
-ALLOWED_HOSTS.append('rwa.terratokenx.com')
+CSRF_TRUSTED_ORIGINS = env.list(
+    'CSRF_TRUSTED_ORIGINS',
+    default=[f'https://{h}' for h in ALLOWED_HOSTS if h not in ('127.0.0.1', 'localhost', '*')],
+)
 
 ADMIN_URL = env('ADMIN_URL', default='admin/')
 

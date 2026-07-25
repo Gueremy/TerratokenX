@@ -20,8 +20,22 @@ services:
         fromDatabase:
           name: reservation-db
           property: connectionString
+      # Sin comodines: production.py rechaza el arranque con "*"
       - key: ALLOWED_HOSTS
-        value: "*"
+        value: "rwa.terratokenx.com,terratokenx.onrender.com,terratokenx-q7u4.onrender.com"
+      - key: CORS_ALLOWED_ORIGINS
+        value: "https://rwa.terratokenx.com,https://terratokenx.onrender.com"
+      # Requeridas por la app — cargar el valor real en el dashboard de Render
+      - key: RESEND_API_KEY
+        sync: false
+      - key: MERCADOPAGO_WEBHOOK_SECRET
+        sync: false
+      - key: MERCADO_PAGO_ACCESS_TOKEN
+        sync: false
+      - key: CRYPTOMUS_MERCHANT_ID
+        sync: false
+      - key: CRYPTOMUS_PAYMENT_API_KEY
+        sync: false
 
 databases:
   - name: reservation-db

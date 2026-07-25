@@ -23,26 +23,42 @@ logger = logging.getLogger('booking.payments')
 # ── MercadoPago ──────────────────────────────────────────────────────────────
 
 def verificar_firma_mp(request) -> bool:
-    """Verifica la firma HMAC-SHA256 del webhook de MercadoPago."""
+    """
+    Verifica la firma HMAC-SHA256 del webhook de MercadoPago.
+
+    Template oficial del manifest (los tres componentes son obligatorios):
+        id:<data.id>;request-id:<x-request-id>;ts:<ts>;
+
+    donde `ts` sale del propio header x-signature ("ts=...,v1=...").
+    Omitir `ts:` produce una firma que nunca coincide con la real de MP.
+    """
     secret = settings.MERCADOPAGO_WEBHOOK_SECRET
     if not secret:
         logger.warning('mp.webhook.sin_secret_configurado')
         return False
 
-    ts_header = request.headers.get('x-request-id', '')
+    received = request.headers.get('x-signature', '')
+    partes = dict(
+        part.strip().split('=', 1) for part in received.split(',') if '=' in part
+    )
+    ts = partes.get('ts', '')
+    v1 = partes.get('v1', '')
+    if not ts or not v1:
+        return False
+
+    request_id = request.headers.get('x-request-id', '')
     try:
         data_id = str(request.data.get('data', {}).get('id', ''))
     except AttributeError:
         return False
 
-    manifest = f"id:{data_id};request-id:{ts_header};"
+    # MP normaliza el id a minúsculas cuando es alfanumérico
+    if data_id and not data_id.isdigit():
+        data_id = data_id.lower()
+
+    manifest = f"id:{data_id};request-id:{request_id};ts:{ts};"
     expected = hmac.new(secret.encode(), manifest.encode(), hashlib.sha256).hexdigest()
 
-    received = request.headers.get('x-signature', '')
-    # x-signature tiene formato: "ts=...,v1=HASH"
-    v1 = dict(
-        part.split('=', 1) for part in received.split(',') if '=' in part
-    ).get('v1', '')
     return hmac.compare_digest(expected, v1)
 
 

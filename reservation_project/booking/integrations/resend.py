@@ -12,26 +12,40 @@ logger = logging.getLogger('booking.email')
 
 
 def _enviar(to: str, subject: str, html: str) -> bool:
-    """Función base. Todos los emails pasan por aquí."""
-    try:
-        if settings.RESEND_API_KEY:
-            import resend
-            resend.api_key = settings.RESEND_API_KEY
-            resend.Emails.send({
-                'from': settings.EMAIL_FROM,
-                'to': [to],
-                'subject': subject,
-                'html': html,
-            })
-        else:
-            # Sin API key (desarrollo local): usar backend de Django (consola)
-            from django.core.mail import send_mail
-            send_mail(subject, '', settings.EMAIL_FROM, [to], html_message=html)
+    """
+    Función base. Todos los emails pasan por aquí.
 
+    Con RESEND_API_KEY configurada usa la API de Resend.
+    Sin ella: en desarrollo (DEBUG=True) cae al backend de consola de Django;
+    en producción registra un ERROR y devuelve False — nunca falla en silencio,
+    porque un email de confirmación perdido es un cliente sin comprobante.
+    """
+    if not settings.RESEND_API_KEY:
+        if not settings.DEBUG:
+            logger.error(
+                'email.no_enviado: RESEND_API_KEY no está configurada en producción. '
+                'Destinatario=%s asunto=%s', to, subject,
+            )
+            return False
+        # Desarrollo: consola, sin gastar el free tier
+        from django.core.mail import send_mail
+        send_mail(subject, '', settings.EMAIL_FROM, [to], html_message=html)
+        logger.info('email.consola', extra={'to': to, 'subject': subject})
+        return True
+
+    try:
+        import resend
+        resend.api_key = settings.RESEND_API_KEY
+        resend.Emails.send({
+            'from': settings.EMAIL_FROM,
+            'to': [to],
+            'subject': subject,
+            'html': html,
+        })
         logger.info('email.enviado', extra={'to': to, 'subject': subject})
         return True
     except Exception as e:
-        logger.error('email.error', extra={'to': to, 'error': str(e)})
+        logger.error('email.error to=%s subject=%s error=%s', to, subject, e)
         return False
 
 

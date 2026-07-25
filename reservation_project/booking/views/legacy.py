@@ -386,65 +386,26 @@ def reservation_form(request):
 
 
 def reservation_success(request, reserva_id):
+    """
+    Página de retorno tras el checkout. SOLO MUESTRA ESTADO — nunca confirma pagos.
+
+    La confirmación es responsabilidad exclusiva de los webhooks firmados
+    (ver booking/views/payments.py), que verifican la firma de la pasarela
+    contra el pago real antes de tocar la reserva. El parámetro ?status= de
+    la URL lo controla el navegador del usuario y NO es una fuente confiable.
+    """
     reserva = get_object_or_404(Reserva, id=reserva_id)
-    
+
+    # Solo informativo: qué dijo la pasarela al redirigir. El estado real
+    # que se muestra siempre sale de la base de datos.
     payment_status = request.GET.get('status')
-    pago_procesado_ahora = False
-    
-    # Se procesa el pago solo una vez para evitar duplicados si el usuario recarga la página.
-    if payment_status == 'approved' and not reserva.pagado:
-        # 1. Actualiza la base de datos de forma atómica y segura.
-        with transaction.atomic():
-            # Recargamos la reserva dentro de la transacción para evitar race conditions.
-            reserva_a_pagar = Reserva.objects.select_for_update().get(id=reserva_id)
-            if not reserva_a_pagar.pagado:
-                reserva_a_pagar.pagado = True
-                reserva_a_pagar.save()
-                pago_procesado_ahora = True
-    elif payment_status == 'manual_review':
-        # No auto-confirmamos, pero podemos registrar algo si es necesario.
-        # El estado ya fue puesto en EN_REVISION por la API 'api_manual_confirm_payment'
-        pass
 
-    # 2. Si el pago se procesó en esta visita, ejecuta las acciones externas (email, calendario).
-    if pago_procesado_ahora:
-        google_calendar_link_email = create_google_calendar_link(reserva)
-        
-        # Enviar correo de confirmación EN BACKGROUND
-        import threading
-        
-        def send_confirmation_email():
-            subject_confirm = '✅ Confirmación: Tu cupo en la Preventa TerraTokenX está asegurado'
-            context_confirm = {
-                'reserva': reserva,
-                'google_calendar_link': google_calendar_link_email,
-            }
-            html_message_confirm = render_to_string('booking/email/reservation_confirmation.html', context_confirm)
-            try:
-                send_mail(
-                    subject_confirm, '',
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[reserva.correo],
-                    fail_silently=False,
-                    html_message=html_message_confirm
-                )
-                print(f"[EMAIL] Correo confirmación enviado a {reserva.correo}")
-            except Exception as e:
-                logger.error(f"Error enviando correo de confirmación: {e}")
-                print(f"[EMAIL ERROR] {e}")
-        
-        email_thread = threading.Thread(target=send_confirmation_email)
-        email_thread.start()
-        
-        # Agregar evento al calendario del negocio
-        add_event_to_spa_calendar(reserva)
-
-    # Crear el enlace de Google Calendar para mostrarlo en la página de éxito
     google_calendar_link = create_google_calendar_link(reserva)
 
     context = {
         'reserva': reserva,
         'payment_status': payment_status,
+        'estado_confirmado': reserva.estado_pago == Reserva.ESTADO_CONFIRMADO,
         'google_calendar_link': google_calendar_link,
     }
     return render(request, 'booking/reservation_success.html', context)

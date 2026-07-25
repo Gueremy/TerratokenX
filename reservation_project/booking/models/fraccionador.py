@@ -2,6 +2,8 @@ from decimal import Decimal
 
 from django.db import models
 
+from .. import validators
+
 
 class FraccionadorProfile(models.Model):
     """Perfil KYB del fraccionador. Los retiros/distribuciones son de Fase 2 (DIFERIDO)."""
@@ -21,9 +23,9 @@ class FraccionadorProfile(models.Model):
     rut_empresa = models.CharField(max_length=12, blank=True)
 
     # Documentos
-    doc_dominio_vigente = models.FileField(upload_to='kyb/dominios/', null=True, blank=True)
-    doc_escritura = models.FileField(upload_to='kyb/escrituras/', null=True, blank=True)
-    doc_tasacion = models.FileField(upload_to='kyb/tasaciones/', null=True, blank=True)
+    doc_dominio_vigente = models.FileField(upload_to=validators.ruta_kyb_dominios, null=True, blank=True, validators=[validators.validar_archivo_kyc])
+    doc_escritura = models.FileField(upload_to=validators.ruta_kyb_escrituras, null=True, blank=True, validators=[validators.validar_archivo_kyc])
+    doc_tasacion = models.FileField(upload_to=validators.ruta_kyb_tasaciones, null=True, blank=True, validators=[validators.validar_archivo_kyc])
 
     # Financiero
     tokens_reserve_pct = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('20.00'))
