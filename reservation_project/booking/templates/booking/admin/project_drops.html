@@ -1,0 +1,191 @@
+{% extends base_template %}
+{% load humanize %}
+
+{% block title %}Drops - {{ proyecto.nombre }}{% endblock %}
+{% block page_title %}Gestión de Drops{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    <!-- Header y Navegación -->
+    <div class="mb-8">
+        <div class="flex items-center gap-2 text-gray-400 text-sm mb-4">
+            {% if is_admin %}
+            <a href="{% url 'admin_projects' %}" class="hover:text-white transition-colors">Proyectos</a>
+            {% else %}
+            <a href="{% url 'fractionalizer_dashboard' %}" class="hover:text-white transition-colors">Mis Proyectos</a>
+            {% endif %}
+            <span class="material-icons text-xs">chevron_right</span>
+            <span class="text-white font-medium">{{ proyecto.nombre }}</span>
+        </div>
+
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div>
+                <h2 class="text-3xl font-bold text-white mb-2">Drops y Ventanas de Venta</h2>
+                <p class="text-gray-400">Gestiona la disponibilidad y el FOMO de tus ventas.</p>
+            </div>
+
+            {% if tokens_libres > 0 %}
+            <a href="{% url 'admin_drop_create' proyecto.id %}{% if is_seller_panel %}?panel=seller{% endif %}"
+                class="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold rounded-xl transition-all shadow-lg shadow-red-900/20 group">
+                <span class="material-icons group-hover:scale-110 transition-transform">add_alarm</span>
+                Crear Nuevo Drop
+            </a>
+            {% else %}
+            <button disabled
+                class="flex items-center gap-2 px-6 py-3 bg-gray-700 text-gray-400 font-bold rounded-xl cursor-not-allowed opacity-75">
+                <span class="material-icons text-emerald-400">block</span>
+                Sin tokens disponibles
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Resumen de Tokens -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div class="bg-dark-800/50 p-5 rounded-xl border border-gray-700 backdrop-blur-sm">
+            <p class="text-gray-400 text-xs uppercase font-bold tracking-wider mb-1">Total Proyecto</p>
+            <p class="text-2xl font-bold text-white">{{ tokens_totales|intcomma }} <span
+                    class="text-sm font-normal text-gray-500">Tokens</span></p>
+        </div>
+        <div class="bg-dark-800/50 p-5 rounded-xl border border-gray-700 backdrop-blur-sm">
+            <p class="text-gray-400 text-xs uppercase font-bold tracking-wider mb-1">Asignados a Drops</p>
+            <p class="text-2xl font-bold text-blue-400">{{ tokens_asignados|intcomma }} <span
+                    class="text-sm font-normal text-gray-500">Tokens</span></p>
+        </div>
+        <div class="bg-dark-800/50 p-5 rounded-xl border border-gray-700 backdrop-blur-sm relative overflow-hidden">
+            <div class="absolute right-0 top-0 p-3 opacity-10">
+                <span class="material-icons text-6xl text-green-500">account_balance_wallet</span>
+            </div>
+            <p class="text-gray-400 text-xs uppercase font-bold tracking-wider mb-1">Disponibles (Libres)</p>
+            <div class="flex items-baseline gap-2">
+                <p class="text-2xl font-bold text-green-400">{{ tokens_libres|intcomma }}</p>
+                <span class="text-sm font-medium text-green-500/80">({{ porcentaje_libre }}% Restante)</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Drops -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {% for drop in drops %}
+        <div
+            class="glass-panel rounded-xl overflow-hidden group border border-gray-700/50 hover:border-red-500/30 transition-all relative">
+
+            {% if not drop.activo %}
+            <div
+                class="absolute inset-0 bg-dark-900/60 backdrop-blur-[1px] z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                <span
+                    class="bg-black/80 text-white px-3 py-1 rounded-full text-xs font-bold border border-gray-700">INACTIVO</span>
+            </div>
+            {% endif %}
+
+            <div class="p-6 relative z-0">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wide
+                            {% if drop.estado_display == 'EN VIVO' %}bg-green-500/20 text-green-400 border border-green-500/30
+                            {% elif drop.estado_display == 'Próximamente' %}bg-blue-500/20 text-blue-400 border border-blue-500/30
+                            {% elif drop.estado_display == 'Agotado' %}bg-red-500/20 text-red-400 border border-red-500/30
+                            {% else %}bg-gray-700 text-gray-400 border border-gray-600{% endif %}">
+                                {{ drop.estado_display }}
+                            </span>
+
+                            <!-- Porcentaje del total -->
+                            {% if tokens_totales > 0 %}
+                            <span
+                                class="text-[10px] bg-gray-700 text-gray-300 px-2 py-0.5 rounded border border-gray-600"
+                                title="Porcentaje del total del proyecto">
+                                {% widthratio drop.tokens_disponibles_drop tokens_totales 100 %}% del Total
+                            </span>
+                            {% endif %}
+                        </div>
+                        <h3 class="text-xl font-bold text-white leading-tight">{{ drop.nombre }}</h3>
+                    </div>
+
+                    <div class="flex items-center gap-1">
+                        <a href="{% url 'admin_drop_edit' drop.id %}{% if is_seller_panel %}?panel=seller{% endif %}"
+                            class="p-2 text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
+                            title="Editar">
+                            <span class="material-icons text-emerald-400">edit</span>
+                        </a>
+                        <form method="POST"
+                            action="{% url 'admin_drop_delete' drop.id %}{% if is_seller_panel %}?panel=seller{% endif %}"
+                            onsubmit="return confirm('¿Seguro que deseas eliminar este Drop?');">
+                            {% csrf_token %}
+                            <button type="submit"
+                                class="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                                title="Eliminar">
+                                <span class="material-icons text-emerald-400">delete</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="space-y-4 mb-2">
+                    <div
+                        class="flex items-center gap-2 text-sm text-gray-300 bg-dark-800/40 p-2 rounded-lg border border-gray-700/30">
+                        <span class="material-icons text-gray-500 text-base">calendar_today</span>
+                        <span>Del <b class="text-white">{{ drop.fecha_inicio|date:"d M H:i" }}</b> al <b
+                                class="text-white">{{ drop.fecha_fin|date:"d M H:i" }}</b></span>
+                    </div>
+
+                    <div class="bg-dark-800/80 rounded-lg p-3 border border-gray-700/50">
+                        <div class="flex justify-between items-center text-xs mb-1.5">
+                            <span class="text-gray-400 uppercase font-bold tracking-wider">Progreso de Venta</span>
+                            <span class="text-white font-bold">{{ drop.tokens_vendidos_drop }} / {{ drop.tokens_disponibles_drop }}</span>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-2 overflow-hidden shadow-inner">
+                            <div class="h-full bg-gradient-to-r from-red-600 to-red-400 rounded-full transition-all relative"
+                                style="width: {{ drop.porcentaje_vendido_drop }}%">
+                                {% if drop.porcentaje_vendido_drop > 0 %}
+                                <div
+                                    class="absolute right-0 top-0 bottom-0 w-[1px] bg-white/50 shadow-[0_0_10px_rgba(255,255,255,0.8)]">
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="text-right mt-1">
+                            <span class="text-xs text-red-300">{{ drop.porcentaje_vendido_drop }}% vendido</span>
+                        </div>
+                    </div>
+
+                    {% if drop.precio_override %}
+                    <div
+                        class="flex items-center justify-between text-sm bg-green-500/10 border border-green-500/20 p-2 rounded-lg">
+                        <span class="text-green-400 flex items-center gap-1">
+                            <span class="material-icons text-base">local_offer</span> Precio Drop
+                        </span>
+                        <span class="text-white font-bold">${{ drop.precio_override|intcomma }} <span
+                                class="text-gray-500 font-normal line-through text-xs">${{ proyecto.precio_token|intcomma }}</span></span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% if drop.descripcion %}
+                <div class="mt-4 pt-3 border-t border-gray-700/50">
+                    <p class="text-xs text-gray-500 italic">"{{ drop.descripcion }}"</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div
+            class="col-span-full py-12 px-6 text-center glass-panel rounded-xl border border-dashed border-gray-700 flex flex-col items-center justify-center">
+            <div class="w-16 h-16 rounded-full bg-dark-700 flex items-center justify-center mb-4">
+                <span class="material-icons text-3xl text-gray-500">bolt</span>
+            </div>
+            <h3 class="text-white font-bold text-lg mb-1">No hay Drops activos</h3>
+            <p class="text-gray-400 text-sm max-w-md mx-auto mb-6">Configura ventanas de venta limitadas para generar
+                urgencia y acelerar la recaudación de tu proyecto.</p>
+
+            {% if tokens_libres > 0 %}
+            <a href="{% url 'admin_drop_create' proyecto.id %}"
+                class="text-red-400 hover:text-red-300 font-bold text-sm flex items-center gap-1 transition-colors">
+                Crear primer drop <span class="material-icons text-sm">arrow_forward</span>
+            </a>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

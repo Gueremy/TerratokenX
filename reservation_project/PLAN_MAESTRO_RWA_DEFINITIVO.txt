@@ -1,0 +1,150 @@
+PLAN MAESTRO DEFINITIVO V5: TerraTokenX RWA
+===========================================
+La ruta completa: Estrategia de Negocio + Ejecución Técnica (Best on Planet MVP).
+
+1. VISION ESTRATEGICA COMPLETA
+Una plataforma híbrida que combina:
+- Proyectos Premium Joan: Liquidez para el token TTX.
+- Marketplace Abierto: "Airbnb de Tierras" para fraccionadores externos.
+- Sistema de Drops: Venta controlada por ventanas de tiempo y escasez.
+- Firma Legal Dual: El usuario elige si firma con FirmaVirtual (Web2) o Smart Contract (Web3).
+- Respaldo Blockchain: NFTs (ERC-3643) como título de propiedad digital inmutable.
+
+--------------------------------------------------------------------------------
+
+2. FASE 1: LA BASE DEL NEGOCIO & DROPS (Semanas 1-5)
+Objetivo: Permitir que TERCEROS vendan y controlar la oferta con Drops.
+
+A. Separación de Proyectos (Internos vs Externos)
+   - Qué es: Diferenciar "Proyectos Premium Joan" de "Proyectos Externos".
+   - Por qué: Es el corazón del nuevo modelo de negocio Marketplace.
+   - CÓMO LO VAMOS A HACER:
+     * Backend: Campo 'owner_type' ('INTERNAL', 'EXTERNAL') en modelo Proyecto.
+     * Frontend: Vistas separadas (ej: marketplace_list.html).
+
+B. Rol "Fraccionador"
+   - Qué es: Un usuario externo que puede subir sus tierras.
+   - Por qué: Escala el inventario sin usar capital propio.
+   - CÓMO LO VAMOS A HACER:
+     * Models: Grupo de permisos 'Fractionalizer'.
+     * Panel: Dashboard limitado que muestra solo "Mis Proyectos" y "Mis Ventas".
+     * PENDIENTE (POST-MVP): Wizard de Creación de Proyectos con validación obligatoria de propiedad (Upload Escritura/Dominio Vigente). Todo proyecto nuevo nace como 'En Revisión'.
+
+C. Gestión de Drops (Ventanas de Venta)
+   - Qué es: Venta por tiempo limitado (ej: "Solo este fin de semana").
+   - Por qué: Genera FOMO (urgencia) y controla el flujo de caja.
+   - CÓMO LO VAMOS A HACER:
+     * Models: Nuevo modelo 'ProjectDrop' con fecha inicio/fin y stock.
+     * Logic: Al comprar, verificar si la fecha actual está dentro del rango.
+
+D. KYC Escalonado (Smart Compliance)
+   - Qué es: Pedir pocos datos para montos bajos (<$500).
+   - Por qué: Aumenta drásticamente la conversión de pequeños inversores.
+   - CÓMO LO VAMOS A HACER:
+     * Models: Campo 'kyc_tier' (0,1,2) en UserProfile.
+     * Middleware: Bloqueo progresivo en checkout según monto acumulado.
+
+E. Metadatos RWA (Pre-Blockchain)
+   - Qué es: Guardar GPS y Hashes legales en la DB.
+   - Por qué: Prepara la data para la Fase 3 (Blockchain).
+   - CÓMO LO VAMOS A HACER:
+     * Models: Campos 'gps_data' (JSON) y 'legal_hash' en Proyecto.
+
+--------------------------------------------------------------------------------
+
+3. FASE 2: FINANCIERO, LEGAL & FIRMA DUAL (Semanas 6-9)
+Objetivo: Gestión del dinero y flexibilidad legal total.
+
+A. Firma Dual (Web2 / Web3)
+   - Qué es: El usuario elige: Firma Notarial (FirmaVirtual) o Firma Digital Blockchain.
+   - Por qué: Atrae a todo tipo de público (Tradicional y Crypto).
+   - CÓMO LO VAMOS A HACER:
+     * Checkout: Radio Button "¿Cómo firmas?".
+     * Integración: API FirmaVirtual vs EIP-712 (Metamask).
+
+B. Multi-Pasarela (Payku, MercadoPago, Transferencia)
+   - Qué es: Aceptar pagos con múltiples métodos según el vendedor.
+   - Por qué: Flexibilidad total para el cliente y el fraccionador.
+   - CÓMO LO VAMOS A HACER:
+     * Models: Configuración JSON por Fraccionador con sus API Keys.
+     * Checkout: Factoría de Pagos dinámica que carga la pasarela correcta.
+     * agregar este metodo de pago llamado plataforma PIX
+
+C. Wallet Interna (Créditos)
+   - Qué es: Saldo a favor en la plataforma.
+   - Por qué: Permite cashbacks, referidos y reembolsos sin costo bancario.
+   - CÓMO LO VAMOS A HACER:
+     * Models: 'WalletBalance' y 'Transaction'.
+     * Logic: Sistema de saldo a favor que se descuenta al comprar.
+
+D. Panel Auditoría (Transparencia)
+   - Qué es: Registro inmutable de quién aprobó qué.
+   - Por qué: Requisito fundamental de transparencia RWA.
+   - CÓMO LO VAMOS A HACER:
+     * Django Admin: Vista 'AuditLog' pública para inversores.
+
+--------------------------------------------------------------------------------
+
+4. FASE 3: LA "JOYA" INSTITUCIONAL (Semanas 10-15)
+Objetivo: Inmutabilidad Blockchain (ERC-3643).
+
+A. Smart Contracts ERC-3643
+   - Qué es: Estándar institucional de tokens (Identity Registry).
+   - Por qué: Cumplimiento regulatorio automático y mercado secundario.
+   - CÓMO LO VAMOS A HACER:
+     * Solidity: Suite T-REX en Polygon.
+     * Logic: Solo wallets con KYC (Identity Registry) pueden tener el token.
+
+B. Minting Automático
+   - Qué es: Emisión del token al firmar contrato.
+   - Por qué: Garantiza que cada token tiene respaldo legal real.
+   - CÓMO LO VAMOS A HACER:
+     * Webhook: Firma Exitosa -> Ejecuta mint() en Blockchain.
+
+C. Web3 Login
+   - Qué es: "Iniciar sesión con Metamask".
+   - Por qué: Puente entre el mundo Web2 y Web3.
+   - CÓMO LO VAMOS A HACER:
+     * Frontend: Librería wagmi/ethers.js.
+
+--------------------------------------------------------------------------------
+
+RESUMEN DE TIEMPOS ESTIMADOS
+- Fase 1: 5 Semanas (Vender & Drops) -> INICIO INMEDIATO
+- Fase 2: 4 Semanas (Legal & Wallet)
+- Fase 3: 6 Semanas (Blockchain)
+
+Total Proyecto: ~4 a 5 Meses.
+Recomendación: Empezar YA con la Fase 1.
+
+--------------------------------------------------------------------------------
+
+ANEXO: OPTIMIZACIÓN DASHBOARD VENDEDOR (Fase Posterior/Paralela Fase 2)
+Objetivo: Transformar el panel en un sistema de gestión integral para fraccionadores.
+
+1. Módulo Ventas & CRM Inversor
+   - Qué es: Tabla detallada con cada venta (quién compró, cuánto, cuándo).
+   - Funcionalidad: 
+     * Ver lista de inversores por proyecto.
+     * Exportar data a Excel/CSV.
+     * Contactar inversores (email masivo básico).
+
+2. Módulo Billetera & Retiros (Tesorería)
+   - Qué es: Gestión de los fondos recaudados por el fraccionador.
+   - Funcionalidad:
+     * Visualizar saldo acumulado (USD/Crypto).
+     * Solicitar retiros a cuentas bancarias o wallets externas.
+     * Historial de pagos recibidos de la plataforma.
+
+3. Módulo Reportes de Avance (Communication Center)
+   - Qué es: Herramienta para mantener informados a los inversores (Vital para RWA).
+   - Funcionalidad:
+     * Publicar "Actualizaciones" (fotos de obra, hitos legales).
+     * Notificar automáticamente por email a los holders del token.
+
+4. Configuración Legal & KYB
+   - Qué es: Gestión del perfil corporativo del vendedor.
+   - Funcionalidad:
+     * Subir/Actualizar documentos de la empresa (Estatutos, Vigencia).
+     * Ver estado de verificación (KYB Tier).
+     * Gestionar cuentas bancarias para recibir fondos.

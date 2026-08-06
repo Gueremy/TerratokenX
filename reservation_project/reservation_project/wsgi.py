@@ -4,6 +4,6 @@ import os
 from django.core.wsgi import get_wsgi_application
 
 # ¡ESTA ES LA LÍNEA CORRECTA Y DEFINITIVA!
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'reservation_project.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'reservation_project.settings.production')
 
 application = get_wsgi_application()

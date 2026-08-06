@@ -1,0 +1,141 @@
+{% extends base_template|default:'booking/admin/base_admin.html' %}
+{% load humanize %}
+
+{% block title %}Drops - Ventanas de Venta{% endblock %}
+{% block page_title %}Drops — Ventanas de Venta{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+
+    <!-- Header -->
+    <div class="mb-8">
+        <p class="text-gray-400 text-sm">Controla cuándo y cómo se venden los tokens de cada proyecto. Crea ventanas de
+            venta limitadas para generar urgencia (FOMO).</p>
+    </div>
+
+    <!-- Proyectos con Drops -->
+    <div class="space-y-6">
+        {% for p in proyectos %}
+        <div
+            class="glass-panel rounded-xl overflow-hidden border border-gray-700/50 hover:border-gold-500/30 transition-all">
+            <!-- Cabecera del proyecto -->
+            <div class="flex items-center justify-between p-5 border-b border-gray-700/50">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-lg bg-dark-700 flex items-center justify-center overflow-hidden">
+                        {% if p.imagen_portada_url %}
+                        <img src="{{ p.imagen_portada_url }}" class="w-full h-full object-cover">
+                        {% else %}
+                        <span class="material-icons text-gray-600">apartment</span>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <h3 class="text-white font-bold text-lg">{{ p.nombre }}</h3>
+                        <p class="text-gray-500 text-xs">{{ p.ubicacion }}</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <!-- Badges resumen -->
+                    {% if p.drops_activos > 0 %}
+                    <span
+                        class="px-2 py-1 rounded text-[10px] font-bold uppercase bg-green-500/20 text-green-400 border border-green-500/30">
+                        {{ p.drops_activos }} EN VIVO
+                    </span>
+                    {% endif %}
+                    {% if p.drops_proximos > 0 %}
+                    <span
+                        class="px-2 py-1 rounded text-[10px] font-bold uppercase bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                        {{ p.drops_proximos }} Próximos
+                    </span>
+                    {% endif %}
+                    <span class="text-gray-500 text-xs">{{ p.total_drops }} drops total</span>
+
+                    <!-- Botón crear Drop -->
+                    <a href="{% url 'admin_drop_create' p.id %}{% if is_seller_panel %}?panel=seller{% endif %}"
+                        class="flex items-center gap-1.5 px-4 py-2 {% if is_seller_panel %}bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/20 hover:border-emerald-500/40{% else %}bg-gold-500/10 hover:bg-gold-500/20 text-gold-400 border-gold-500/20 hover:border-gold-500/40{% endif %} font-medium text-xs rounded-lg border transition-all">
+                        <span class="material-icons text-sm">add</span>
+                        Nuevo Drop
+                    </a>
+                </div>
+            </div>
+
+            <!-- Drops del proyecto -->
+            {% if p.drops_list %}
+            <div class="divide-y divide-gray-800">
+                {% for drop in p.drops_list %}
+                <div class="flex items-center justify-between px-5 py-3 hover:bg-dark-700/50 transition-colors">
+                    <div class="flex items-center gap-4">
+                        <!-- Estado badge -->
+                        <span class="w-20 text-center text-[10px] font-bold px-2 py-1 rounded uppercase
+                        {% if drop.estado_display == 'EN VIVO' %}bg-green-500/20 text-green-400 border border-green-500/30
+                        {% elif drop.estado_display == 'Próximamente' %}bg-blue-500/20 text-blue-400 border border-blue-500/30
+                        {% elif drop.estado_display == 'Agotado' %}bg-red-500/20 text-red-400 border border-red-500/30
+                        {% else %}bg-gray-700 text-gray-400 border border-gray-600{% endif %}">
+                            {{ drop.estado_display }}
+                        </span>
+
+                        <div>
+                            <p class="text-white font-medium text-sm">{{ drop.nombre }}</p>
+                            <p class="text-gray-500 text-xs">{{ drop.fecha_inicio|date:"d M H:i" }} → {{ drop.fecha_fin|date:"d M H:i" }}</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-6">
+                        <!-- Progress -->
+                        <div class="w-32">
+                            <div class="flex justify-between text-[10px] text-gray-400 mb-1">
+                                <span>{{ drop.tokens_vendidos_drop }}/{{ drop.tokens_disponibles_drop }}</span>
+                                <span>{{ drop.porcentaje_vendido_drop }}%</span>
+                            </div>
+                            <div class="w-full bg-gray-700 rounded-full h-1">
+                                <div class="h-1 {% if is_seller_panel %}bg-emerald-500{% else %}bg-gold-500{% endif %} rounded-full"
+                                    style="width: {{ drop.porcentaje_vendido_drop }}%"></div>
+                            </div>
+                        </div>
+
+                        {% if drop.precio_override %}
+                        <span class="text-green-400 text-xs font-bold">${{ drop.precio_override|intcomma }}</span>
+                        {% endif %}
+
+                        {% if not drop.activo %}
+                        <span class="text-[10px] text-gray-600 uppercase font-bold">Inactivo</span>
+                        {% endif %}
+
+                        <!-- Acciones -->
+                        <div class="flex items-center gap-1">
+                            <a href="{% url 'admin_drop_edit' drop.id %}{% if is_seller_panel %}?panel=seller{% endif %}"
+                                class="p-1.5 text-gray-500 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
+                                title="Editar">
+                                <span class="material-icons text-sm">edit</span>
+                            </a>
+                            <form method="POST"
+                                action="{% url 'admin_drop_delete' drop.id %}{% if is_seller_panel %}?panel=seller{% endif %}"
+                                onsubmit="return confirm('¿Eliminar este Drop?');" class="inline">
+                                {% csrf_token %}
+                                <button type="submit"
+                                    class="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                                    title="Eliminar">
+                                    <span class="material-icons text-sm">delete</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="px-5 py-6 text-center">
+                <p class="text-gray-600 text-sm">Sin drops configurados</p>
+            </div>
+            {% endif %}
+        </div>
+        {% empty %}
+        <div class="py-20 text-center glass-panel rounded-xl border border-dashed border-gray-700">
+            <span class="material-icons text-5xl text-gray-600 mb-4 block">bolt</span>
+            <p class="text-gray-400 text-lg mb-2">No hay proyectos activos</p>
+            <p class="text-gray-600 text-sm">Crea un proyecto primero desde la sección Proyectos.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

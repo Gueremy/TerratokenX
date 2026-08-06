@@ -13,7 +13,7 @@
 
         <div class="bg-dark-800 border border-gold-500/20 rounded-lg px-4 py-2 flex items-center gap-3">
             <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-            <span class="text-gray-300 font-medium">Total: <span class="text-white font-bold">{{ total_usuarios           }}</span></span>
+            <span class="text-gray-300 font-medium">Total: <span class="text-white font-bold">{{ total_usuarios }}</span></span>
         </div>
     </div>
 
@@ -95,7 +95,7 @@
                                 {% if profile.wallet_address %}
                                 <span class="text-[10px] text-gray-400 font-mono truncate max-w-[100px]"
                                     title="{{ profile.wallet_address }}">
-                                    <i class="fas fa-wallet text-gray-600 mr-1"></i>{{ profile.wallet_address|slice:":6"                   }}...
+                                    <i class="fas fa-wallet text-gray-600 mr-1"></i>{{ profile.wallet_address|slice:":6" }}...
                                 </span>
                                 {% endif %}
                                 {% endwith %}
@@ -118,7 +118,7 @@
                                         onclick="return confirm('¿Estás seguro de {% if usuario.is_active %}bloquear{% else %}desbloquear{% endif %} a este usuario?')"
                                         class="p-2 rounded-lg {% if usuario.is_active %}bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white{% else %}bg-green-500/10 text-green-500 hover:bg-green-500 hover:text-white{% endif %} transition-all"
                                         title="{% if usuario.is_active %}Bloquear Usuario{% else %}Desbloquear Usuario{% endif %}">
-                                        <span class="material-icons text-sm">{% if usuario.is_active %}block{% else                       %}check_circle{% endif %}</span>
+                                        <span class="material-icons text-sm">{% if usuario.is_active %}block{% else %}check_circle{% endif %}</span>
                                     </button>
                                 </form>
                             </div>

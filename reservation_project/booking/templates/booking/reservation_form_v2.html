@@ -140,7 +140,12 @@
         transition: all 0.2s;
     }
 
-    .qty-btn:hover {
+    .qty-btn:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+
+    .qty-btn:not(:disabled):hover {
         background: #d4af37;
         color: #000;
     }
@@ -277,14 +282,14 @@
                 {% csrf_token %}
 
                 <!-- STEP 1: ASSET SELECTION -->
-                <div x-show="step === 1" x-transition>
+                <div x-show="step === 1" x-cloak x-transition>
                     <div class="asset-card shadow-2xl">
                         <div class="asset-card-header d-flex justify-content-between align-items-center">
                             <h5 class="m-0 d-flex align-items-center gap-2 font-bold uppercase tracking-wider">
                                 <i class="fas fa-building text-gold"></i> Selección del Activo
                             </h5>
                             <!-- Project Selector if multiple -->
-                            <div x-show="availableProjects.length > 1">
+                            <div x-show="availableProjects.length > 1" x-cloak>
                                 <select class="form-select-custom py-1 px-2 small" x-model="selectedProjectId"
                                     @change="updateProject()">
                                     <template x-for="p in availableProjects" :key="p.id">
@@ -325,17 +330,33 @@
                                 </div>
                             </div>
 
+                            <!-- Qty Selector con Validación KYC -->
                             <div class="mt-4 px-4 text-center">
                                 <p class="text-muted small mb-2 text-uppercase fw-bold tracking-widest"
                                     style="font-size: 0.6rem;">¿Cuántos tokens deseas adquirir?</p>
                             </div>
-                            <div class="qty-selector">
+                            <div class="qty-selector" :class="isOverLimit ? 'border-danger' : ''">
                                 <button type="button" class="qty-btn" @click="changeQty(-1)"><i
                                         class="fas fa-minus"></i></button>
-                                <input type="number" name="cantidad_tokens" x-model="qty" @input="calculateTotal()"
+                                <input type="number" name="cantidad_tokens" x-model="qty" @input="validateQty()"
                                     class="qty-input">
-                                <button type="button" class="qty-btn" @click="changeQty(1)"><i
+                                <button type="button" class="qty-btn" @click="changeQty(1)" :disabled="qty >= maxQty"><i
                                         class="fas fa-plus"></i></button>
+                            </div>
+
+                            <!-- Mensaje de Límite KYC -->
+                            <div class="text-center mb-3">
+                                <div x-show="kycRemaining < 1000000" x-cloak>
+                                    <p class="x-small text-muted mb-1">
+                                        Tu límite disponible: <span class="text-white font-bold">$<span
+                                                x-text="formatNumber(kycRemaining)"></span> USD</span>
+                                        (<span x-text="kycTier"></span>)
+                                    </p>
+                                </div>
+                                <div x-show="isOverLimit" x-cloak class="text-danger x-small font-bold animate-pulse">
+                                    ⛔ Excedes tu cupo. Máximo <span x-text="maxQty"></span> tokens.
+                                    <a href="/verification/" class="text-gold underline ms-1">Verificarme ahora</a>
+                                </div>
                             </div>
 
                             <!-- Coupon Input Section -->
@@ -348,11 +369,12 @@
                                     <button type="button" @click="validateCoupon()"
                                         class="btn btn-outline-gold btn-sm px-3 font-bold"
                                         :disabled="!couponCode || isCheckingCoupon">
-                                        <span x-show="!isCheckingCoupon">VALIDAR</span>
-                                        <span x-show="isCheckingCoupon" class="spinner-border spinner-border-sm"></span>
+                                        <span x-show="!isCheckingCoupon" x-cloak>VALIDAR</span>
+                                        <span x-show="isCheckingCoupon" x-cloak
+                                            class="spinner-border spinner-border-sm"></span>
                                     </button>
                                 </div>
-                                <div x-show="couponMessage" class="mt-2 small"
+                                <div x-show="couponMessage" x-cloak class="mt-2 small"
                                     :class="couponValid ? 'text-success' : 'text-danger'" x-text="couponMessage"></div>
                             </div>
 
@@ -360,7 +382,7 @@
                                 <div class="d-flex flex-column">
                                     <span class="text-muted fw-bold small text-uppercase"
                                         style="letter-spacing: 1px;">Total a Pagar:</span>
-                                    <span x-show="discount > 0" class="text-success x-small fw-bold">DESCUENTO
+                                    <span x-show="discount > 0" x-cloak class="text-success x-small fw-bold">DESCUENTO
                                         APLICADO</span>
                                 </div>
                                 <span class="h3 text-gold m-0 font-bold"
@@ -368,7 +390,7 @@
                             </div>
 
                             <button type="button" class="btn-gold shadow-lg" @click="step = 2"
-                                :disabled="!isStep1Valid">
+                                :disabled="!isStep1Valid || isOverLimit">
                                 Continuar a Identidad <i class="fas fa-arrow-right ms-2"></i>
                             </button>
                         </div>
@@ -435,7 +457,7 @@
                                 </div>
 
                                 <!-- Campos Empresa (Collapsible) -->
-                                <div class="col-md-12" x-show="isCompany" x-transition>
+                                <div class="col-md-12" x-show="isCompany" x-cloak x-transition>
                                     <div
                                         class="row g-4 mt-1 p-3 rounded-lg border border-secondary border-opacity-30 bg-black">
                                         <div class="col-md-6">
@@ -599,17 +621,7 @@
 
 <!-- Data for Projects -->
 <script id="projects-json" type="application/json">
-[
-    {% for p in proyectos_activos %}
-    {
-        "id": "{{ p.id }}",
-        "nombre": "{{ p.nombre|escapejs }}",
-        "precio": {{ p.precio_token|default:100 }},
-        "rentabilidad": "{{ p.rentabilidad_estimada|escapejs }}",
-        "imagen": "{{ p.imagen_portada_url|default:'' }}"
-    }{% if not forloop.last %},{% endif %}
-    {% endfor %}
-]
+    {{ proyectos_js_data|safe }}
 </script>
 
 <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
@@ -620,6 +632,12 @@
             step: 1,
             qty: 1,
             total: 0,
+
+            // KYC DATA SECURE
+            kycRemaining: parseFloat("{{ kyc_info.remaining_usd|default:0|stringformat:'f' }}"),
+            kycTier: "{{ kyc_info.tier_label|default:'Invitado' }}",
+            maxQty: 9999,
+
             tcAccepted: false,
             eligibleAccepted: false,
             paymentMethod: 'MP',
@@ -653,11 +671,17 @@
                 // Initialize projects
                 const dataRaw = document.getElementById('projects-json').textContent;
                 this.availableProjects = JSON.parse(dataRaw);
+                console.log("KYC LIMIT:", this.kycRemaining);
+
+                if (isNaN(this.kycRemaining)) {
+                    this.kycRemaining = 0;
+                }
 
                 // Determine initial project
                 const urlParams = new URLSearchParams(window.location.search);
                 const projectSlug = urlParams.get('project_slug');
 
+                // Prioridad: Contexto Django > URL > Primer Dispo
                 {% if proyecto %}
                 this.selectedProjectId = "{{ proyecto.id }}";
                 {% else %}
@@ -676,12 +700,46 @@
             this.selectedProjectId = found.id;
         }
         this.activeProject = found || {};
+
+        // Recalcular MAX QTY: Mínimo entre Stock Real (Drop/Total) y Límite KYC
+        let maxByStock = this.activeProject.stock !== undefined ? this.activeProject.stock : 9999;
+        let maxByMoney = 9999;
+
+        if (this.activeProject.precio > 0) {
+            maxByMoney = Math.floor(this.kycRemaining / this.activeProject.precio);
+        }
+
+        // El límite real es el menor de los dos. Si stock es 0, es 0.
+        this.maxQty = Math.min(maxByStock, maxByMoney);
+        if (this.maxQty < 0) this.maxQty = 0;
+
+        // Ajustar QTY si excede nuevo max
+        if (this.qty > this.maxQty) {
+            this.qty = this.maxQty > 0 ? this.maxQty : 1; // Mantener 1 si es 0 para que vea el error
+        }
+        if (this.maxQty === 0) this.qty = 0; // Si no hay stock ni cupo, 0.
+
         this.calculateTotal();
-        console.log("Proyecto Activo:", this.activeProject.nombre, "ID:", this.selectedProjectId);
     },
 
     changeQty(delta) {
-        this.qty = Math.max(1, parseInt(this.qty) + delta);
+        let newVal = parseInt(this.qty) + delta;
+        if (newVal < 1) newVal = 1;
+
+        // VALIDACIÓN ESTRICTA EN FRONTEND
+        if (this.maxQty >= 0 && newVal > this.maxQty) {
+            // Solo permitimos subir si no excede el máximo
+            newVal = this.maxQty;
+        }
+
+        this.qty = newVal;
+        this.calculateTotal();
+    },
+
+    validateQty() {
+        if (this.maxQty > 0 && this.qty > this.maxQty) {
+            this.qty = this.maxQty;
+        }
         this.calculateTotal();
     },
 
@@ -727,8 +785,13 @@
     },
 
             // Validation Getters
+            get isOverLimit() {
+        // Doble check del total vs cupo
+        return (this.total > this.kycRemaining);
+    },
+            
             get isStep1Valid() {
-        return this.selectedProjectId && this.qty >= 1;
+        return this.selectedProjectId && this.qty >= 1 && !this.isOverLimit;
     },
 
             get isStep2Valid() {
@@ -750,7 +813,7 @@
     },
 
     formatNumber(num) {
-        if (!num) return "0";
+        if (!num && num !== 0) return "0";
         return Math.round(num).toLocaleString('en-US');
     },
 

@@ -1,0 +1,259 @@
+{% load static humanize %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TerraTokenX | Dashboard Fraccionador</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        emerald: {
+                            50: '#ecfdf5', 100: '#d1fae5', 200: '#a7f3d0', 300: '#6ee7b7',
+                            400: '#34d399', 500: '#10b981', 600: '#059669', 700: '#047857',
+                            800: '#065f46', 900: '#064e3b',
+                        },
+                        dark: {
+                            900: '#0a0a0a', 800: '#111111', 700: '#1a1a1a', 600: '#242424', 500: '#2d2d2d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #111827 100%);
+        }
+
+        .glass-panel {
+            background: rgba(26, 26, 26, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .emerald-glow {
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+        }
+    </style>
+</head>
+
+<body class="bg-dark-900 text-gray-100 h-screen overflow-hidden flex">
+
+    <!-- Sidebar Vendedor -->
+    <aside class="w-64 bg-dark-800 border-r border-emerald-500/20 flex flex-col hidden md:flex">
+        <div class="p-6 border-b border-emerald-500/20 flex items-center gap-3">
+            <div
+                class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center font-bold text-white shadow-lg">
+                <span class="text-xl">V</span>
+            </div>
+            <span class="text-xl font-bold tracking-tight text-white">
+                Panel<span class="text-emerald-500">Vendedor</span>
+            </span>
+        </div>
+        <nav class="flex-1 p-6 space-y-2">
+            <a href="#"
+                class="flex items-center gap-3 px-3 py-3 rounded-lg bg-emerald-500/10 text-emerald-400 border-l-4 border-emerald-500 transition-all">
+                <span class="material-icons text-emerald-400">dashboard</span> Mis Proyectos
+            </a>
+            <a href="{% url 'seller_drops_overview' %}"
+                class="flex items-center gap-3 px-3 py-3 rounded-lg text-gray-400 hover:bg-dark-700 transition-all">
+                <span class="material-icons text-emerald-400">bolt</span> Drops (Ventas)
+            </a>
+            <a href="{% url 'investor_dashboard' %}"
+                class="flex items-center gap-3 px-3 py-3 rounded-lg text-gray-400 hover:bg-dark-700 transition-all mt-8 border-t border-gray-800 pt-4">
+                <span class="material-icons text-emerald-400">arrow_back</span> Modo Inversor
+            </a>
+        </nav>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+        <header
+            class="h-16 border-b border-emerald-500/20 flex items-center justify-between px-6 bg-dark-800/80 backdrop-blur-md sticky top-0 z-10">
+            <h1 class="text-sm font-medium text-gray-400">Gestión / <span class="text-emerald-500">Proyectos</span></h1>
+            <div class="flex items-center gap-3">
+                <span
+                    class="px-2 py-1 rounded text-xs font-bold uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                    {{ user.profile.company_name|default:"Empresa" }}
+                </span>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-6 md:p-12">
+            <div class="max-w-6xl mx-auto">
+                <!-- KPIs Summary -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                    <!-- Ingresos -->
+                    <div
+                        class="glass-panel p-6 rounded-2xl border border-emerald-500/20 bg-emerald-900/10 relative overflow-hidden group hover:border-emerald-500/40 transition-all">
+                        <div
+                            class="absolute -right-4 -top-4 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-all">
+                        </div>
+                        <div class="relative">
+                            <div class="flex items-center justify-between mb-4">
+                                <div
+                                    class="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                                    <span class="material-icons text-emerald-400">attach_money</span>
+                                </div>
+                                <span
+                                    class="bg-emerald-500/20 text-emerald-400 text-xs font-bold px-2 py-1 rounded">USD</span>
+                            </div>
+                            <p class="text-gray-400 text-sm font-medium">Ingresos Totales</p>
+                            <h3 class="text-3xl font-bold text-white mt-1">${{ kpi.capital|intcomma }}</h3>
+                        </div>
+                    </div>
+
+                    <!-- Tokens Vendidos -->
+                    <div
+                        class="glass-panel p-6 rounded-2xl border border-blue-500/20 bg-blue-900/10 relative overflow-hidden group hover:border-blue-500/40 transition-all">
+                        <div
+                            class="absolute -right-4 -top-4 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-all">
+                        </div>
+                        <div class="relative">
+                            <div class="flex items-center justify-between mb-4">
+                                <div
+                                    class="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400">
+                                    <span class="material-icons text-emerald-400">token</span>
+                                </div>
+                                <span
+                                    class="bg-blue-500/20 text-blue-400 text-xs font-bold px-2 py-1 rounded">TTX</span>
+                            </div>
+                            <p class="text-gray-400 text-sm font-medium">Tokens Vendidos</p>
+                            <h3 class="text-3xl font-bold text-white mt-1">{{ kpi.tokens_vendidos|intcomma }}</h3>
+                        </div>
+                    </div>
+
+                    <!-- Proyectos Activos -->
+                    <div
+                        class="glass-panel p-6 rounded-2xl border border-purple-500/20 bg-purple-900/10 relative overflow-hidden group hover:border-purple-500/40 transition-all">
+                        <div
+                            class="absolute -right-4 -top-4 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl group-hover:bg-purple-500/20 transition-all">
+                        </div>
+                        <div class="relative">
+                            <div class="flex items-center justify-between mb-4">
+                                <div
+                                    class="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-400">
+                                    <span class="material-icons text-emerald-400">apartment</span>
+                                </div>
+                            </div>
+                            <p class="text-gray-400 text-sm font-medium">Proyectos Activos</p>
+                            <h3 class="text-3xl font-bold text-white mt-1">{{ kpi.total_proyectos }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between mb-8">
+                    <h2 class="text-2xl font-bold text-white">Mis Proyectos Publicados</h2>
+
+                    {% if user.profile.kyb_status == 'APPROVED' %}
+                    <a href="{% url 'fractionalizer_create_project' %}"
+                        class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg shadow-lg flex items-center gap-2 transition-all">
+                        <span class="material-icons text-emerald-400">add</span> Nuevo Proyecto
+                    </a>
+                    {% else %}
+                    <div class="px-4 py-2 bg-gray-700 text-gray-400 rounded-lg flex items-center gap-2 cursor-not-allowed"
+                        title="Debes aprobar KYB primero">
+                        <span class="material-icons text-emerald-400">lock</span> Nuevo Proyecto
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% if user.profile.kyb_status != 'APPROVED' %}
+                <div
+                    class="mb-8 p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 flex items-center gap-3">
+                    <span class="material-icons text-xl">warning</span>
+                    {% if user.profile.kyb_status == 'REVIEW' %}
+                    <p class="text-sm font-medium">Tu cuenta de vendedor está en revisión. Podrás publicar proyectos una
+                        vez aprobada.</p>
+                    {% else %}
+                    <p class="text-sm font-medium">Completa tu perfil KYB para empezar a vender.</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for p in proyectos %}
+                    <div
+                        class="glass-panel rounded-2xl overflow-hidden group hover:border-emerald-500/50 transition-all">
+                        <div class="h-40 bg-gray-800 relative">
+                            {% if p.imagen_portada_url %}
+                            <img src="{{ p.imagen_portada_url }}"
+                                class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity">
+                            {% else %}
+                            <div class="flex items-center justify-center h-full text-gray-600"><span
+                                    class="material-icons text-4xl">image</span></div>
+                            {% endif %}
+                            <div class="absolute top-2 right-2">
+                                <span
+                                    class="px-2 py-1 rounded text-[10px] font-bold uppercase bg-black/60 text-white backdrop-blur-sm border border-white/10">
+                                    {{ p.get_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="p-5">
+                            <h3 class="text-lg font-bold text-white mb-1 truncate">{{ p.nombre }}</h3>
+                            <p class="text-xs text-gray-500 mb-4">{{ p.ubicacion }}</p>
+
+                            <div class="flex items-center justify-between text-sm mb-4">
+                                <span class="text-gray-400">Tokens vend:</span>
+                                <span class="text-emerald-400 font-bold">{{ p.tokens_vendidos }} / {{ p.tokens_totales }}</span>
+                            </div>
+
+                            <div class="w-full bg-gray-700 rounded-full h-1.5 mb-4">
+                                <div class="h-1.5 rounded-full bg-emerald-500"
+                                    style="width: {{ p.porcentaje_vendido }}%"></div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2 mt-4">
+                                <a href="{% url 'fractionalizer_edit_project' p.id %}"
+                                    class="py-2 bg-dark-700 hover:bg-dark-600 text-gray-300 hover:text-white text-xs font-bold rounded-lg border border-gray-700 transition-colors text-center">
+                                    Editar
+                                </a>
+                                <button
+                                    class="py-2 bg-dark-700 hover:bg-dark-600 text-gray-300 hover:text-white text-xs font-bold rounded-lg border border-gray-700 transition-colors">
+                                    Reservas
+                                </button>
+                                <a href="{% url 'admin_project_drops' p.id %}?panel=seller"
+                                    class="col-span-2 py-2.5 bg-emerald-600/10 hover:bg-emerald-600 hover:text-white text-emerald-400 text-xs font-bold rounded-lg border border-emerald-500/30 flex items-center justify-center gap-2 transition-all group-btn">
+                                    <span class="material-icons text-sm">bolt</span> Gestionar Drops
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div
+                        class="col-span-full py-20 text-center border-2 border-dashed border-gray-800 rounded-3xl bg-dark-900/50 flex flex-col items-center justify-center">
+                        <div class="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mb-6">
+                            <span class="material-icons text-4xl text-gray-600">storefront</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-2">Tu portafolio está vacío</h3>
+                        <p class="text-gray-400 max-w-sm mx-auto mb-8">Comienza a publicar tus activos inmobiliarios
+                            para que los inversionistas puedan comprar fracciones.</p>
+
+                        {% if user.profile.kyb_status == 'APPROVED' %}
+                        <a href="{% url 'fractionalizer_create_project' %}"
+                            class="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-900/20 transition-all hover:scale-105 flex items-center gap-2">
+                            <span class="material-icons text-emerald-400">add_circle</span> Crear Primer Proyecto
+                        </a>
+                        {% else %}
+                        <p
+                            class="text-yellow-500 text-sm font-bold bg-yellow-500/10 px-4 py-2 rounded-lg border border-yellow-500/20">
+                            <span class="material-icons text-sm align-middle mr-1">hourglass_empty</span>
+                            Esperando aprobación KYB para publicar
+                        </p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+
+</html>

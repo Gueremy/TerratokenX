@@ -1,6 +1,7 @@
 # En tu archivo models.py
 
 import uuid
+from django.conf import settings
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils import timezone
@@ -81,6 +82,16 @@ class Reserva(models.Model):
     # Nuevo: Vinculación con Proyecto
     proyecto = models.ForeignKey('Proyecto', on_delete=models.CASCADE, null=True, blank=True, related_name='reserva_set')
     user = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='reserva_set')
+    
+    # Trazabilidad: ¿En qué Drop se hizo esta compra?
+    drop = models.ForeignKey(
+        'ProjectDrop',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reservas',
+        help_text='Drop en el que se realizó esta compra (para auditoría y métricas).'
+    )
 
     PAYMENT_METHOD_CHOICES = [
         ('MP', 'Mercado Pago'),
@@ -147,6 +158,15 @@ class Reserva(models.Model):
         
         # Después de guardar, si toca disparar acciones por confirmación de pago
         if trigger_firmavirtual:
+            # --- KYC UPDATE (NUEVO) ---
+            if self.user and hasattr(self.user, 'profile'):
+                try:
+                    self.user.profile.investment_total_usd += self.total
+                    self.user.profile.save()
+                    print(f"💰 KYC Updated: +${self.total} USD for {self.user.username}")
+                except Exception as e:
+                    print(f"⚠️ Error updating KYC total: {e}")
+
             # 1. Enviar email de bienvenida al cliente
             self._send_welcome_email()
             
@@ -270,6 +290,101 @@ class Proyecto(models.Model):
     descripcion = models.TextField(blank=True)
     ubicacion = models.CharField(max_length=200, default="Patagonia Chilena")
     
+    # =============================================
+    # MARKETPLACE: Separación Interno vs Externo
+    # =============================================
+    OWNER_TYPE_CHOICES = [
+        ('INTERNAL', 'Proyecto Interno (Premium)'),
+        ('EXTERNAL', 'Proyecto Externo (Marketplace)'),
+    ]
+    owner_type = models.CharField(
+        max_length=10,
+        choices=OWNER_TYPE_CHOICES,
+        default='INTERNAL',
+        help_text='INTERNAL = Proyecto propio (Joan). EXTERNAL = Proyecto de un Fraccionador externo.'
+    )
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='proyectos_propios',
+        help_text='Usuario dueño del proyecto (solo para proyectos EXTERNAL).'
+    )
+
+    # =============================================
+    # COMPLIANCE: Estado de revisión del proyecto
+    # =============================================
+    COMPLIANCE_STATUS_CHOICES = [
+        ('NONE', 'Sin revisión'),
+        ('DRAFT', 'Borrador'),
+        ('REVIEW', 'En Revisión'),
+        ('APPROVED', 'Aprobado'),
+        ('REJECTED', 'Rechazado'),
+    ]
+    compliance_status = models.CharField(
+        max_length=10,
+        choices=COMPLIANCE_STATUS_CHOICES,
+        default='NONE',
+        help_text='Estado de revisión/compliance del proyecto.'
+    )
+
+    DOCS_STATUS_CHOICES = [
+        ('MISSING', 'Documentos Faltantes'),
+        ('PARTIAL', 'Documentación Parcial'),
+        ('COMPLETE', 'Documentación Completa'),
+    ]
+    docs_status = models.CharField(
+        max_length=10,
+        choices=DOCS_STATUS_CHOICES,
+        default='MISSING',
+        help_text='Estado de la documentación legal del proyecto.'
+    )
+    
+    # Documento de Propiedad (Obligatorio para revisión)
+    archivo_propiedad = models.FileField(
+        upload_to='proyectos/legal/',
+        blank=True,
+        null=True,
+        help_text='Escritura o Certificado de Dominio Vigente para validar propiedad.'
+    )
+
+    # =============================================
+    # METADATOS RWA (Pre-Blockchain)
+    # =============================================
+    gps_data = models.JSONField(
+        blank=True,
+        null=True,
+        default=dict,
+        help_text='Coordenadas GPS del activo. Ej: {"lat": -43.77, "lng": -71.69}'
+    )
+    spv_legal_name = models.CharField(
+        max_length=200,
+        blank=True,
+        default='',
+        help_text='Nombre legal del SPV/Sociedad dueña del activo (ej: Refugio Patagonia SpA).'
+    )
+    legal_hash = models.CharField(
+        max_length=128,
+        blank=True,
+        default='',
+        help_text='Hash SHA-256 del paquete contractual/legal del proyecto.'
+    )
+    docs_manifest_hash = models.CharField(
+        max_length=128,
+        blank=True,
+        default='',
+        help_text='Hash SHA-256 del manifiesto de documentos (Due Diligence).'
+    )
+    data_room_url = models.URLField(
+        blank=True,
+        null=True,
+        help_text='Enlace al Data Room del proyecto (Google Drive, Notion, etc.).'
+    )
+
+    # =============================================
+    # CAMPOS ORIGINALES
+    # =============================================
     # Imagenes
     imagen_portada = models.ImageField(upload_to='proyectos/', null=True, blank=True)
     imagen_portada_url = models.URLField(blank=True, null=True, help_text="URL externa de la imagen (opcional, ahorra espacio)")
@@ -283,6 +398,15 @@ class Proyecto(models.Model):
     # Estado
     activo = models.BooleanField(default=True, help_text="Visible en la web")
     financiamiento_activo = models.BooleanField(default=True, help_text="Permite comprar tokens")
+    
+    # =============================================
+    # DROPS: Control de venta por ventanas
+    # =============================================
+    venta_solo_drops = models.BooleanField(
+        default=False,
+        verbose_name='Venta solo vía Drops',
+        help_text='Si está activado, solo se puede comprar cuando hay un Drop activo. Si no hay Drop abierto, el proyecto queda bloqueado.'
+    )
     
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -404,6 +528,124 @@ class ProyectoDocumento(models.Model):
     def __str__(self):
         return f"{self.proyecto.nombre} - {self.titulo}"
 
+
+# =============================================
+# DROPS: Ventanas de Venta por Tiempo Limitado
+# =============================================
+class ProjectDrop(models.Model):
+    """
+    Un Drop es una ventana de venta con fecha de inicio/fin y stock limitado.
+    Genera urgencia (FOMO) y controla el flujo de caja del proyecto.
+    """
+    proyecto = models.ForeignKey(
+        'Proyecto',
+        on_delete=models.CASCADE,
+        related_name='drops',
+        help_text='Proyecto al que pertenece este Drop.'
+    )
+    nombre = models.CharField(
+        max_length=100,
+        help_text='Nombre del drop (ej: "Drop #1 - Early Bird", "Drop #2 - Público")'
+    )
+    descripcion = models.TextField(
+        blank=True,
+        help_text='Descripción corta del drop (ej: "Precio especial para los primeros inversores")'
+    )
+
+    # Ventana de tiempo
+    fecha_inicio = models.DateTimeField(
+        help_text='Fecha y hora en que se abre la venta (UTC o timezone del proyecto)'
+    )
+    fecha_fin = models.DateTimeField(
+        help_text='Fecha y hora en que se cierra la venta'
+    )
+
+    # Stock por drop
+    tokens_disponibles_drop = models.PositiveIntegerField(
+        default=100,
+        help_text='Cantidad de tokens disponibles SOLO en este drop'
+    )
+    tokens_vendidos_drop = models.PositiveIntegerField(
+        default=0,
+        help_text='Tokens vendidos durante este drop (se actualiza automáticamente)'
+    )
+
+    # Precio override (opcional - permite precio especial por drop)
+    precio_override = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text='Precio especial para este drop (deja vacío para usar el precio del proyecto)'
+    )
+
+    # Límite anti-ballena (máximo tokens por usuario en este drop)
+    max_tokens_por_usuario = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text='Máx. tokens que un solo usuario puede comprar en este Drop. Vacío = sin límite.'
+    )
+
+    activo = models.BooleanField(
+        default=True,
+        help_text='Si está desactivado, el drop no se muestra aunque esté en rango de fechas.'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['fecha_inicio']
+        verbose_name = 'Drop (Ventana de Venta)'
+        verbose_name_plural = 'Drops (Ventanas de Venta)'
+
+    def __str__(self):
+        return f"{self.proyecto.nombre} - {self.nombre}"
+
+    @property
+    def esta_en_vivo(self):
+        """¿El drop está activo AHORA?"""
+        now = timezone.now()
+        return self.activo and self.fecha_inicio <= now <= self.fecha_fin
+
+    @property
+    def esta_proximo(self):
+        """¿El drop aún no ha empezado?"""
+        now = timezone.now()
+        return self.activo and now < self.fecha_inicio
+
+    @property
+    def ya_termino(self):
+        """¿El drop ya finalizó?"""
+        now = timezone.now()
+        return now > self.fecha_fin
+
+    @property
+    def tokens_restantes(self):
+        """Tokens que quedan disponibles en este drop."""
+        return max(0, self.tokens_disponibles_drop - self.tokens_vendidos_drop)
+
+    @property
+    def porcentaje_vendido_drop(self):
+        """% de tokens vendidos en este drop."""
+        if self.tokens_disponibles_drop > 0:
+            return round((self.tokens_vendidos_drop / self.tokens_disponibles_drop) * 100, 1)
+        return 0
+
+    @property
+    def precio_efectivo(self):
+        """Precio a aplicar: override del drop o precio del proyecto."""
+        return self.precio_override if self.precio_override else self.proyecto.precio_token
+
+    @property
+    def estado_display(self):
+        """Estado legible del drop."""
+        if not self.activo:
+            return 'Desactivado'
+        if self.esta_en_vivo:
+            if self.tokens_restantes <= 0:
+                return 'Agotado'
+            return 'EN VIVO'
+        if self.esta_proximo:
+            return 'Próximamente'
+        return 'Finalizado'
+
 class Configuracion(models.Model):
     precio_base_token = models.PositiveIntegerField(default=100, verbose_name="Precio Base Token (USD)")
     # Deprecado: tokens_totales se mueve a Proyecto
@@ -447,6 +689,39 @@ class UserProfile(models.Model):
         choices=KYC_STATUS_CHOICES,
         default=KYC_PENDIENTE
     )
+
+    # === KYC ESCALONADO (TIERS) ===
+    TIER_0_BASIC = 0
+    TIER_1_VERIFIED = 1
+    TIER_2_WHALE = 2
+    
+    TIER_CHOICES = [
+        (TIER_0_BASIC, 'Nivel 0 (Básico - $500)'),
+        (TIER_1_VERIFIED, 'Nivel 1 (Verificado - $10k)'),
+        (TIER_2_WHALE, 'Nivel 2 (Whale - Ilimitado)'),
+    ]
+    kyc_tier = models.PositiveSmallIntegerField(default=TIER_0_BASIC, choices=TIER_CHOICES, help_text="Nivel de verificación actual")
+    investment_total_usd = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Total invertido acumulado (USD)")
+
+    @property
+    def limit_usd(self):
+        if self.kyc_tier == 0: return 500
+        if self.kyc_tier == 1: return 10000
+        return 999999999
+
+    @property
+    def calculated_investment_total(self):
+        """Calcula el total invertido sumando las reservas confirmadas."""
+        from django.db.models import Sum
+        # Filtra por estado 'CONFIRMADO' (ver Reserva.ESTADO_CONFIRMADO)
+        total = self.user.reserva_set.filter(estado_pago='CONFIRMADO').aggregate(Sum('total'))['total__sum']
+        return total or 0
+
+    @property
+    def remaining_limit(self):
+        # Usa el valor calculado en tiempo real
+        return max(0, float(self.limit_usd) - float(self.calculated_investment_total))
+
     
     # KYC Documents
     documento_identidad_frontal = models.ImageField(upload_to='kyc/documentos/', blank=True, null=True)
@@ -473,9 +748,51 @@ class UserProfile(models.Model):
     )
     wallet_address = models.CharField(max_length=100, blank=True, null=True, help_text="Dirección de billetera (Opcional)")
 
+    # =============================================
+    # ROL FRACCIONADOR (KYB - Know Your Business)
+    # =============================================
+    USER_TYPE_CHOICES = [
+        ('INVESTOR', 'Inversionista'),
+        ('FRACTIONALIZER', 'Fraccionador (Vendedor)'),
+    ]
+    user_type = models.CharField(
+        max_length=20,
+        choices=USER_TYPE_CHOICES,
+        default='INVESTOR',
+        help_text="Rol del usuario en la plataforma."
+    )
+
+    KYB_STATUS_CHOICES = [
+        ('NONE', 'No Iniciado'),
+        ('REVIEW', 'En Revisión'),
+        ('APPROVED', 'Aprobado'),
+        ('REJECTED', 'Rechazado'),
+    ]
+    kyb_status = models.CharField(
+        max_length=15,
+        choices=KYB_STATUS_CHOICES,
+        default='NONE',
+        help_text="Estado de verificación de empresa (solo para Fraccionadores)."
+    )
+
+    # Datos empresa
+    company_name = models.CharField(max_length=200, blank=True, null=True, verbose_name="Razón Social")
+    company_tax_id = models.CharField(max_length=20, blank=True, null=True, verbose_name="RUT Empresa")
+    company_legal_rep = models.CharField(max_length=100, blank=True, null=True, verbose_name="Representante Legal")
+    
+    # Documentos KYB
+    company_docs = models.FileField(
+        upload_to='kyb/docs/', 
+        blank=True, 
+        null=True, 
+        help_text="Escritura o Constitución de la empresa (PDF)"
+    )
+
     def __str__(self):
         return f"Perfil de {self.user.username}"
 
     class Meta:
         verbose_name = "Perfil de Usuario"
         verbose_name_plural = "Perfiles de Usuario"
+
+# --- PERFIL DE USUARIO PARA KYC (NUEVO) ---

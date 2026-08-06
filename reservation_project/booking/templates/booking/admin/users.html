@@ -27,7 +27,8 @@
                         <th class="px-6 py-4 text-xs font-bold text-gold-500 uppercase tracking-wider">Tier</th>
                         <th class="px-6 py-4 text-xs font-bold text-gold-500 uppercase tracking-wider">Inversión</th>
                         <th class="px-6 py-4 text-xs font-bold text-gold-500 uppercase tracking-wider">Estado</th>
-                        <th class="px-6 py-4 text-xs font-bold text-gold-500 uppercase tracking-wider text-right">Acciones</th>
+                        <th class="px-6 py-4 text-xs font-bold text-gold-500 uppercase tracking-wider text-right">
+                            Acciones</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-700/50">
@@ -36,11 +37,13 @@
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-3">
                                 <div class="relative">
-                                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gold-500/20 to-gold-600/20 border border-gold-500/30 flex items-center justify-center text-gold-400 font-bold">
+                                    <div
+                                        class="w-10 h-10 rounded-full bg-gradient-to-br from-gold-500/20 to-gold-600/20 border border-gold-500/30 flex items-center justify-center text-gold-400 font-bold">
                                         {{ usuario.first_name|slice:":1"|upper }}{{ usuario.last_name|slice:":1"|upper }}
                                     </div>
                                     {% if usuario.is_staff %}
-                                    <div class="absolute -top-1 -right-1 bg-blue-500 rounded-full p-1 border border-dark-900" title="Staff">
+                                    <div class="absolute -top-1 -right-1 bg-blue-500 rounded-full p-1 border border-dark-900"
+                                        title="Staff">
                                         <div class="w-1 h-1 bg-white rounded-full"></div>
                                     </div>
                                     {% endif %}
@@ -49,7 +52,8 @@
                                     <h4 class="font-bold text-white group-hover:text-gold-400 transition-colors">
                                         {{ usuario.first_name }} {{ usuario.last_name }}
                                         {% if not usuario.is_active %}
-                                        <span class="ml-2 text-[10px] bg-red-500/20 text-red-500 px-2 py-0.5 rounded border border-red-500/20">BLOQUEADO</span>
+                                        <span
+                                            class="ml-2 text-[10px] bg-red-500/20 text-red-500 px-2 py-0.5 rounded border border-red-500/20">BLOQUEADO</span>
                                         {% endif %}
                                     </h4>
                                     <div class="flex flex-col text-xs text-gray-500">
@@ -61,40 +65,75 @@
                         </td>
                         <td class="px-6 py-4 font-bold text-gray-400">
                             {% if usuario.is_staff %}
-                                <span class="text-gold-500">ADMIN</span>
+                            <span class="text-gold-500">ADMIN</span>
                             {% else %}
-                                BRONZE
+                            BRONZE
                             {% endif %}
                         </td>
                         <td class="px-6 py-4">
                             {% if usuario.total_tokens > 0 %}
-                                <div class="flex flex-col">
-                                    <span class="text-white font-bold">{{ usuario.total_tokens }} Tokens</span>
-                                    <span class="text-[10px] text-gold-500/70 uppercase truncate max-w-[150px]" title="{{ usuario.proyectos_lista }}">
-                                        {{ usuario.proyectos_lista }}
-                                    </span>
+                            <div class="flex flex-col">
+                                <span class="text-white font-bold">{{ usuario.total_tokens }} Tokens</span>
+                                <span class="text-[10px] text-gold-500/70 uppercase truncate max-w-[150px]"
+                                    title="{{ usuario.proyectos_lista }}">
+                                    {{ usuario.proyectos_lista }}
+                                </span>
+                                <!-- Monto Inverido (Nuevo) -->
+                                <div class="text-[10px] text-gray-400 mt-1">
+                                    Inv: ${{ usuario.profile.investment_total_usd|default:"0"|intcomma }}
+                                    USD
                                 </div>
+                            </div>
                             {% else %}
-                                <span class="text-gray-600 text-xs">Sin inversión</span>
+                            <span class="text-gray-600 text-xs">Sin inversión</span>
                             {% endif %}
                         </td>
                         <td class="px-6 py-4">
-                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-500/10 text-gray-400 border border-gray-500/20 w-fit">
-                                KYC NO INICIADO
-                            </span>
+                            <!-- Estado KYC Dinámico -->
+                            <div class="flex flex-col gap-1">
+                                {% if usuario.profile.kyc_status == 'APPROVED' %}
+                                <span
+                                    class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-500/10 text-green-400 border border-green-500/20 w-fit">
+                                    VERIFICADO
+                                </span>
+                                {% elif usuario.profile.kyc_status == 'PENDING' %}
+                                <span
+                                    class="px-2 py-0.5 rounded text-[10px] font-bold bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 w-fit animate-pulse">
+                                    EN REVISIÓN
+                                </span>
+                                {% elif usuario.profile.kyc_status == 'REJECTED' %}
+                                <span
+                                    class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/10 text-red-500 border border-red-500/20 w-fit">
+                                    RECHAZADO
+                                </span>
+                                {% else %}
+                                <span
+                                    class="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-500/10 text-gray-400 border border-gray-500/20 w-fit">
+                                    NO INICIADO
+                                </span>
+                                {% endif %}
+
+                                <!-- Nivel KYC -->
+                                <span class="text-[10px] text-gray-500">
+                                    {% if usuario.profile.kyc_tier == 0 %}Nivel 0 (Básico){% endif %}
+                                    {% if usuario.profile.kyc_tier == 1 %}Nivel 1 (Limit $10k){% endif %}
+                                    {% if usuario.profile.kyc_tier == 2 %}Nivel 2 (Whale){% endif %}
+                                </span>
+                            </div>
                         </td>
                         <td class="px-6 py-4 text-right">
                             <div class="flex items-center justify-end gap-2">
                                 <!-- Editar -->
-                                <button type="button" 
-                                        onclick="openEditModal('{{ usuario.id }}', '{{ usuario.first_name }}', '{{ usuario.last_name }}', '{{ usuario.email }}')"
-                                        class="p-2 rounded-lg bg-gray-700/50 text-gray-400 hover:bg-white hover:text-black transition-all">
+                                <button type="button"
+                                    onclick="openEditModal('{{ usuario.id }}', '{{ usuario.first_name }}', '{{ usuario.last_name }}', '{{ usuario.email }}', '{{ usuario.profile.kyc_tier|default:0 }}')"
+                                    class="p-2 rounded-lg bg-gray-700/50 text-gray-400 hover:bg-white hover:text-black transition-all">
                                     <span class="material-icons text-sm">edit</span>
                                 </button>
                                 <!-- Bloquear -->
                                 <form method="POST" action="{% url 'admin_block_user' usuario.id %}" class="inline">
                                     {% csrf_token %}
-                                    <button type="submit" class="p-2 rounded-lg {% if usuario.is_active %}bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white{% else %}bg-green-500/10 text-green-500 hover:bg-green-500 hover:text-white{% endif %} transition-all">
+                                    <button type="submit"
+                                        class="p-2 rounded-lg {% if usuario.is_active %}bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white{% else %}bg-green-500/10 text-green-500 hover:bg-green-500 hover:text-white{% endif %} transition-all">
                                         <span class="material-icons text-sm">{% if usuario.is_active %}block{% else %}check_circle{% endif %}</span>
                                     </button>
                                 </form>
@@ -115,40 +154,65 @@
 <!-- Modal -->
 <div id="editUserModal" class="fixed inset-0 z-50 hidden">
     <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeEditModal()"></div>
-    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-dark-900 border border-gold-500/30 rounded-xl p-6 shadow-2xl">
+    <div
+        class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-dark-900 border border-gold-500/30 rounded-xl p-6 shadow-2xl">
         <h3 class="text-xl font-bold text-white mb-4">Editar Usuario</h3>
         <form id="editUserForm" method="POST" action="">
             {% csrf_token %}
             <div class="space-y-4">
                 <div>
                     <label class="block text-gray-400 text-sm mb-2">Nombre</label>
-                    <input type="text" name="first_name" id="edit_first_name" required class="w-full bg-black border border-gray-700 rounded p-2 text-white outline-none">
+                    <input type="text" name="first_name" id="edit_first_name" required
+                        class="w-full bg-black border border-gray-700 rounded p-2 text-white outline-none focus:border-gold-500">
                 </div>
                 <div>
                     <label class="block text-gray-400 text-sm mb-2">Apellido</label>
-                    <input type="text" name="last_name" id="edit_last_name" required class="w-full bg-black border border-gray-700 rounded p-2 text-white outline-none">
+                    <input type="text" name="last_name" id="edit_last_name" required
+                        class="w-full bg-black border border-gray-700 rounded p-2 text-white outline-none focus:border-gold-500">
                 </div>
                 <div>
                     <label class="block text-gray-400 text-sm mb-2">Email</label>
-                    <input type="email" name="email" id="edit_email" required class="w-full bg-black border border-gray-700 rounded p-2 text-white outline-none">
+                    <input type="email" name="email" id="edit_email" required
+                        class="w-full bg-black border border-gray-700 rounded p-2 text-white outline-none focus:border-gold-500">
+                </div>
+
+                <!-- SELECTOR DE NIVEL KYC -->
+                <div class="p-3 border border-dark-700 rounded bg-dark-800">
+                    <label class="block text-gold-500 text-sm mb-2 font-bold">Nivel KYC (Límite de Inversión)</label>
+                    <select name="kyc_tier" id="edit_kyc_tier"
+                        class="w-full bg-black border border-gray-700 rounded p-2 text-white outline-none focus:border-gold-500">
+                        <option value="0">Nivel 0 - Básico ($500 USD)</option>
+                        <option value="1">Nivel 1 - Verificado ($10,000 USD)</option>
+                        <option value="2">Nivel 2 - Ballena (Ilimitado)</option>
+                    </select>
+                    <p class="text-[10px] text-gray-500 mt-1">
+                        ⚠️ Cambiar esto afecta inmediatamente la capacidad de compra del usuario.
+                    </p>
                 </div>
             </div>
             <div class="flex justify-end gap-3 mt-6">
-                <button type="button" onclick="closeEditModal()" class="px-4 py-2 text-gray-400">Cancelar</button>
-                <button type="submit" class="px-4 py-2 bg-gold-600 text-black font-bold rounded">Guardar</button>
+                <button type="button" onclick="closeEditModal()"
+                    class="px-4 py-2 text-gray-400 hover:text-white transition-colors">Cancelar</button>
+                <button type="submit"
+                    class="px-4 py-2 bg-gold-600 hover:bg-gold-500 text-black font-bold rounded shadow-lg shadow-gold-500/20 transition-all">Guardar
+                    Cambios</button>
             </div>
         </form>
     </div>
 </div>
 
 <script>
-    function openEditModal(id, f, l, e) {
+    function openEditModal(id, f, l, e, tier) {
         document.getElementById('editUserModal').classList.remove('hidden');
         document.getElementById('edit_first_name').value = f;
         document.getElementById('edit_last_name').value = l;
         document.getElementById('edit_email').value = e;
+        // Seleccionar el nivel adecuado
+        document.getElementById('edit_kyc_tier').value = tier;
+
         document.getElementById('editUserForm').action = "/admin-panel/users/edit/" + id + "/";
     }
+
     function closeEditModal() {
         document.getElementById('editUserModal').classList.add('hidden');
     }
